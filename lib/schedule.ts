@@ -8,7 +8,7 @@ export function getSlotStatus(
   bookings: Booking[],
   blockedDates: BlockedDate[],
   todayStr: string
-): { status: SlotStatus; bookingId?: string } {
+): { status: SlotStatus; bookingId?: string; teamName?: string } {
   // 1. Past check
   if (date < todayStr) return { status: 'past' }
   if (date === todayStr) {
@@ -27,7 +27,7 @@ export function getSlotStatus(
     b => b.booking_date === date && b.time_slot_id === slot.id && b.status !== 'cancelled'
   )
   if (booking) {
-    return { status: booking.status as 'pending' | 'confirmed', bookingId: booking.id }
+    return { status: booking.status as 'pending' | 'confirmed', bookingId: booking.id, teamName: booking.team_name }
   }
 
   return { status: 'available' }
@@ -67,6 +67,18 @@ export function formatHour(hour: number): string {
 export function formatDayHeader(date: Date): string {
   const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
   return `${days[date.getDay()]} ${date.getDate()}`
+}
+
+const FULL_DAYS = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
+
+export function formatDayShort(date: Date): string {
+  const days = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']
+  return days[date.getDay()]
+}
+
+export function formatFullDate(date: Date): string {
+  const months = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des']
+  return `${FULL_DAYS[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`
 }
 
 export function formatPrice(price: number): string {

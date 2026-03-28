@@ -6,6 +6,8 @@ import {
   formatHour,
   formatPrice,
   formatDayHeader,
+  formatDayShort,
+  formatFullDate,
   toDateString,
 } from '../schedule'
 import type { TimeSlot, Booking, BlockedDate } from '../types'
@@ -165,5 +167,49 @@ describe('formatDayHeader', () => {
   it('returns Sen for Monday', () => {
     const monday = new Date(2026, 2, 2) // March 2, 2026 is Monday
     expect(formatDayHeader(monday)).toBe('Sen 2')
+  })
+})
+
+describe('formatDayShort', () => {
+  it('returns 3-letter day name in Indonesian', () => {
+    expect(formatDayShort(new Date('2026-03-30T00:00:00'))).toBe('Sen')
+    expect(formatDayShort(new Date('2026-03-31T00:00:00'))).toBe('Sel')
+    expect(formatDayShort(new Date('2026-04-01T00:00:00'))).toBe('Rab')
+  })
+})
+
+describe('formatFullDate', () => {
+  it('returns full Indonesian date label', () => {
+    expect(formatFullDate(new Date('2026-03-30T00:00:00'))).toBe('Senin, 30 Mar 2026')
+    expect(formatFullDate(new Date('2026-03-29T00:00:00'))).toBe('Minggu, 29 Mar 2026')
+  })
+})
+
+describe('getSlotStatus with teamName', () => {
+  it('returns teamName for confirmed booking', () => {
+    const booking: Booking = {
+      id: 'b1',
+      team_name: 'FC Garuda',
+      booking_date: '2026-03-30',
+      time_slot_id: 'slot-1',
+      status: 'confirmed',
+      created_at: '2026-01-01T00:00:00Z',
+    }
+    const result = getSlotStatus(slot, '2026-03-30', [booking], [], '2026-03-29')
+    expect(result.status).toBe('confirmed')
+    expect(result.teamName).toBe('FC Garuda')
+  })
+
+  it('returns teamName for pending booking', () => {
+    const booking: Booking = {
+      id: 'b2',
+      team_name: 'Bintang FC',
+      booking_date: '2026-03-30',
+      time_slot_id: 'slot-1',
+      status: 'pending',
+      created_at: '2026-01-01T00:00:00Z',
+    }
+    const result = getSlotStatus(slot, '2026-03-30', [booking], [], '2026-03-29')
+    expect(result.teamName).toBe('Bintang FC')
   })
 })
