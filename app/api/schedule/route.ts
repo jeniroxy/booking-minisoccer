@@ -7,7 +7,7 @@ function toDateStr(d: Date): string {
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url)
-  const startDateParam = searchParams.get('startDate') ?? toDateStr(new Date())
+  const startDateParam = searchParams.get('startDate') ?? new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(startDateParam)) {
     return NextResponse.json({ error: 'Invalid startDate' }, { status: 400 })

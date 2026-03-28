@@ -2,16 +2,12 @@ import { createClient } from '@/lib/supabase/server'
 import { ScheduleGrid } from '@/components/schedule/ScheduleGrid'
 import Link from 'next/link'
 
-function toDateStr(d: Date): string {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-}
-
 export default async function JadwalPage() {
-  const today = new Date()
-  const startDate = toDateStr(today)
-  const endObj = new Date(today)
-  endObj.setDate(today.getDate() + 29)
-  const endDate = toDateStr(endObj)
+  // Use Jakarta timezone (WIB, UTC+7) so the server doesn't show yesterday
+  const startDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+  const endObj = new Date(startDate + 'T00:00:00')
+  endObj.setDate(endObj.getDate() + 29)
+  const endDate = endObj.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
 
   const supabase = createClient()
 
