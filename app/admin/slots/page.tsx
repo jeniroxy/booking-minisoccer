@@ -15,17 +15,21 @@ export default async function AdminSlotsPage() {
   ])
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <nav className="bg-white border-b border-gray-200 px-4 py-3 sticky top-0 z-30">
-        <div className="max-w-screen-lg mx-auto flex items-center gap-4">
-          <Link href="/admin" className="text-sm text-gray-500 hover:text-blue-500 transition-colors">
+    <main className="min-h-screen bg-slate-950">
+      <nav className="bg-slate-950 border-b border-slate-800 px-4 py-2.5 sticky top-0 z-30">
+        <div className="max-w-[960px] mx-auto flex items-center gap-3">
+          <Link
+            href="/admin"
+            className="text-[12px] text-slate-500 hover:text-green-400 transition-colors"
+          >
             ← Dashboard
           </Link>
-          <span className="font-bold text-lg text-blue-500">Kelola Slot</span>
+          <span className="text-slate-700">|</span>
+          <span className="text-[14px] font-bold text-slate-100">Kelola Slot</span>
         </div>
       </nav>
 
-      <div className="max-w-screen-lg mx-auto py-8 px-4 grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="max-w-[960px] mx-auto py-6 px-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
         <SlotManager initialSlots={slotsRes.data ?? []} />
         <BlockDateManager
           initialBlocked={blockedRes.data ?? []}

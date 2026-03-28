@@ -1,9 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { formatHour } from '@/lib/schedule'
 import type { BlockedDate, TimeSlot } from '@/lib/types'
 
@@ -59,63 +56,55 @@ export function BlockDateManager({ initialBlocked, slots }: BlockDateManagerProp
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100">
-      <div className="p-4 border-b border-gray-100">
-        <h2 className="font-semibold text-slate-800">Blokir Tanggal</h2>
-        <p className="text-xs text-gray-400 mt-0.5">Blokir hari atau jam tertentu agar tidak bisa dipesan.</p>
+    <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
+      <div className="px-4 py-3 border-b border-slate-700">
+        <h2 className="text-[13px] font-bold text-slate-100">Blokir Tanggal</h2>
+        <p className="text-[11px] text-slate-500 mt-0.5">Blokir hari atau jam tertentu agar tidak bisa dipesan.</p>
       </div>
 
-      <div className="p-4 border-b border-gray-100 space-y-3">
-        <div className="flex gap-3 items-end">
+      {/* Form */}
+      <div className="p-4 border-b border-slate-700 space-y-3">
+        <div className="flex gap-2 items-end">
           <div className="flex flex-col gap-1.5 flex-1">
-            <Label className="text-xs text-gray-500">Tanggal</Label>
-            <Input
+            <label className="text-[11px] font-medium text-slate-500">Tanggal</label>
+            <input
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
               min={new Date().toISOString().split('T')[0]}
-              className="rounded-xl border-gray-200 text-sm h-9"
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-[13px] text-slate-100 outline-none focus:border-green-500 transition-colors [color-scheme:dark]"
             />
           </div>
-          <Button
+          <button
             onClick={addBlock}
             disabled={saving || !date}
-            className="rounded-full h-9 px-5 text-sm bg-blue-500 hover:bg-blue-600"
+            className="px-4 py-2 rounded-xl text-[12px] font-bold bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 disabled:opacity-40 transition-colors whitespace-nowrap"
           >
             {saving ? 'Menyimpan...' : '+ Blokir'}
-          </Button>
+          </button>
         </div>
 
-        <div className="flex gap-3">
-          <label className="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer">
-            <input
-              type="radio"
-              name="blockType"
-              value="full"
-              checked={blockType === 'full'}
-              onChange={() => setBlockType('full')}
-              className="accent-blue-500"
-            />
-            Seluruh hari
-          </label>
-          <label className="flex items-center gap-1.5 text-sm text-gray-600 cursor-pointer">
-            <input
-              type="radio"
-              name="blockType"
-              value="specific"
-              checked={blockType === 'specific'}
-              onChange={() => setBlockType('specific')}
-              className="accent-blue-500"
-            />
-            Jam tertentu
-          </label>
+        <div className="flex gap-4">
+          {(['full', 'specific'] as const).map(type => (
+            <label key={type} className="flex items-center gap-2 text-[12px] text-slate-400 cursor-pointer">
+              <input
+                type="radio"
+                name="blockType"
+                value={type}
+                checked={blockType === type}
+                onChange={() => setBlockType(type)}
+                className="accent-green-500"
+              />
+              {type === 'full' ? 'Seluruh hari' : 'Jam tertentu'}
+            </label>
+          ))}
         </div>
 
         {blockType === 'specific' && (
           <select
             value={selectedSlotId}
             onChange={e => setSelectedSlotId(e.target.value)}
-            className="w-full border border-gray-200 rounded-xl text-sm px-3 py-2 bg-white text-slate-700"
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl text-[13px] px-3 py-2 text-slate-100 outline-none focus:border-green-500 transition-colors"
           >
             <option value="">Pilih jam...</option>
             {slots.map(s => (
@@ -127,20 +116,21 @@ export function BlockDateManager({ initialBlocked, slots }: BlockDateManagerProp
         )}
       </div>
 
+      {/* List */}
       {blocked.length === 0 ? (
-        <p className="px-4 py-8 text-center text-sm text-gray-400">Belum ada tanggal yang diblokir</p>
+        <p className="px-4 py-8 text-center text-[13px] text-slate-500">Belum ada tanggal yang diblokir</p>
       ) : (
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-slate-700/50">
           {blocked.map(bd => (
             <div key={bd.id} className="flex items-center justify-between px-4 py-3">
               <div>
-                <span className="text-sm font-medium text-slate-800">{bd.date}</span>
-                <span className="text-xs text-gray-400 ml-2">{slotLabel(bd)}</span>
+                <span className="text-[13px] font-medium text-slate-200">{bd.date}</span>
+                <span className="text-[11px] text-slate-500 ml-2">{slotLabel(bd)}</span>
               </div>
               <button
                 onClick={() => removeBlock(bd.id)}
                 disabled={deletingId === bd.id}
-                className="text-xs text-red-400 hover:text-red-600 transition-colors"
+                className="text-[11px] text-red-400 hover:text-red-300 transition-colors disabled:opacity-40"
               >
                 {deletingId === bd.id ? '...' : 'Hapus'}
               </button>

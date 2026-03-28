@@ -3,9 +3,6 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('')
@@ -33,48 +30,48 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+    <main className="min-h-screen bg-slate-950 flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
-          <div className="text-4xl mb-2">⚽</div>
-          <h1 className="text-2xl font-bold text-slate-800">Admin Login</h1>
-          <p className="text-sm text-gray-500 mt-1">MiniSoccer Dashboard</p>
+          <img src="/logo-icon.svg" alt="Logo" className="w-14 h-14 rounded-2xl mx-auto mb-3" />
+          <h1 className="text-[20px] font-bold text-slate-100">Zains Mini Soccer</h1>
+          <p className="text-[12px] text-slate-500 mt-1">Admin Dashboard</p>
         </div>
 
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+        <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email" className="text-sm font-medium text-slate-600">Email</Label>
-              <Input
+              <label htmlFor="email" className="text-[12px] font-medium text-slate-400">Email</label>
+              <input
                 id="email"
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="admin@example.com"
                 required
-                className="rounded-xl border-gray-200"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[13px] text-slate-100 placeholder-slate-600 outline-none focus:border-green-500 transition-colors"
               />
             </div>
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="password" className="text-sm font-medium text-slate-600">Password</Label>
-              <Input
+              <label htmlFor="password" className="text-[12px] font-medium text-slate-400">Password</label>
+              <input
                 id="password"
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="rounded-xl border-gray-200"
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[13px] text-slate-100 placeholder-slate-600 outline-none focus:border-green-500 transition-colors"
               />
             </div>
-            {error && <p className="text-sm text-red-500">{error}</p>}
-            <Button
+            {error && <p className="text-[12px] text-red-400">{error}</p>}
+            <button
               type="submit"
               disabled={loading}
-              className="rounded-full bg-blue-500 hover:bg-blue-600 mt-2"
+              className="w-full bg-gradient-to-r from-green-500 to-green-600 rounded-xl py-2.5 text-[13px] font-bold text-green-950 disabled:opacity-50 mt-1"
             >
               {loading ? 'Masuk...' : 'Masuk'}
-            </Button>
+            </button>
           </form>
         </div>
       </div>
