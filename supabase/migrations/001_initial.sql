@@ -53,8 +53,10 @@ CREATE POLICY "bookings_public_insert_pending" ON bookings
 CREATE POLICY "blocked_dates_public_read" ON blocked_dates
   FOR SELECT USING (true);
 
--- Seed: default time slots 08:00 - 22:00
+-- Seed: default time slots 06:00 - 23:00
 INSERT INTO time_slots (start_hour, end_hour, price) VALUES
+  (6,  7,  80000),
+  (7,  8,  80000),
   (8,  9,  80000),
   (9,  10, 80000),
   (10, 11, 80000),
@@ -68,4 +70,5 @@ INSERT INTO time_slots (start_hour, end_hour, price) VALUES
   (18, 19, 100000),
   (19, 20, 100000),
   (20, 21, 120000),
-  (21, 22, 120000);
+  (21, 22, 120000),
+  (22, 23, 120000);
