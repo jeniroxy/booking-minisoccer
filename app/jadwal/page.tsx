@@ -2,14 +2,16 @@ import { createClient } from '@/lib/supabase/server'
 import { ScheduleGrid } from '@/components/schedule/ScheduleGrid'
 import Link from 'next/link'
 
+function toDateStr(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export default async function JadwalPage() {
   const today = new Date()
-  const year = today.getFullYear()
-  const month = today.getMonth() + 1
-
-  const startDate = `${year}-${String(month).padStart(2, '0')}-01`
-  const lastDay = new Date(year, month, 0).getDate()
-  const endDate = `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+  const startDate = toDateStr(today)
+  const endObj = new Date(today)
+  endObj.setDate(today.getDate() + 29)
+  const endDate = toDateStr(endObj)
 
   const supabase = createClient()
 
@@ -37,8 +39,7 @@ export default async function JadwalPage() {
             bookings: bookingsRes.data ?? [],
             blockedDates: blockedRes.data ?? [],
           }}
-          initialYear={year}
-          initialMonth={month}
+          initialStartDate={startDate}
         />
       </div>
     </main>

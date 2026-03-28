@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 import {
   getSlotStatus,
-  getDaysInMonth,
+  get30Days,
   toDateString,
   formatHour,
   formatPrice,
@@ -20,50 +20,46 @@ interface SelectedSlot {
 
 interface ScheduleGridProps {
   initialData: ScheduleData
-  initialYear: number
-  initialMonth: number
+  initialStartDate: string
 }
 
-const MONTH_NAMES = [
-  'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-  'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
-]
+const SHORT_MONTHS = ['Jan','Feb','Mar','Apr','Mei','Jun','Jul','Agu','Sep','Okt','Nov','Des']
 
-export function ScheduleGrid({ initialData, initialYear, initialMonth }: ScheduleGridProps) {
-  const [year, setYear] = useState(initialYear)
-  const [month, setMonth] = useState(initialMonth)
+function formatDateRange(start: Date, end: Date): string {
+  const s = `${start.getDate()} ${SHORT_MONTHS[start.getMonth()]}`
+  const e = `${end.getDate()} ${SHORT_MONTHS[end.getMonth()]} ${end.getFullYear()}`
+  return `${s} – ${e}`
+}
+
+export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProps) {
+  const [startDate, setStartDate] = useState(initialStartDate)
   const [data, setData] = useState<ScheduleData>(initialData)
   const [loading, setLoading] = useState(false)
   const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>(null)
 
   const today = new Date()
   const todayStr = toDateString(today)
-  const currentYM = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}`
 
-  const days = getDaysInMonth(year, month)
+  const days = get30Days(new Date(startDate + 'T00:00:00'))
 
-  const handleMonthChange = useCallback(
+  const handleShift = useCallback(
     async (direction: 1 | -1) => {
-      let ny = year
-      let nm = month + direction
-      if (nm > 12) { nm = 1; ny++ }
-      if (nm < 1) { nm = 12; ny-- }
-
-      const targetYM = `${ny}-${String(nm).padStart(2, '0')}`
-      if (targetYM < currentYM) return
+      const current = new Date(startDate + 'T00:00:00')
+      current.setDate(current.getDate() + direction * 30)
+      const newStart = toDateString(current)
+      if (newStart < todayStr) return
 
       setLoading(true)
       try {
-        const res = await fetch(`/api/schedule?year=${ny}&month=${nm}`)
+        const res = await fetch(`/api/schedule?startDate=${newStart}`)
         const newData: ScheduleData = await res.json()
         setData(newData)
-        setYear(ny)
-        setMonth(nm)
+        setStartDate(newStart)
       } finally {
         setLoading(false)
       }
     },
-    [year, month, currentYM]
+    [startDate, todayStr]
   )
 
   const handleBookingSuccess = useCallback(
@@ -88,27 +84,26 @@ export function ScheduleGrid({ initialData, initialYear, initialMonth }: Schedul
     [selectedSlot]
   )
 
-  const thisYM = `${year}-${String(month).padStart(2, '0')}`
-  const isPrevDisabled = thisYM <= currentYM
+  const isPrevDisabled = startDate <= todayStr
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Month Navigation */}
+      {/* Navigation */}
       <div className="flex items-center justify-between px-1">
         <button
-          onClick={() => handleMonthChange(-1)}
+          onClick={() => handleShift(-1)}
           disabled={isPrevDisabled}
-          aria-label="Bulan sebelumnya"
+          aria-label="30 hari sebelumnya"
           className="w-9 h-9 flex items-center justify-center rounded-full text-xl text-slate-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
         >
           ‹
         </button>
-        <h2 className="text-xl font-bold text-slate-800">
-          {MONTH_NAMES[month - 1]} {year}
+        <h2 className="text-base font-semibold text-slate-700">
+          {formatDateRange(days[0], days[days.length - 1])}
         </h2>
         <button
-          onClick={() => handleMonthChange(1)}
-          aria-label="Bulan berikutnya"
+          onClick={() => handleShift(1)}
+          aria-label="30 hari berikutnya"
           className="w-9 h-9 flex items-center justify-center rounded-full text-xl text-slate-600 hover:bg-gray-100 transition-colors"
         >
           ›

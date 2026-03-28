@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   getSlotStatus,
   getDaysInMonth,
+  get30Days,
   formatHour,
   formatPrice,
   formatDayHeader,
@@ -121,15 +122,30 @@ describe('formatHour', () => {
 })
 
 describe('formatPrice', () => {
-  it('formats price with Rp prefix', () => {
-    const result = formatPrice(80000)
-    expect(result).toContain('Rp')
-    expect(result).toContain('80')
+  it('formats 80000 as 80K', () => {
+    expect(formatPrice(80000)).toBe('80K')
   })
 
-  it('formats 120000 correctly', () => {
-    const result = formatPrice(120000)
-    expect(result).toContain('120')
+  it('formats 120000 as 120K', () => {
+    expect(formatPrice(120000)).toBe('120K')
+  })
+})
+
+describe('get30Days', () => {
+  it('returns exactly 30 days', () => {
+    expect(get30Days(new Date(2026, 2, 28))).toHaveLength(30)
+  })
+
+  it('first element is the start date', () => {
+    const start = new Date(2026, 2, 28)
+    const days = get30Days(start)
+    expect(days[0].getDate()).toBe(28)
+    expect(days[0].getMonth()).toBe(2)
+  })
+
+  it('spans across month boundary correctly', () => {
+    const days = get30Days(new Date(2026, 2, 28)) // Mar 28
+    expect(days[29].getMonth()).toBe(3) // ends in April
   })
 })
 

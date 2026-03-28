@@ -41,6 +41,16 @@ export function getDaysInMonth(year: number, month: number): Date[] {
   return days
 }
 
+export function get30Days(from: Date): Date[] {
+  const days: Date[] = []
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(from)
+    d.setDate(from.getDate() + i)
+    days.push(d)
+  }
+  return days
+}
+
 export function toDateString(date: Date): string {
   const y = date.getFullYear()
   const m = String(date.getMonth() + 1).padStart(2, '0')
@@ -58,9 +68,5 @@ export function formatDayHeader(date: Date): string {
 }
 
 export function formatPrice(price: number): string {
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(price)
+  return `${Math.round(price / 1000)}K`
 }
