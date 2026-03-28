@@ -137,7 +137,7 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
   )
 
   return (
-    <div className="min-h-screen bg-slate-950">
+    <div className="min-h-screen bg-slate-950 max-w-[960px] mx-auto">
       {/* Header */}
       <header className="bg-slate-950 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-2">
