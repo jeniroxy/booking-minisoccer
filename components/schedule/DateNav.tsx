@@ -12,6 +12,7 @@ interface DateNavProps {
   bookings: Booking[]
   onSelectDate: (dateStr: string) => void
   onShift: (dir: 1 | -1) => void
+  onToday: () => void
   onJumpToMonth: (year: number, month: number) => void
   isShiftDisabled: boolean
 }
@@ -40,6 +41,7 @@ export function DateNav({
   onSelectDate,
   bookings,
   onShift,
+  onToday,
   onJumpToMonth,
   isShiftDisabled,
 }: DateNavProps) {
@@ -65,7 +67,7 @@ export function DateNav({
   }
 
   const handleTodayClick = () => {
-    onShift(-1)
+    onToday()
   }
 
   return (

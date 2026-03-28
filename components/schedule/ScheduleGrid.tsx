@@ -30,7 +30,23 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
   const [bookingOpen, setBookingOpen] = useState(false)
 
   const days = get30Days(new Date(startDate + 'T00:00:00'))
-  const isPrevDisabled = startDate <= todayStr
+  const isPrevDisabled = selectedDate <= todayStr
+
+  const handleToday = useCallback(async () => {
+    if (startDate !== initialStartDate) {
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/schedule?startDate=${initialStartDate}`)
+        const newData: ScheduleData = await res.json()
+        setData(newData)
+        setStartDate(initialStartDate)
+      } finally {
+        setLoading(false)
+      }
+    }
+    setSelectedDate(todayStr)
+    setSelection(null)
+  }, [startDate, todayStr, initialStartDate])
 
   const handleJumpToMonth = useCallback(
     async (year: number, month: number) => {
@@ -66,30 +82,36 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
 
   const handleShift = useCallback(
     async (direction: 1 | -1) => {
-      if (direction === -1 && isPrevDisabled) {
-        setSelectedDate(todayStr)
-        setStartDate(initialStartDate)
+      const current = new Date(selectedDate + 'T00:00:00')
+      current.setDate(current.getDate() + direction * 7)
+      const newSelected = toDateString(current)
+      if (newSelected < todayStr) return
+
+      // Cek apakah newSelected masih dalam window data saat ini
+      const windowEnd = new Date(startDate + 'T00:00:00')
+      windowEnd.setDate(windowEnd.getDate() + 29)
+      const windowEndStr = toDateString(windowEnd)
+
+      if (newSelected >= startDate && newSelected <= windowEndStr) {
+        setSelectedDate(newSelected)
+        setSelection(null)
         return
       }
 
-      const current = new Date(startDate + 'T00:00:00')
-      current.setDate(current.getDate() + direction * 30)
-      const newStart = toDateString(current)
-      if (newStart < todayStr) return
-
+      // Di luar window — fetch data baru
       setLoading(true)
       try {
-        const res = await fetch(`/api/schedule?startDate=${newStart}`)
+        const res = await fetch(`/api/schedule?startDate=${newSelected}`)
         const newData: ScheduleData = await res.json()
         setData(newData)
-        setStartDate(newStart)
-        setSelectedDate(newStart)
+        setStartDate(newSelected)
+        setSelectedDate(newSelected)
         setSelection(null)
       } finally {
         setLoading(false)
       }
     },
-    [startDate, todayStr, isPrevDisabled, initialStartDate]
+    [startDate, selectedDate, todayStr]
   )
 
   const handleSlotClick = useCallback((slot: TimeSlot) => {
@@ -182,6 +204,7 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
           if (selection?.date !== d) setSelection(null)
         }}
         onShift={handleShift}
+        onToday={handleToday}
         onJumpToMonth={handleJumpToMonth}
         isShiftDisabled={isPrevDisabled}
       />
