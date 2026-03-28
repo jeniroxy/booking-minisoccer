@@ -153,22 +153,13 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
 
           {error && <p className="text-[11px] text-red-400">{error}</p>}
 
-          <div className="flex gap-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 bg-slate-900 border border-slate-700 rounded-xl py-2.5 text-[12px] font-medium text-slate-500"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="flex-[2.5] bg-gradient-to-r from-green-500 to-green-600 rounded-xl py-2.5 text-[12px] font-bold text-green-950 disabled:opacity-50"
-            >
-              {loading ? 'Memproses...' : '📲 Booking via WhatsApp'}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-gradient-to-r from-green-500 to-green-600 rounded-xl py-2.5 text-[12px] font-bold text-green-950 disabled:opacity-50"
+          >
+            {loading ? 'Memproses...' : '📲 Booking via WhatsApp'}
+          </button>
         </form>
       </div>
     </>
