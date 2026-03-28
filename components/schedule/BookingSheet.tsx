@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { buildWAUrl, formatDateLabel } from '@/lib/booking'
-import { formatHour, formatPrice, STUDENT_DISCOUNT } from '@/lib/schedule'
+import { formatHour, formatPrice, STUDENT_DISCOUNT, LOYALTY_DISCOUNT } from '@/lib/schedule'
 import type { TimeSlot } from '@/lib/types'
 
 interface BookingSheetProps {
@@ -18,12 +18,16 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
   const [teamName, setTeamName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [loyaltyEligible, setLoyaltyEligible] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
+  const loyaltyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const sorted = [...slots].sort((a, b) => a.start_hour - b.start_hour)
   const slotPrice = (s: TimeSlot) => Math.max(0, s.price - (isStudent ? STUDENT_DISCOUNT : 0))
-  const totalPrice = sorted.reduce((sum, s) => sum + slotPrice(s), 0)
+  const baseTotal = sorted.reduce((sum, s) => sum + slotPrice(s), 0)
+  const loyaltyDiscount = !isStudent && loyaltyEligible ? LOYALTY_DISCOUNT : 0
+  const totalPrice = Math.max(0, baseTotal - loyaltyDiscount)
 
   useEffect(() => {
     if (isOpen) {
@@ -31,9 +35,31 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
     } else {
       setTeamName('')
       setError('')
+      setLoyaltyEligible(false)
       if (sheetRef.current) sheetRef.current.style.bottom = '0px'
     }
   }, [isOpen])
+
+  // Cek loyalty saat user mengetik nama tim (debounce 600ms, hanya untuk Umum)
+  useEffect(() => {
+    if (isStudent || !teamName.trim()) {
+      setLoyaltyEligible(false)
+      return
+    }
+    if (loyaltyTimerRef.current) clearTimeout(loyaltyTimerRef.current)
+    loyaltyTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/bookings/loyalty?team_name=${encodeURIComponent(teamName.trim())}`)
+        const { eligible } = await res.json()
+        setLoyaltyEligible(eligible)
+      } catch {
+        setLoyaltyEligible(false)
+      }
+    }, 600)
+    return () => {
+      if (loyaltyTimerRef.current) clearTimeout(loyaltyTimerRef.current)
+    }
+  }, [teamName, isStudent])
 
   // Geser sheet ke atas mengikuti keyboard — bekerja di iOS & Android
   useEffect(() => {
@@ -159,6 +185,12 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
                 {isStudent ? 'Pelajar (diskon Rp50.000/jam)' : 'Umum'}
               </span>
             </div>
+            {loyaltyDiscount > 0 && (
+              <div className="flex justify-between text-[11px]">
+                <span className="text-amber-400 font-medium">🎉 Diskon Loyal</span>
+                <span className="text-amber-400 font-semibold">-{formatPrice(loyaltyDiscount)}</span>
+              </div>
+            )}
             <div className="border-t border-slate-700 pt-1.5 flex justify-between text-[13px]">
               <span className="font-semibold text-slate-200">Total</span>
               <span className="font-bold text-green-400">{formatPrice(totalPrice)}</span>
