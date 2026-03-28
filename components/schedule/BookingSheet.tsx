@@ -19,6 +19,7 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const inputRef = useRef<HTMLInputElement>(null)
+  const sheetRef = useRef<HTMLDivElement>(null)
 
   const sorted = [...slots].sort((a, b) => a.start_hour - b.start_hour)
   const slotPrice = (s: TimeSlot) => Math.max(0, s.price - (isStudent ? STUDENT_DISCOUNT : 0))
@@ -30,6 +31,28 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
     } else {
       setTeamName('')
       setError('')
+      if (sheetRef.current) sheetRef.current.style.bottom = '0px'
+    }
+  }, [isOpen])
+
+  // Geser sheet ke atas mengikuti keyboard — bekerja di iOS & Android
+  useEffect(() => {
+    if (!isOpen) return
+    const viewport = window.visualViewport
+    if (!viewport) return
+
+    const handleResize = () => {
+      const sheet = sheetRef.current
+      if (!sheet) return
+      const keyboardHeight = window.innerHeight - viewport.height - viewport.offsetTop
+      sheet.style.bottom = `${Math.max(0, keyboardHeight)}px`
+    }
+
+    viewport.addEventListener('resize', handleResize)
+    viewport.addEventListener('scroll', handleResize)
+    return () => {
+      viewport.removeEventListener('resize', handleResize)
+      viewport.removeEventListener('scroll', handleResize)
     }
   }, [isOpen])
 
@@ -105,8 +128,8 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
         onClick={onClose}
       />
 
-      {/* Sheet — flex column, tinggi menyesuaikan keyboard (svh) */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-800 rounded-t-[20px] border-t border-slate-700 flex flex-col max-h-[90svh] mx-auto max-w-lg">
+      {/* Sheet — flex column, posisi bottom disesuaikan visualViewport (keyboard-aware) */}
+      <div ref={sheetRef} className="fixed bottom-0 left-0 right-0 z-50 bg-slate-800 rounded-t-[20px] border-t border-slate-700 flex flex-col max-h-[90svh] mx-auto max-w-lg">
         {/* Handle + judul */}
         <div className="px-4 pt-4 pb-2 flex-shrink-0">
           <div className="w-9 h-1 bg-slate-600 rounded-full mx-auto mb-4" />
