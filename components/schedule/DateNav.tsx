@@ -28,7 +28,12 @@ function getMonthLabel(days: Date[]): string {
 }
 
 function getAvailableMonths(days: Date[]): number[] {
-  return [...new Set(days.map(d => d.getMonth()))]
+  const seen: number[] = []
+  for (const d of days) {
+    const m = d.getMonth()
+    if (!seen.includes(m)) seen.push(m)
+  }
+  return seen
 }
 
 export function DateNav({
