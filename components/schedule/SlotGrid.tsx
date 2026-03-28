@@ -45,7 +45,7 @@ function SlotCard({ slot, status, teamName, price, isSelected, onClick }: SlotCa
             : 'border-slate-700 hover:border-green-500 hover:bg-slate-700/50'
         )}
       >
-        <p className={cn('text-[10px] mb-1', isSelected ? 'text-green-300' : 'text-slate-500')}>
+        <p className={cn('text-[13px] mb-1', isSelected ? 'text-green-300' : 'text-slate-500')}>
           {timeLabel}
         </p>
         <p className={cn('text-[22px] font-extrabold leading-none tracking-tight', isSelected ? 'text-green-400' : 'text-green-500')}>
@@ -61,7 +61,7 @@ function SlotCard({ slot, status, teamName, price, isSelected, onClick }: SlotCa
   if (status === 'confirmed') {
     return (
       <div className="bg-[#120a0a] border border-red-500/20 rounded-xl p-2.5 cursor-not-allowed">
-        <p className="text-[10px] text-slate-600 mb-1.5">{timeLabel}</p>
+        <p className="text-[13px] text-slate-600 mb-1.5">{timeLabel}</p>
         <span className="inline-flex items-center gap-1 bg-red-500/30 border border-red-500/40 rounded-md px-1.5 py-0.5 mb-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-red-500 flex-shrink-0" />
           <span className="text-[8px] font-bold text-red-300 uppercase tracking-wider">Booked</span>
@@ -76,7 +76,7 @@ function SlotCard({ slot, status, teamName, price, isSelected, onClick }: SlotCa
   if (status === 'pending') {
     return (
       <div className="bg-[#1c1a07] border border-yellow-700/50 rounded-xl p-2.5 cursor-not-allowed opacity-70">
-        <p className="text-[10px] text-slate-600 mb-1.5">{timeLabel}</p>
+        <p className="text-[13px] text-slate-600 mb-1.5">{timeLabel}</p>
         <span className="inline-flex items-center gap-1 bg-yellow-500/20 border border-yellow-500/35 rounded-md px-1.5 py-0.5 mb-1.5">
           <span className="w-1.5 h-1.5 rounded-full bg-yellow-500 flex-shrink-0" />
           <span className="text-[8px] font-bold text-yellow-400 uppercase tracking-wider">Pending</span>
@@ -91,7 +91,7 @@ function SlotCard({ slot, status, teamName, price, isSelected, onClick }: SlotCa
   // blocked
   return (
     <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-2.5 cursor-not-allowed opacity-35">
-      <p className="text-[10px] text-slate-600 mb-1">{timeLabel}</p>
+      <p className="text-[13px] text-slate-600 mb-1">{timeLabel}</p>
       <p className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Tutup</p>
     </div>
   )

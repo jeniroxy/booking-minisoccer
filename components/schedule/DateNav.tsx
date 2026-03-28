@@ -12,28 +12,25 @@ interface DateNavProps {
   bookings: Booking[]
   onSelectDate: (dateStr: string) => void
   onShift: (dir: 1 | -1) => void
+  onJumpToMonth: (year: number, month: number) => void
   isShiftDisabled: boolean
 }
 
-const SHORT_MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des']
 const MONTH_NAMES = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
 
 function getMonthLabel(days: Date[]): string {
   const first = days[0]
-  const last = days[days.length - 1]
-  if (first.getMonth() === last.getMonth()) {
-    return `${MONTH_NAMES[first.getMonth()]} ${first.getFullYear()}`
-  }
-  return `${SHORT_MONTHS[first.getMonth()]} – ${SHORT_MONTHS[last.getMonth()]} ${last.getFullYear()}`
+  return `${MONTH_NAMES[first.getMonth()]} ${first.getFullYear()}`
 }
 
-function getAvailableMonths(days: Date[]): number[] {
-  const seen: number[] = []
-  for (const d of days) {
-    const m = d.getMonth()
-    if (!seen.includes(m)) seen.push(m)
+function get12Months(todayStr: string): { year: number; month: number; label: string }[] {
+  const today = new Date(todayStr + 'T00:00:00')
+  const result = []
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(today.getFullYear(), today.getMonth() + i, 1)
+    result.push({ year: d.getFullYear(), month: d.getMonth(), label: MONTH_NAMES[d.getMonth()] })
   }
-  return seen
+  return result
 }
 
 export function DateNav({
@@ -43,11 +40,12 @@ export function DateNav({
   onSelectDate,
   bookings,
   onShift,
+  onJumpToMonth,
   isShiftDisabled,
 }: DateNavProps) {
   const stripRef = useRef<HTMLDivElement>(null)
   const [monthPickerOpen, setMonthPickerOpen] = useState(false)
-  const availableMonths = getAvailableMonths(days)
+  const months12 = get12Months(todayStr)
 
   const hasActiveBooking = (dateStr: string) =>
     bookings.some(b => b.booking_date === dateStr && b.status !== 'cancelled')
@@ -61,11 +59,8 @@ export function DateNav({
     }
   }, [selectedDate])
 
-  const handleMonthSelect = (monthIndex: number) => {
-    const target = days.find(d => d.getMonth() === monthIndex)
-    if (target) {
-      onSelectDate(toDateString(target))
-    }
+  const handleMonthSelect = (year: number, month: number) => {
+    onJumpToMonth(year, month)
     setMonthPickerOpen(false)
   }
 
@@ -74,7 +69,7 @@ export function DateNav({
   }
 
   return (
-    <div className="bg-slate-950 border-b border-slate-800 px-3.5 pt-2.5 pb-2.5 relative">
+    <div className="bg-slate-950 border-b border-slate-800 px-3.5 pt-2.5 pb-2.5 relative sticky top-[52px] z-20">
       {/* Header row: month button + arrows */}
       <div className="flex items-center justify-between mb-2.5">
         <button
@@ -117,22 +112,20 @@ export function DateNav({
         <div className="absolute top-[52px] left-3.5 right-3.5 bg-slate-800 border border-slate-700 rounded-2xl p-3 z-50 shadow-2xl">
           <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest text-center mb-2.5">Pilih Bulan</p>
           <div className="grid grid-cols-3 gap-1.5">
-            {MONTH_NAMES.map((name, i) => {
-              const isAvailable = availableMonths.includes(i)
-              const isSelected = days.some(d => d.getMonth() === i && toDateString(d) === selectedDate)
+            {months12.map(({ year, month, label }) => {
+              const isActive = days[0].getMonth() === month && days[0].getFullYear() === year
               return (
                 <button
-                  key={i}
-                  disabled={!isAvailable}
-                  onClick={() => handleMonthSelect(i)}
+                  key={`${year}-${month}`}
+                  onClick={() => handleMonthSelect(year, month)}
                   className={cn(
                     'py-2 rounded-lg border text-[11px] font-medium transition-colors',
-                    !isAvailable && 'opacity-25 cursor-not-allowed bg-slate-900 border-slate-700 text-slate-500',
-                    isAvailable && !isSelected && 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-700',
-                    isSelected && 'bg-green-500 border-green-500 text-green-950 font-bold',
+                    isActive
+                      ? 'bg-green-500 border-green-500 text-green-950 font-bold'
+                      : 'bg-slate-900 border-slate-700 text-slate-300 hover:bg-slate-700',
                   )}
                 >
-                  {name.slice(0, 3)}
+                  {label.slice(0, 3)}
                 </button>
               )
             })}

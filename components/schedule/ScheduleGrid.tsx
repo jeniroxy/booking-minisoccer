@@ -32,6 +32,38 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
   const days = get30Days(new Date(startDate + 'T00:00:00'))
   const isPrevDisabled = startDate <= todayStr
 
+  const handleJumpToMonth = useCallback(
+    async (year: number, month: number) => {
+      const today = new Date(todayStr + 'T00:00:00')
+      const target = new Date(year, month, 1)
+      // If it's the current month, jump to today
+      const newStart = target <= today ? todayStr : toDateString(target)
+
+      // Already in this window
+      const windowStart = new Date(startDate + 'T00:00:00')
+      const windowEnd = new Date(startDate + 'T00:00:00')
+      windowEnd.setDate(windowEnd.getDate() + 29)
+      const targetDate = new Date(newStart + 'T00:00:00')
+      if (targetDate >= windowStart && targetDate <= windowEnd) {
+        setSelectedDate(newStart)
+        return
+      }
+
+      setLoading(true)
+      try {
+        const res = await fetch(`/api/schedule?startDate=${newStart}`)
+        const newData: ScheduleData = await res.json()
+        setData(newData)
+        setStartDate(newStart)
+        setSelectedDate(newStart)
+        setSelection(null)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [startDate, todayStr]
+  )
+
   const handleShift = useCallback(
     async (direction: 1 | -1) => {
       if (direction === -1 && isPrevDisabled) {
@@ -150,6 +182,7 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
           if (selection?.date !== d) setSelection(null)
         }}
         onShift={handleShift}
+        onJumpToMonth={handleJumpToMonth}
         isShiftDisabled={isPrevDisabled}
       />
 
