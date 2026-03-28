@@ -105,43 +105,46 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
         onClick={onClose}
       />
 
-      {/* Sheet */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-800 rounded-t-[20px] border-t border-slate-700 p-4 mx-auto max-w-lg">
-        {/* Handle */}
-        <div className="w-9 h-1 bg-slate-600 rounded-full mx-auto mb-4" />
+      {/* Sheet — flex column, tinggi menyesuaikan keyboard (svh) */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 bg-slate-800 rounded-t-[20px] border-t border-slate-700 flex flex-col max-h-[90svh] mx-auto max-w-lg">
+        {/* Handle + judul */}
+        <div className="px-4 pt-4 pb-2 flex-shrink-0">
+          <div className="w-9 h-1 bg-slate-600 rounded-full mx-auto mb-4" />
+          <h2 className="text-[13px] font-bold text-slate-100">Konfirmasi Booking</h2>
+        </div>
 
-        <h2 className="text-[13px] font-bold text-slate-100 mb-3">Konfirmasi Booking</h2>
-
-        {/* Summary */}
-        <div className="bg-slate-900 border border-slate-700 rounded-xl p-3 mb-3 space-y-1.5">
-          <div className="flex justify-between text-[11px]">
-            <span className="text-slate-500">Tanggal</span>
-            <span className="text-slate-200 font-medium">{formatDateLabel(date)}</span>
-          </div>
-          <div className="flex justify-between text-[11px]">
-            <span className="text-slate-500">Jam</span>
-            <span className="text-slate-200 font-medium">
-              {formatHour(sorted[0].start_hour)} – {formatHour(sorted[sorted.length - 1].end_hour)}
-            </span>
-          </div>
-          <div className="flex justify-between text-[11px]">
-            <span className="text-slate-500">Durasi</span>
-            <span className="text-slate-200 font-medium">{sorted.length} jam</span>
-          </div>
-          <div className="flex justify-between text-[11px]">
-            <span className="text-slate-500">Kategori</span>
-            <span className={`font-medium ${isStudent ? 'text-green-400' : 'text-slate-200'}`}>
-              {isStudent ? 'Pelajar (diskon Rp50.000/jam)' : 'Umum'}
-            </span>
-          </div>
-          <div className="border-t border-slate-700 pt-1.5 flex justify-between text-[13px]">
-            <span className="font-semibold text-slate-200">Total</span>
-            <span className="font-bold text-green-400">{formatPrice(totalPrice)}</span>
+        {/* Summary — scrollable jika ruang terbatas */}
+        <div className="overflow-y-auto flex-1 px-4 pb-2">
+          <div className="bg-slate-900 border border-slate-700 rounded-xl p-3 space-y-1.5">
+            <div className="flex justify-between text-[11px]">
+              <span className="text-slate-500">Tanggal</span>
+              <span className="text-slate-200 font-medium">{formatDateLabel(date)}</span>
+            </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-slate-500">Jam</span>
+              <span className="text-slate-200 font-medium">
+                {formatHour(sorted[0].start_hour)} – {formatHour(sorted[sorted.length - 1].end_hour)}
+              </span>
+            </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-slate-500">Durasi</span>
+              <span className="text-slate-200 font-medium">{sorted.length} jam</span>
+            </div>
+            <div className="flex justify-between text-[11px]">
+              <span className="text-slate-500">Kategori</span>
+              <span className={`font-medium ${isStudent ? 'text-green-400' : 'text-slate-200'}`}>
+                {isStudent ? 'Pelajar (diskon Rp50.000/jam)' : 'Umum'}
+              </span>
+            </div>
+            <div className="border-t border-slate-700 pt-1.5 flex justify-between text-[13px]">
+              <span className="font-semibold text-slate-200">Total</span>
+              <span className="font-bold text-green-400">{formatPrice(totalPrice)}</span>
+            </div>
           </div>
         </div>
 
-        {/* Input */}
-        <form onSubmit={handleSubmit} className="space-y-3">
+        {/* Input + button — selalu terlihat di atas keyboard */}
+        <form onSubmit={handleSubmit} className="flex-shrink-0 px-4 pb-6 pt-2 space-y-2 border-t border-slate-700">
           <input
             ref={inputRef}
             type="text"
