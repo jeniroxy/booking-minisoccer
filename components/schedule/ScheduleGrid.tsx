@@ -163,12 +163,10 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
       {/* Header */}
       <header className="bg-slate-950 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-green-700 rounded-[10px] flex items-center justify-center text-base">
-            ⚽
-          </div>
+          <img src="/logo-icon.svg" alt="Logo" className="w-8 h-8 rounded-[10px]" />
           <div>
-            <p className="text-[14px] font-bold text-slate-100 leading-tight">Mini Soccer</p>
-            <p className="text-[9px] text-slate-500">Jadwal &amp; Booking</p>
+            <p className="text-[14px] font-bold text-slate-100 leading-tight">Zains Mini Soccer</p>
+            <p className="text-[11px] text-slate-400">Jadwal &amp; Booking</p>
           </div>
         </div>
 
