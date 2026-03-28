@@ -3,7 +3,8 @@ export function buildWAUrl(params: {
   dateLabel: string
   startHour: number
   endHour: number
-  price: number
+  totalPrice: number
+  isStudent: boolean
   waNumber: string
 }): string {
   const pad = (n: number) => String(n).padStart(2, '0')
@@ -12,7 +13,7 @@ export function buildWAUrl(params: {
     style: 'currency',
     currency: 'IDR',
     minimumFractionDigits: 0,
-  }).format(params.price)
+  }).format(params.totalPrice)
 
   const message = [
     'Halo Admin MiniSoccer!',
@@ -21,7 +22,8 @@ export function buildWAUrl(params: {
     `Nama Tim: ${params.teamName}`,
     `Tanggal: ${params.dateLabel}`,
     `Jam: ${timeRange}`,
-    `Harga: ${priceFormatted}`,
+    `Kategori: ${params.isStudent ? 'Pelajar' : 'Umum'}`,
+    `Total Harga: ${priceFormatted}`,
     '',
     'Mohon konfirmasi ketersediaan. Terima kasih!',
   ].join('\n')

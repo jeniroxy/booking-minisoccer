@@ -6,21 +6,26 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { buildWAUrl, formatDateLabel } from '@/lib/booking'
-import { formatHour, formatPrice } from '@/lib/schedule'
+import { formatHour, formatPrice, STUDENT_DISCOUNT } from '@/lib/schedule'
 import type { TimeSlot } from '@/lib/types'
 
 interface BookingModalProps {
-  slot: TimeSlot
+  slots: TimeSlot[]
   date: Date
+  isStudent: boolean
   isOpen: boolean
   onClose: () => void
-  onSuccess: (bookingId: string) => void
+  onSuccess: (bookingIds: string[]) => void
 }
 
-export function BookingModal({ slot, date, isOpen, onClose, onSuccess }: BookingModalProps) {
+export function BookingModal({ slots, date, isStudent, isOpen, onClose, onSuccess }: BookingModalProps) {
   const [teamName, setTeamName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const sorted = [...slots].sort((a, b) => a.start_hour - b.start_hour)
+  const slotPrice = (s: TimeSlot) => Math.max(0, s.price - (isStudent ? STUDENT_DISCOUNT : 0))
+  const totalPrice = sorted.reduce((sum, s) => sum + slotPrice(s), 0)
 
   const handleClose = () => {
     setTeamName('')
@@ -41,33 +46,34 @@ export function BookingModal({ slot, date, isOpen, onClose, onSuccess }: Booking
     try {
       const bookingDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
 
-      const res = await fetch('/api/bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ team_name: teamName.trim(), booking_date: bookingDate, time_slot_id: slot.id }),
-      })
+      const results = await Promise.all(
+        sorted.map(slot =>
+          fetch('/api/bookings', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ team_name: teamName.trim(), booking_date: bookingDate, time_slot_id: slot.id }),
+          })
+        )
+      )
 
-      if (res.status === 409) {
-        setError('Slot ini sudah dipesan. Silakan pilih slot lain.')
+      const failed = results.find(r => !r.ok)
+      if (failed) {
+        const status = failed.status
+        setError(status === 409 ? 'Salah satu slot sudah dipesan. Silakan pilih ulang.' : 'Gagal membuat booking. Silakan coba lagi.')
         setLoading(false)
         return
       }
 
-      if (!res.ok) {
-        setError('Gagal membuat booking. Silakan coba lagi.')
-        setLoading(false)
-        return
-      }
-
-      const booking = await res.json()
-      onSuccess(booking.id)
+      const bookings = await Promise.all(results.map(r => r.json()))
+      onSuccess(bookings.map((b: { id: string }) => b.id))
 
       const waUrl = buildWAUrl({
         teamName: teamName.trim(),
         dateLabel: formatDateLabel(date),
-        startHour: slot.start_hour,
-        endHour: slot.end_hour,
-        price: slot.price,
+        startHour: sorted[0].start_hour,
+        endHour: sorted[sorted.length - 1].end_hour,
+        totalPrice,
+        isStudent,
         waNumber: process.env.NEXT_PUBLIC_ADMIN_WA_NUMBER!,
       })
       window.open(waUrl, '_blank')
@@ -108,12 +114,32 @@ export function BookingModal({ slot, date, isOpen, onClose, onSuccess }: Booking
             <div className="flex justify-between text-sm">
               <span className="text-gray-500">Jam</span>
               <span className="font-medium text-slate-800">
-                {formatHour(slot.start_hour)} – {formatHour(slot.end_hour)}
+                {formatHour(sorted[0].start_hour)} – {formatHour(sorted[sorted.length - 1].end_hour)}
               </span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-500">Harga</span>
-              <span className="font-bold text-blue-600">{formatPrice(slot.price)}</span>
+              <span className="text-gray-500">Durasi</span>
+              <span className="font-medium text-slate-800">{sorted.length} jam</span>
+            </div>
+            <div className="flex justify-between text-sm">
+              <span className="text-gray-500">Kategori</span>
+              <span className={`font-medium ${isStudent ? 'text-green-600' : 'text-slate-800'}`}>
+                {isStudent ? 'Pelajar (diskon Rp50.000/jam)' : 'Umum'}
+              </span>
+            </div>
+            {sorted.length > 1 && (
+              <div className="border-t border-gray-200 pt-2 space-y-1">
+                {sorted.map(s => (
+                  <div key={s.id} className="flex justify-between text-xs text-gray-500">
+                    <span>{formatHour(s.start_hour)}–{formatHour(s.end_hour)}</span>
+                    <span>{formatPrice(slotPrice(s))}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex justify-between text-sm border-t border-gray-200 pt-2">
+              <span className="text-gray-500">Total Harga</span>
+              <span className="font-bold text-blue-600">{formatPrice(totalPrice)}</span>
             </div>
           </div>
 

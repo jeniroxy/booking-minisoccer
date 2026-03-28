@@ -8,7 +8,8 @@ describe('buildWAUrl', () => {
       dateLabel: 'Rabu, 27 Mar 2026',
       startHour: 9,
       endHour: 10,
-      price: 80000,
+      totalPrice: 80000,
+      isStudent: false,
       waNumber: '6281400842380',
     })
     expect(url).toMatch(/^https:\/\/wa\.me\/6281400842380/)
@@ -20,7 +21,8 @@ describe('buildWAUrl', () => {
       dateLabel: 'Rabu, 27 Mar 2026',
       startHour: 9,
       endHour: 10,
-      price: 80000,
+      totalPrice: 80000,
+      isStudent: false,
       waNumber: '6281400842380',
     })
     expect(url).toContain('?text=')
@@ -33,7 +35,8 @@ describe('buildWAUrl', () => {
       dateLabel: 'Sen, 30 Mar 2026',
       startHour: 8,
       endHour: 9,
-      price: 80000,
+      totalPrice: 80000,
+      isStudent: false,
       waNumber: '6281400842380',
     })
     expect(url).toContain('08%3A00-09%3A00')
@@ -45,11 +48,25 @@ describe('buildWAUrl', () => {
       dateLabel: 'Sab, 28 Mar 2026',
       startHour: 20,
       endHour: 21,
-      price: 120000,
+      totalPrice: 120000,
+      isStudent: false,
       waNumber: '6281400842380',
     })
     expect(url).toContain('Rp')
     expect(url).toContain('120')
+  })
+
+  it('includes Pelajar category in message when isStudent is true', () => {
+    const url = buildWAUrl({
+      teamName: 'T',
+      dateLabel: 'Sen, 30 Mar 2026',
+      startHour: 8,
+      endHour: 10,
+      totalPrice: 60000,
+      isStudent: true,
+      waNumber: '6281400842380',
+    })
+    expect(url).toContain('Pelajar')
   })
 })
 

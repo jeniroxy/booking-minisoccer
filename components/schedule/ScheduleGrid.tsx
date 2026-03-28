@@ -9,13 +9,14 @@ import {
   formatHour,
   formatPrice,
   formatDayHeader,
+  STUDENT_DISCOUNT,
 } from '@/lib/schedule'
 import type { TimeSlot, ScheduleData, SlotStatus } from '@/lib/types'
 import { BookingModal } from './BookingModal'
 
-interface SelectedSlot {
-  slot: TimeSlot
-  date: Date
+interface Selection {
+  date: string
+  slots: TimeSlot[]
 }
 
 interface ScheduleGridProps {
@@ -35,7 +36,9 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
   const [startDate, setStartDate] = useState(initialStartDate)
   const [data, setData] = useState<ScheduleData>(initialData)
   const [loading, setLoading] = useState(false)
-  const [selectedSlot, setSelectedSlot] = useState<SelectedSlot | null>(null)
+  const [isStudent, setIsStudent] = useState(false)
+  const [selection, setSelection] = useState<Selection | null>(null)
+  const [bookingOpen, setBookingOpen] = useState(false)
 
   const today = new Date()
   const todayStr = toDateString(today)
@@ -55,6 +58,7 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
         const newData: ScheduleData = await res.json()
         setData(newData)
         setStartDate(newStart)
+        setSelection(null)
       } finally {
         setLoading(false)
       }
@@ -62,53 +66,125 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
     [startDate, todayStr]
   )
 
+  const handleSlotClick = useCallback((slot: TimeSlot, day: Date) => {
+    const dateStr = toDateString(day)
+
+    setSelection(prev => {
+      if (!prev || prev.date !== dateStr) {
+        return { date: dateStr, slots: [slot] }
+      }
+
+      const sorted = [...prev.slots].sort((a, b) => a.start_hour - b.start_hour)
+      const first = sorted[0]
+      const last = sorted[sorted.length - 1]
+
+      // Deselect edge slot
+      if (slot.id === first.id || slot.id === last.id) {
+        const filtered = prev.slots.filter(s => s.id !== slot.id)
+        return filtered.length > 0 ? { date: dateStr, slots: filtered } : null
+      }
+
+      // Extend selection if adjacent
+      if (slot.start_hour === last.end_hour) {
+        return { date: dateStr, slots: [...prev.slots, slot] }
+      }
+      if (slot.end_hour === first.start_hour) {
+        return { date: dateStr, slots: [slot, ...prev.slots] }
+      }
+
+      // Not adjacent — start fresh
+      return { date: dateStr, slots: [slot] }
+    })
+  }, [])
+
   const handleBookingSuccess = useCallback(
-    (bookingId: string) => {
-      if (!selectedSlot) return
+    (bookingIds: string[]) => {
+      if (!selection) return
+      const sorted = [...selection.slots].sort((a, b) => a.start_hour - b.start_hour)
+      const dateStr = selection.date
       setData(prev => ({
         ...prev,
         bookings: [
           ...prev.bookings,
-          {
-            id: bookingId,
+          ...sorted.map((slot, i) => ({
+            id: bookingIds[i],
             team_name: '',
-            booking_date: toDateString(selectedSlot.date),
-            time_slot_id: selectedSlot.slot.id,
+            booking_date: dateStr,
+            time_slot_id: slot.id,
             status: 'pending' as const,
             created_at: new Date().toISOString(),
-          },
+          })),
         ],
       }))
-      setSelectedSlot(null)
+      setSelection(null)
+      setBookingOpen(false)
     },
-    [selectedSlot]
+    [selection]
   )
+
+  const slotPrice = (slot: TimeSlot) =>
+    Math.max(0, slot.price - (isStudent ? STUDENT_DISCOUNT : 0))
+
+  const totalSelectionPrice = selection
+    ? selection.slots.reduce((sum, s) => sum + slotPrice(s), 0)
+    : 0
 
   const isPrevDisabled = startDate <= todayStr
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Navigation */}
+      {/* Header: toggle left, date nav right */}
       <div className="flex items-center justify-between px-1">
-        <button
-          onClick={() => handleShift(-1)}
-          disabled={isPrevDisabled}
-          aria-label="30 hari sebelumnya"
-          className="w-9 h-9 flex items-center justify-center rounded-full text-xl text-slate-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
-        >
-          ‹
-        </button>
-        <h2 className="text-base font-semibold text-slate-700">
-          {formatDateRange(days[0], days[days.length - 1])}
-        </h2>
-        <button
-          onClick={() => handleShift(1)}
-          aria-label="30 hari berikutnya"
-          className="w-9 h-9 flex items-center justify-center rounded-full text-xl text-slate-600 hover:bg-gray-100 transition-colors"
-        >
-          ›
-        </button>
+        {/* Umum / Pelajar toggle */}
+        <div className="flex items-center bg-gray-100 rounded-full p-0.5 text-sm font-medium">
+          <button
+            onClick={() => setIsStudent(false)}
+            className={cn(
+              'px-4 py-1.5 rounded-full transition-colors',
+              !isStudent ? 'bg-white text-slate-800 shadow-sm' : 'text-gray-500 hover:text-slate-700'
+            )}
+          >
+            Umum
+          </button>
+          <button
+            onClick={() => setIsStudent(true)}
+            className={cn(
+              'px-4 py-1.5 rounded-full transition-colors',
+              isStudent ? 'bg-white text-green-600 shadow-sm' : 'text-gray-500 hover:text-slate-700'
+            )}
+          >
+            Pelajar
+          </button>
+        </div>
+
+        {/* Date navigation */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => handleShift(-1)}
+            disabled={isPrevDisabled}
+            aria-label="30 hari sebelumnya"
+            className="w-8 h-8 flex items-center justify-center rounded-full text-xl text-slate-600 hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+          >
+            ‹
+          </button>
+          <span className="text-sm font-semibold text-slate-700 px-1">
+            {formatDateRange(days[0], days[days.length - 1])}
+          </span>
+          <button
+            onClick={() => handleShift(1)}
+            aria-label="30 hari berikutnya"
+            className="w-8 h-8 flex items-center justify-center rounded-full text-xl text-slate-600 hover:bg-gray-100 transition-colors"
+          >
+            ›
+          </button>
+        </div>
       </div>
+
+      {isStudent && (
+        <p className="text-xs text-green-600 bg-green-50 rounded-xl px-3 py-2">
+          Harga Pelajar aktif — diskon Rp50.000 per jam
+        </p>
+      )}
 
       {/* Timetable */}
       <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
@@ -155,14 +231,18 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
                       data.blockedDates,
                       todayStr
                     )
+                    const isSelected =
+                      selection?.date === dateStr &&
+                      selection.slots.some(s => s.id === slot.id)
                     return (
                       <SlotCell
                         key={dateStr}
                         status={status}
-                        price={slot.price}
+                        price={slotPrice(slot)}
+                        isSelected={isSelected}
                         onClick={
                           status === 'available'
-                            ? () => setSelectedSlot({ slot, date: day })
+                            ? () => handleSlotClick(slot, day)
                             : undefined
                         }
                       />
@@ -182,6 +262,10 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
           Tersedia
         </span>
         <span className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-sm bg-blue-100 border border-blue-400 inline-block" />
+          Dipilih
+        </span>
+        <span className="flex items-center gap-1.5">
           <span className="w-3 h-3 rounded-sm bg-blue-500 inline-block" />
           Booked
         </span>
@@ -195,12 +279,39 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
         </span>
       </div>
 
-      {selectedSlot && (
+      {/* Sticky booking bar */}
+      {selection && (
+        <div className="sticky bottom-4 flex justify-center">
+          <div className="bg-slate-800 text-white rounded-full px-5 py-3 shadow-xl flex items-center gap-3 text-sm">
+            <span className="font-medium">
+              {selection.slots.length} jam
+            </span>
+            <span className="text-slate-400">·</span>
+            <span className="font-bold text-blue-300">{formatPrice(totalSelectionPrice)}</span>
+            <button
+              onClick={() => setBookingOpen(true)}
+              className="bg-blue-500 hover:bg-blue-600 text-white rounded-full px-4 py-1 text-sm font-semibold transition-colors"
+            >
+              Pesan
+            </button>
+            <button
+              onClick={() => setSelection(null)}
+              className="text-slate-400 hover:text-white transition-colors text-xs"
+              aria-label="Batal pilih"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+      )}
+
+      {selection && bookingOpen && (
         <BookingModal
-          slot={selectedSlot.slot}
-          date={selectedSlot.date}
-          isOpen
-          onClose={() => setSelectedSlot(null)}
+          slots={selection.slots}
+          date={new Date(selection.date + 'T00:00:00')}
+          isStudent={isStudent}
+          isOpen={bookingOpen}
+          onClose={() => setBookingOpen(false)}
           onSuccess={handleBookingSuccess}
         />
       )}
@@ -211,14 +322,27 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
 function SlotCell({
   status,
   price,
+  isSelected,
   onClick,
 }: {
   status: SlotStatus
   price: number
+  isSelected: boolean
   onClick?: () => void
 }) {
   const base =
     'px-2 py-2 border-b border-r border-gray-200 text-center text-xs font-medium h-[52px] min-w-[104px] align-middle'
+
+  if (isSelected) {
+    return (
+      <td
+        className={cn(base, 'bg-blue-100 text-blue-700 ring-2 ring-inset ring-blue-400 cursor-pointer')}
+        onClick={onClick}
+      >
+        {formatPrice(price)}
+      </td>
+    )
+  }
 
   const variants: Record<SlotStatus, string> = {
     available: 'bg-white text-blue-600 hover:bg-blue-50 cursor-pointer transition-colors',
