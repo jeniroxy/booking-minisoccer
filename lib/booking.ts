@@ -5,6 +5,7 @@ export function buildWAUrl(params: {
   endHour: number
   totalPrice: number
   isStudent: boolean
+  voucherCode?: string
   waNumber: string
 }): string {
   const pad = (n: number) => String(n).padStart(2, '0')
@@ -15,7 +16,7 @@ export function buildWAUrl(params: {
     minimumFractionDigits: 0,
   }).format(params.totalPrice)
 
-  const message = [
+  const lines = [
     'Halo Admin MiniSoccer!',
     'Saya ingin booking lapangan.',
     '',
@@ -23,12 +24,13 @@ export function buildWAUrl(params: {
     `Tanggal: ${params.dateLabel}`,
     `Jam: ${timeRange}`,
     `Kategori: ${params.isStudent ? 'Pelajar' : 'Umum'}`,
-    `Total Harga: ${priceFormatted}`,
-    '',
-    'Mohon konfirmasi ketersediaan. Terima kasih!',
-  ].join('\n')
+  ]
+  if (params.voucherCode) {
+    lines.push(`Voucher: ${params.voucherCode}`)
+  }
+  lines.push(`Total Harga: ${priceFormatted}`, '', 'Mohon konfirmasi ketersediaan. Terima kasih!')
 
-  return `https://wa.me/${params.waNumber}?text=${encodeURIComponent(message)}`
+  return `https://wa.me/${params.waNumber}?text=${encodeURIComponent(lines.join('\n'))}`
 }
 
 export function formatDateLabel(date: Date): string {

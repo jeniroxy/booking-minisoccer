@@ -37,7 +37,7 @@ export function FloatingBar({ slots, date, isStudent, onPesan, onCancel }: Float
             onClick={onPesan}
             className="bg-green-950 text-green-400 rounded-xl px-[18px] py-2.5 text-[13px] font-bold whitespace-nowrap"
           >
-            Pesan Sekarang
+            Booking Sekarang
           </button>
           <button
             onClick={onCancel}

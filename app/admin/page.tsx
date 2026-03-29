@@ -35,6 +35,12 @@ export default async function AdminPage() {
             >
               Kelola Slot
             </Link>
+            <Link
+              href="/admin/vouchers"
+              className="text-[12px] text-slate-500 hover:text-green-400 transition-colors"
+            >
+              Voucher
+            </Link>
           </div>
           <form action={handleSignOut}>
             <button

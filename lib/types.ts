@@ -33,3 +33,15 @@ export interface ScheduleData {
 }
 
 export type BookingWithSlot = Booking & { time_slots: TimeSlot }
+
+export interface Voucher {
+  id: string
+  code: string
+  name: string
+  discount_type: 'percent' | 'nominal'
+  discount_value: number
+  valid_from: string   // 'YYYY-MM-DD'
+  valid_until: string  // 'YYYY-MM-DD'
+  is_active: boolean
+  created_at: string
+}
