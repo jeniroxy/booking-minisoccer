@@ -5,14 +5,6 @@ import { buildWAUrl, formatDateLabel } from '@/lib/booking'
 import { formatHour, formatPrice, STUDENT_DISCOUNT, LOYALTY_DISCOUNT } from '@/lib/schedule'
 import type { TimeSlot } from '@/lib/types'
 
-interface VoucherResult {
-  id: string
-  code: string
-  name: string
-  discount_type: 'percent' | 'nominal'
-  discount_value: number
-}
-
 interface BookingSheetProps {
   slots: TimeSlot[]
   date: Date
@@ -27,29 +19,16 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [loyaltyEligible, setLoyaltyEligible] = useState(false)
-  const [voucherCode, setVoucherCode] = useState('')
-  const [voucherResult, setVoucherResult] = useState<VoucherResult | null>(null)
-  const [voucherError, setVoucherError] = useState('')
-  const [voucherChecking, setVoucherChecking] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
   const loyaltyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const voucherTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const sorted = [...slots].sort((a, b) => a.start_hour - b.start_hour)
   const slotPrice = (s: TimeSlot) => Math.max(0, s.price - (isStudent ? STUDENT_DISCOUNT : 0))
   const baseTotal = sorted.reduce((sum, s) => sum + slotPrice(s), 0)
   const loyaltyDiscount = !isStudent && loyaltyEligible ? LOYALTY_DISCOUNT : 0
 
-  const voucherDiscount = (() => {
-    if (!voucherResult) return 0
-    if (voucherResult.discount_type === 'percent') {
-      return Math.round(baseTotal * voucherResult.discount_value / 100)
-    }
-    return voucherResult.discount_value
-  })()
-
-  const totalPrice = Math.max(0, baseTotal - loyaltyDiscount - voucherDiscount)
+  const totalPrice = Math.max(0, baseTotal - loyaltyDiscount)
 
   useEffect(() => {
     if (isOpen) {
@@ -58,9 +37,6 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
       setTeamName('')
       setError('')
       setLoyaltyEligible(false)
-      setVoucherCode('')
-      setVoucherResult(null)
-      setVoucherError('')
       if (sheetRef.current) sheetRef.current.style.bottom = '0px'
     }
   }, [isOpen])
@@ -85,38 +61,6 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
       if (loyaltyTimerRef.current) clearTimeout(loyaltyTimerRef.current)
     }
   }, [teamName, isStudent])
-
-  // Validasi voucher saat user mengetik kode (debounce 600ms)
-  useEffect(() => {
-    if (!voucherCode.trim()) {
-      setVoucherResult(null)
-      setVoucherError('')
-      return
-    }
-    if (voucherTimerRef.current) clearTimeout(voucherTimerRef.current)
-    setVoucherChecking(true)
-    voucherTimerRef.current = setTimeout(async () => {
-      try {
-        const res = await fetch(`/api/vouchers/validate?code=${encodeURIComponent(voucherCode.trim())}`)
-        const data = await res.json()
-        if (data.valid) {
-          setVoucherResult(data.voucher)
-          setVoucherError('')
-        } else {
-          setVoucherResult(null)
-          setVoucherError(data.error ?? 'Voucher tidak valid')
-        }
-      } catch {
-        setVoucherResult(null)
-        setVoucherError('Gagal memeriksa voucher')
-      } finally {
-        setVoucherChecking(false)
-      }
-    }, 600)
-    return () => {
-      if (voucherTimerRef.current) clearTimeout(voucherTimerRef.current)
-    }
-  }, [voucherCode])
 
   // Geser sheet ke atas mengikuti keyboard — bekerja di iOS & Android
   useEffect(() => {
@@ -186,7 +130,6 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
         endHour: sorted[sorted.length - 1].end_hour,
         totalPrice,
         isStudent,
-        voucherCode: voucherResult ? voucherResult.code : undefined,
         waNumber: process.env.NEXT_PUBLIC_ADMIN_WA_NUMBER!,
       })
       if (waWindow) {
@@ -249,12 +192,6 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
                 <span className="text-amber-400 font-semibold">-{formatPrice(loyaltyDiscount)}</span>
               </div>
             )}
-            {voucherDiscount > 0 && voucherResult && (
-              <div className="flex justify-between text-[11px]">
-                <span className="text-purple-400 font-medium">🏷️ Voucher {voucherResult.code}</span>
-                <span className="text-purple-400 font-semibold">-{formatPrice(voucherDiscount)}</span>
-              </div>
-            )}
             <div className="border-t border-slate-700 pt-1.5 flex justify-between text-[13px]">
               <span className="font-semibold text-slate-200">Total</span>
               <span className="font-bold text-green-400">{formatPrice(totalPrice)}</span>
@@ -272,30 +209,6 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
             onChange={e => setTeamName(e.target.value)}
             className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[12px] text-slate-100 placeholder-slate-500 outline-none focus:border-green-500"
           />
-
-          {/* Voucher input */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Kode voucher (opsional)"
-              value={voucherCode}
-              onChange={e => setVoucherCode(e.target.value.toUpperCase())}
-              className={`w-full bg-slate-900 border rounded-xl px-3 py-2.5 text-[12px] text-slate-100 placeholder-slate-500 outline-none transition-colors uppercase ${
-                voucherResult
-                  ? 'border-purple-500/60 focus:border-purple-500'
-                  : voucherError
-                  ? 'border-red-500/60 focus:border-red-500'
-                  : 'border-slate-700 focus:border-green-500'
-              }`}
-            />
-            {voucherChecking && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-500">Memeriksa...</span>
-            )}
-            {!voucherChecking && voucherResult && (
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-purple-400 font-bold">✓ {voucherResult.name}</span>
-            )}
-          </div>
-          {voucherError && <p className="text-[11px] text-red-400">{voucherError}</p>}
 
           {error && <p className="text-[11px] text-red-400">{error}</p>}
 

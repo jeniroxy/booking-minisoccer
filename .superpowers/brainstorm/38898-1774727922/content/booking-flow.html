@@ -1,0 +1,96 @@
+<h2>Pertanyaan 5 dari 5: Flow Booking</h2>
+<p class="subtitle">Setelah user pilih jam dan tap "Pesan", apa yang terjadi?</p>
+
+<div class="cards">
+
+  <!-- Option A: Sticky bar + bottom sheet -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:0;overflow:hidden;border-radius:8px;position:relative;min-height:200px">
+      <!-- Page content (blurred/dimmed) -->
+      <div style="padding:8px 10px;opacity:0.4">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:9px">
+          <div style="background:#1e293b;border:1.5px solid #334155;border-radius:8px;padding:6px;text-align:center;color:#64748b">06:00<br>90K</div>
+          <div style="background:#14532d;border:2px solid #22c55e;border-radius:8px;padding:6px;text-align:center;color:#22c55e;font-weight:bold">✓ 07:00<br>dipilih</div>
+          <div style="background:#1e293b;border:1.5px solid #334155;border-radius:8px;padding:6px;text-align:center;color:#64748b">08:00<br>90K</div>
+          <div style="background:#1e293b;border:1.5px solid #334155;border-radius:8px;padding:6px;text-align:center;color:#64748b">09:00<br>90K</div>
+        </div>
+      </div>
+      <!-- Bottom sheet slides up -->
+      <div style="position:absolute;bottom:0;left:0;right:0;background:#1e293b;border-radius:16px 16px 0 0;padding:12px;border-top:1px solid #334155">
+        <div style="width:32px;height:3px;background:#475569;border-radius:2px;margin:0 auto 10px"></div>
+        <div style="font-size:10px;font-weight:700;color:white;margin-bottom:6px">Konfirmasi Booking</div>
+        <div style="font-size:9px;color:#94a3b8;margin-bottom:8px">Sel, 29 Mar · 07:00–08:00 · 1 jam · Rp90K</div>
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:8px;padding:6px;margin-bottom:8px">
+          <input style="background:none;border:none;color:#e2e8f0;font-size:10px;width:100%;outline:none" placeholder="Nama tim kamu..." />
+        </div>
+        <div style="display:flex;gap:6px">
+          <button style="flex:1;background:#334155;color:#94a3b8;border:none;border-radius:8px;padding:6px;font-size:9px">Batal</button>
+          <button style="flex:2;background:#22c55e;color:white;border:none;border-radius:8px;padding:6px;font-size:9px;font-weight:bold">📲 Booking via WA</button>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Bottom Sheet (Slide Up)</h3>
+      <p>Panel muncul dari bawah, seperti native mobile app. Background sedikit gelap. Terasa natural di HP, tidak terlalu mengganggu konteks halaman.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Floating sticky bar + modal -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:0;overflow:hidden;border-radius:8px;position:relative;min-height:200px">
+      <!-- Page content -->
+      <div style="padding:8px 10px;opacity:0.4">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:9px">
+          <div style="background:#1e293b;border:1.5px solid #334155;border-radius:8px;padding:6px;text-align:center;color:#64748b">06:00<br>90K</div>
+          <div style="background:#14532d;border:2px solid #22c55e;border-radius:8px;padding:6px;text-align:center;color:#22c55e;font-weight:bold">✓ 07:00<br>dipilih</div>
+          <div style="background:#1e293b;border:1.5px solid #334155;border-radius:8px;padding:6px;text-align:center;color:#64748b">08:00<br>90K</div>
+          <div style="background:#1e293b;border:1.5px solid #334155;border-radius:8px;padding:6px;text-align:center;color:#64748b">09:00<br>90K</div>
+        </div>
+      </div>
+      <!-- Floating sticky bar -->
+      <div style="position:absolute;bottom:8px;left:8px;right:8px;background:#22c55e;border-radius:12px;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 4px 20px rgba(34,197,94,0.4)">
+        <div>
+          <div style="font-size:10px;font-weight:700;color:white">1 jam · Rp90K</div>
+          <div style="font-size:8px;color:#dcfce7">Sel, 29 Mar · 07:00–08:00</div>
+        </div>
+        <button style="background:white;color:#15803d;border:none;border-radius:8px;padding:5px 10px;font-size:9px;font-weight:700">Pesan →</button>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Floating Bar + Dialog Tengah</h3>
+      <p>Bar hijau mengambang di bawah layar saat slot dipilih. Tap "Pesan" buka dialog di tengah layar. Sticky bar terasa <em>call-to-action</em> yang kuat dan mencolok.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Inline expand -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0f172a;padding:8px 10px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:9px;margin-bottom:5px">
+        <div style="background:#1e293b;border:1.5px solid #334155;border-radius:8px;padding:6px;text-align:center;color:#64748b">06:00<br>90K</div>
+        <div style="background:#1e293b;border:1.5px solid #334155;border-radius:8px;padding:6px;text-align:center;color:#64748b">08:00<br>90K</div>
+      </div>
+      <!-- Selected slot expands to full width -->
+      <div style="background:#14532d;border:2px solid #22c55e;border-radius:10px;padding:10px;grid-column:span 2;margin-bottom:5px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div style="font-size:10px;font-weight:700;color:#22c55e">✓ 07:00–08:00 · Rp90K</div>
+          <button style="background:none;border:none;color:#6b7280;font-size:11px">✕</button>
+        </div>
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:6px;padding:5px;margin-bottom:6px">
+          <input style="background:none;border:none;color:#e2e8f0;font-size:9px;width:100%;outline:none" placeholder="Nama tim..." />
+        </div>
+        <button style="width:100%;background:#22c55e;color:white;border:none;border-radius:7px;padding:6px;font-size:9px;font-weight:700">📲 Booking via WA</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:5px;font-size:9px">
+        <div style="background:#1e293b;border:1.5px solid #334155;border-radius:8px;padding:6px;text-align:center;color:#64748b">09:00<br>90K</div>
+        <div style="background:#1e293b;border:1.5px solid #334155;border-radius:8px;padding:6px;text-align:center;color:#64748b">10:00<br>90K</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Slot Expand Inline</h3>
+      <p>Slot yang dipilih langsung melebar jadi full-width dan munculkan form di dalam grid. Tidak ada modal — semua dalam satu halaman. Unik tapi butuh scroll yang tepat.</p>
+    </div>
+  </div>
+
+</div>
+
+<p class="subtitle" style="margin-top:16px">Klik di browser atau jawab A/B/C di terminal</p>

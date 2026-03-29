@@ -1,0 +1,34 @@
+{"type":"server-started","port":49817,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:49817","screen_dir":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content","state_dir":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/state"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/device-focus.html"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/waiting-1.html"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/layout-approach.html"}
+{"source":"user-event","type":"click","text":"Sen28\n        \n        \n          Sel29\n        \n        \n          Rab30\n        \n        \n          Kam31\n        \n        \n          Jum1\n        \n      \n      \n      \n        BOOKED06:00–07:00\n        07:00–08:00Rp90K\n        ✓ Dipilih08:00–09:00\n        09:00–10:00Rp90K\n        PENDING10:00–11:00\n        11:00–12:00Rp90K\n      \n      1 jam · Rp90K · [Pesan]\n    \n    \n      B — Tampilan Satu Hari\n      Strip tanggal horizontal di atas, tap untuk pilih hari. Di bawahnya muncul grid 2 kolom slot jam vertikal. Tidak perlu scroll 2 arah — cukup pilih hari dulu, lalu pilih jam.","choice":"b","id":null,"timestamp":1774728121163}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/date-nav.html"}
+{"source":"user-event","type":"click","text":"Geser untuk lihat hari lain →\n      \n      \n        \n          Ming\n          27\n          \n        \n        \n          Sen\n          28\n          \n        \n        \n          Sel\n          29\n          \n        \n        \n          Rab\n          30\n          \n        \n        \n          Kam\n          31\n          \n        \n        \n          Jum\n          1\n          \n        \n        \n          Sab\n          2\n          \n        \n      \n      ● merah = ada slot sudah dipesan hari itu\n      \n      \n        07:00–08:0090K\n        ✓ Dipilih08:00–09:00\n      \n    \n    \n      A — Strip Geser (seperti Google Calendar)\n      Strip hari bisa di-scroll horizontal. Dot merah kecil di bawah tanggal menunjukkan ada booking aktif. Cepat dan familiar bagi pengguna HP.","choice":"a","id":null,"timestamp":1774728241404}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/visual-style.html"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/booking-flow.html"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design.html"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-no-sheet.html"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-teamname.html"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v2.html"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v3.html"}
+{"type":"screen-updated","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v3.html"}
+{"type":"screen-updated","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v3.html"}
+{"type":"screen-updated","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v3.html"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v4.html"}
+{"type":"screen-updated","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v4.html"}
+{"type":"screen-updated","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v4.html"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v5.html"}
+{"type":"screen-updated","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v5.html"}
+{"type":"screen-updated","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v5.html"}
+{"type":"screen-updated","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v5.html"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v6.html"}
+{"type":"screen-updated","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v6.html"}
+{"type":"screen-updated","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v6.html"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v7.html"}
+{"type":"screen-updated","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v7.html"}
+{"type":"screen-updated","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v7.html"}
+{"type":"screen-updated","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v7.html"}
+{"type":"screen-updated","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v7.html"}
+{"type":"screen-updated","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/38898-1774727922/content/full-design-v7.html"}
+{"type":"server-stopped","reason":"idle timeout"}

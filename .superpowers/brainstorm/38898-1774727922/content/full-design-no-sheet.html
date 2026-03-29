@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desain — State Normal & Slot Dipilih</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #020617;
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 20px 16px;
+  }
+
+  .frame-label {
+    text-align: center;
+    font-size: 11px;
+    color: #475569;
+    margin-bottom: 8px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .frames-row {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .frame-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  .frame-col-label {
+    font-size: 10px;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+
+  .phone-frame {
+    width: 340px;
+    background: #0f172a;
+    border-radius: 36px;
+    border: 2px solid #1e293b;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+    position: relative;
+  }
+  .phone-notch {
+    background: #0f172a;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-bottom: 1px solid #1e293b;
+  }
+  .phone-notch-pill {
+    width: 70px; height: 16px;
+    background: #020617;
+    border-radius: 20px;
+  }
+  .phone-screen {
+    background: #0f172a;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    background: #0f172a;
+    border-bottom: 1px solid #1e293b;
+    padding: 10px 14px 8px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .header-logo { display: flex; align-items: center; gap: 7px; }
+  .header-icon {
+    width: 30px; height: 30px;
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px;
+  }
+  .header-title { font-size: 13px; font-weight: 700; color: #f1f5f9; }
+  .header-subtitle { font-size: 9px; color: #64748b; }
+  .header-toggle {
+    display: flex; background: #1e293b;
+    border-radius: 20px; padding: 2px;
+  }
+  .toggle-btn {
+    padding: 3px 9px; border-radius: 16px;
+    font-size: 9px; font-weight: 600; border: none; cursor: pointer;
+  }
+  .toggle-btn.active { background: #22c55e; color: #052e16; }
+  .toggle-btn.inactive { background: transparent; color: #64748b; }
+
+  /* DATE STRIP */
+  .date-strip-wrap {
+    background: #0f172a;
+    border-bottom: 1px solid #1e293b;
+    padding: 8px 14px 6px;
+  }
+  .date-strip-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 7px;
+  }
+  .date-strip-month { font-size: 10px; font-weight: 600; color: #94a3b8; }
+  .date-strip-nav { display: flex; gap: 3px; }
+  .nav-arrow {
+    width: 20px; height: 20px;
+    background: #1e293b; border: none; border-radius: 6px;
+    color: #64748b; font-size: 11px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .date-strip {
+    display: flex; gap: 5px;
+    overflow-x: auto; scrollbar-width: none; padding-bottom: 2px;
+  }
+  .date-strip::-webkit-scrollbar { display: none; }
+  .date-item { flex-shrink: 0; text-align: center; cursor: pointer; }
+  .date-day-label {
+    font-size: 8px; color: #475569; margin-bottom: 3px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .date-circle {
+    width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 500; color: #64748b;
+    background: transparent; margin: 0 auto; position: relative;
+  }
+  .date-circle.today { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+  .date-circle.active { background: #22c55e; color: #052e16; font-weight: 700; }
+  .date-circle.has-booking::after {
+    content: ''; position: absolute; bottom: -4px; left: 50%; transform: translateX(-50%);
+    width: 4px; height: 4px; border-radius: 50%; background: #ef4444;
+  }
+  .date-circle.active.has-booking::after { background: #052e16; }
+
+  /* DAY LABEL */
+  .day-label {
+    padding: 9px 14px 3px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .day-label-text { font-size: 12px; font-weight: 600; color: #f1f5f9; }
+  .day-label-count {
+    font-size: 9px; color: #64748b;
+    background: #1e293b; padding: 2px 7px; border-radius: 10px;
+  }
+  .day-label-count.green { color: #22c55e; background: #14532d; }
+
+  /* SLOT GRID */
+  .slot-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 7px; padding: 7px 14px 80px;
+  }
+  .slot-card {
+    background: #1e293b; border: 1.5px solid #334155;
+    border-radius: 12px; padding: 9px 11px;
+    cursor: pointer; position: relative; overflow: hidden;
+  }
+  .slot-card.selected {
+    background: #14532d; border: 2px solid #22c55e;
+    box-shadow: 0 0 0 1px #22c55e22;
+  }
+  .slot-card.booked { opacity: 0.45; cursor: not-allowed; }
+  .slot-card.pending { background: #1c1a07; border-color: #854d0e; opacity: 0.65; cursor: not-allowed; }
+  .slot-card.blocked { background: #111827; border-color: #1f2937; opacity: 0.35; cursor: not-allowed; }
+  .slot-time { font-size: 10px; color: #64748b; margin-bottom: 3px; }
+  .slot-card.selected .slot-time { color: #86efac; }
+  .slot-price { font-size: 14px; font-weight: 700; color: #22c55e; }
+  .slot-status { font-size: 9px; font-weight: 600; letter-spacing: 0.04em; }
+  .slot-status.booked { color: #ef4444; }
+  .slot-status.pending { color: #f59e0b; }
+  .slot-status.blocked { color: #374151; }
+  .slot-check {
+    position: absolute; top: 7px; right: 7px;
+    width: 16px; height: 16px; background: #22c55e;
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 8px; color: #052e16; font-weight: bold;
+  }
+
+  /* LEGEND */
+  .legend {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    padding: 7px 14px 10px; border-top: 1px solid #1e293b;
+  }
+  .legend-item { display: flex; align-items: center; gap: 4px; font-size: 8px; color: #475569; }
+  .legend-dot { width: 7px; height: 7px; border-radius: 2px; }
+
+  /* STICKY BAR */
+  .sticky-bar {
+    position: absolute; bottom: 12px; left: 12px; right: 12px;
+    background: #22c55e; border-radius: 14px;
+    padding: 9px 12px;
+    display: flex; align-items: center; justify-content: space-between;
+    box-shadow: 0 4px 20px rgba(34,197,94,0.4);
+    z-index: 10;
+  }
+  .sticky-bar-dur { font-size: 11px; font-weight: 700; color: #052e16; }
+  .sticky-bar-time { font-size: 9px; color: #166534; margin-top: 1px; }
+  .sticky-bar-btn {
+    background: #052e16; color: #22c55e; border: none;
+    border-radius: 8px; padding: 6px 12px;
+    font-size: 10px; font-weight: 700; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div class="frame-label">Dua State: Default (kiri) &amp; Slot Dipilih dengan Floating Bar (kanan)</div>
+
+<div class="frames-row">
+
+  <!-- ===== STATE 1: DEFAULT (no selection) ===== -->
+  <div class="frame-col">
+    <div class="frame-col-label">Default — Belum pilih slot</div>
+    <div class="phone-frame">
+      <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+      <div class="phone-screen">
+
+        <div class="header">
+          <div class="header-logo">
+            <div class="header-icon">⚽</div>
+            <div>
+              <div class="header-title">Mini Soccer</div>
+              <div class="header-subtitle">Jadwal & Booking</div>
+            </div>
+          </div>
+          <div class="header-toggle">
+            <button class="toggle-btn active">Umum</button>
+            <button class="toggle-btn inactive">Pelajar</button>
+          </div>
+        </div>
+
+        <div class="date-strip-wrap">
+          <div class="date-strip-header">
+            <span class="date-strip-month">Maret – April 2026</span>
+            <div class="date-strip-nav">
+              <button class="nav-arrow">‹</button>
+              <button class="nav-arrow">›</button>
+            </div>
+          </div>
+          <div class="date-strip">
+            <div class="date-item">
+              <div class="date-day-label">Sab</div>
+              <div class="date-circle" style="opacity:0.25;font-size:10px">27</div>
+            </div>
+            <div class="date-item">
+              <div class="date-day-label">Min</div>
+              <div class="date-circle" style="opacity:0.25;font-size:10px">28</div>
+            </div>
+            <div class="date-item">
+              <div class="date-day-label" style="color:#94a3b8">Sen</div>
+              <div class="date-circle today has-booking">29</div>
+            </div>
+            <div class="date-item">
+              <div class="date-day-label" style="color:#22c55e">Sel</div>
+              <div class="date-circle active">30</div>
+            </div>
+            <div class="date-item">
+              <div class="date-day-label">Rab</div>
+              <div class="date-circle has-booking" style="color:#94a3b8;font-size:10px">31</div>
+            </div>
+            <div class="date-item">
+              <div class="date-day-label">Kam</div>
+              <div class="date-circle" style="color:#94a3b8;font-size:10px">1</div>
+            </div>
+            <div class="date-item">
+              <div class="date-day-label">Jum</div>
+              <div class="date-circle" style="color:#94a3b8;font-size:10px">2</div>
+            </div>
+            <div class="date-item">
+              <div class="date-day-label">Sab</div>
+              <div class="date-circle has-booking" style="color:#94a3b8;font-size:10px">3</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="day-label">
+          <span class="day-label-text">Selasa, 30 Mar</span>
+          <span class="day-label-count">10 tersedia</span>
+        </div>
+
+        <div class="slot-grid">
+          <div class="slot-card booked">
+            <div class="slot-time">06:00 – 07:00</div>
+            <div class="slot-status booked">BOOKED</div>
+          </div>
+          <div class="slot-card">
+            <div class="slot-time">07:00 – 08:00</div>
+            <div class="slot-price">Rp90K</div>
+          </div>
+          <div class="slot-card">
+            <div class="slot-time">08:00 – 09:00</div>
+            <div class="slot-price">Rp90K</div>
+          </div>
+          <div class="slot-card pending">
+            <div class="slot-time">09:00 – 10:00</div>
+            <div class="slot-status pending">PENDING</div>
+          </div>
+          <div class="slot-card">
+            <div class="slot-time">10:00 – 11:00</div>
+            <div class="slot-price">Rp90K</div>
+          </div>
+          <div class="slot-card">
+            <div class="slot-time">11:00 – 12:00</div>
+            <div class="slot-price">Rp90K</div>
+          </div>
+          <div class="slot-card booked">
+            <div class="slot-time">12:00 – 13:00</div>
+            <div class="slot-status booked">BOOKED</div>
+          </div>
+          <div class="slot-card">
+            <div class="slot-time">13:00 – 14:00</div>
+            <div class="slot-price">Rp90K</div>
+          </div>
+          <div class="slot-card">
+            <div class="slot-time">14:00 – 15:00</div>
+            <div class="slot-price">Rp90K</div>
+          </div>
+          <div class="slot-card">
+            <div class="slot-time">15:00 – 16:00</div>
+            <div class="slot-price">Rp90K</div>
+          </div>
+        </div>
+
+        <div class="legend">
+          <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Tersedia</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#14532d;border:1px solid #22c55e"></div>Dipilih</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#374151"></div>Booked</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#854d0e"></div>Pending</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#1f2937"></div>Tutup</div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== STATE 2: SLOTS SELECTED + FLOATING BAR ===== -->
+  <div class="frame-col">
+    <div class="frame-col-label">2 Slot dipilih — Floating bar</div>
+    <div class="phone-frame">
+      <div class="phone-notch"><div class="phone-notch-pill"></div></div>
+      <div class="phone-screen" style="padding-bottom:0">
+
+        <div class="header">
+          <div class="header-logo">
+            <div class="header-icon">⚽</div>
+            <div>
+              <div class="header-title">Mini Soccer</div>
+              <div class="header-subtitle">Jadwal & Booking</div>
+            </div>
+          </div>
+          <div class="header-toggle">
+            <button class="toggle-btn inactive">Umum</button>
+            <button class="toggle-btn active">Pelajar</button>
+          </div>
+        </div>
+
+        <div class="date-strip-wrap">
+          <div class="date-strip-header">
+            <span class="date-strip-month">Maret – April 2026</span>
+            <div class="date-strip-nav">
+              <button class="nav-arrow">‹</button>
+              <button class="nav-arrow">›</button>
+            </div>
+          </div>
+          <div class="date-strip">
+            <div class="date-item">
+              <div class="date-day-label">Sab</div>
+              <div class="date-circle" style="opacity:0.25;font-size:10px">27</div>
+            </div>
+            <div class="date-item">
+              <div class="date-day-label">Min</div>
+              <div class="date-circle" style="opacity:0.25;font-size:10px">28</div>
+            </div>
+            <div class="date-item">
+              <div class="date-day-label" style="color:#94a3b8">Sen</div>
+              <div class="date-circle today has-booking">29</div>
+            </div>
+            <div class="date-item">
+              <div class="date-day-label" style="color:#22c55e">Sel</div>
+              <div class="date-circle active">30</div>
+            </div>
+            <div class="date-item">
+              <div class="date-day-label">Rab</div>
+              <div class="date-circle has-booking" style="color:#94a3b8;font-size:10px">31</div>
+            </div>
+            <div class="date-item">
+              <div class="date-day-label">Kam</div>
+              <div class="date-circle" style="color:#94a3b8;font-size:10px">1</div>
+            </div>
+            <div class="date-item">
+              <div class="date-day-label">Jum</div>
+              <div class="date-circle" style="color:#94a3b8;font-size:10px">2</div>
+            </div>
+            <div class="date-item">
+              <div class="date-day-label">Sab</div>
+              <div class="date-circle has-booking" style="color:#94a3b8;font-size:10px">3</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="day-label">
+          <span class="day-label-text">Selasa, 30 Mar</span>
+          <span class="day-label-count green">2 dipilih · 8 tersedia</span>
+        </div>
+
+        <div class="slot-grid">
+          <div class="slot-card booked">
+            <div class="slot-time">06:00 – 07:00</div>
+            <div class="slot-status booked">BOOKED</div>
+          </div>
+          <div class="slot-card">
+            <div class="slot-time">07:00 – 08:00</div>
+            <div class="slot-price">Rp40K</div>
+          </div>
+          <div class="slot-card selected">
+            <div class="slot-time">08:00 – 09:00</div>
+            <div class="slot-price">Rp40K</div>
+            <div class="slot-check">✓</div>
+          </div>
+          <div class="slot-card selected">
+            <div class="slot-time">09:00 – 10:00</div>
+            <div class="slot-price">Rp40K</div>
+            <div class="slot-check">✓</div>
+          </div>
+          <div class="slot-card pending">
+            <div class="slot-time">10:00 – 11:00</div>
+            <div class="slot-status pending">PENDING</div>
+          </div>
+          <div class="slot-card">
+            <div class="slot-time">11:00 – 12:00</div>
+            <div class="slot-price">Rp40K</div>
+          </div>
+          <div class="slot-card booked">
+            <div class="slot-time">12:00 – 13:00</div>
+            <div class="slot-status booked">BOOKED</div>
+          </div>
+          <div class="slot-card">
+            <div class="slot-time">13:00 – 14:00</div>
+            <div class="slot-price">Rp40K</div>
+          </div>
+          <div class="slot-card">
+            <div class="slot-time">14:00 – 15:00</div>
+            <div class="slot-price">Rp40K</div>
+          </div>
+          <div class="slot-card">
+            <div class="slot-time">15:00 – 16:00</div>
+            <div class="slot-price">Rp40K</div>
+          </div>
+        </div>
+
+        <div class="legend" style="padding-bottom:80px">
+          <div class="legend-item"><div class="legend-dot" style="background:#22c55e"></div>Tersedia</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#14532d;border:1px solid #22c55e"></div>Dipilih</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#374151"></div>Booked</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#854d0e"></div>Pending</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#1f2937"></div>Tutup</div>
+        </div>
+
+        <!-- FLOATING BAR -->
+        <div class="sticky-bar">
+          <div>
+            <div class="sticky-bar-dur">2 jam · Rp80K</div>
+            <div class="sticky-bar-time">Sel 30 Mar · 08:00 – 10:00</div>
+          </div>
+          <button class="sticky-bar-btn">Pesan →</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>
