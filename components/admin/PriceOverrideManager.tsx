@@ -18,10 +18,17 @@ export function PriceOverrideManager({ initialOverrides, slots }: PriceOverrideM
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState('')
 
+  const allSlotIds = slots.map(s => s.id)
+  const allSelected = allSlotIds.length > 0 && allSlotIds.every(id => selectedSlotIds.includes(id))
+
   const toggleSlot = (slotId: string) => {
     setSelectedSlotIds(prev =>
       prev.includes(slotId) ? prev.filter(id => id !== slotId) : [...prev, slotId]
     )
+  }
+
+  const toggleAll = () => {
+    setSelectedSlotIds(allSelected ? [] : allSlotIds)
   }
 
   const addOverride = async () => {
@@ -124,6 +131,24 @@ export function PriceOverrideManager({ initialOverrides, slots }: PriceOverrideM
             Pilih Jam ({selectedSlotIds.length} dipilih)
           </label>
           <div className="grid grid-cols-2 gap-1.5">
+            <button
+              type="button"
+              onClick={toggleAll}
+              className={`col-span-2 flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] border transition-colors text-left font-bold ${
+                allSelected
+                  ? 'bg-green-900/50 border-green-500 text-green-300'
+                  : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
+              }`}
+            >
+              <span className={`w-3.5 h-3.5 rounded flex-shrink-0 border flex items-center justify-center text-[8px] ${
+                allSelected
+                  ? 'bg-green-500 border-green-500 text-green-950'
+                  : 'border-slate-600'
+              }`}>
+                {allSelected && '✓'}
+              </span>
+              <span>Seharian</span>
+            </button>
             {slots.map(s => (
               <button
                 key={s.id}
