@@ -1,4 +1,4 @@
-import type { TimeSlot, Booking, BlockedDate, SlotStatus } from './types'
+import type { TimeSlot, Booking, BlockedDate, SlotStatus, SlotPriceOverride } from './types'
 
 export const STUDENT_DISCOUNT = 50000
 export const LOYALTY_DISCOUNT = 50000
@@ -84,4 +84,9 @@ export function formatFullDate(date: Date): string {
 
 export function formatPrice(price: number): string {
   return `${Math.round(price / 1000)}K`
+}
+
+export function getEffectivePrice(slot: TimeSlot, dateStr: string, overrides: SlotPriceOverride[]): number {
+  const override = overrides.find(o => o.date === dateStr && o.time_slot_id === slot.id)
+  return override ? override.price : slot.price
 }

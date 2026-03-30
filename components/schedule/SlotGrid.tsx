@@ -1,8 +1,8 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { getSlotStatus, formatHour, formatPrice, formatFullDate, STUDENT_DISCOUNT } from '@/lib/schedule'
-import type { TimeSlot, Booking, BlockedDate, SlotStatus } from '@/lib/types'
+import { getSlotStatus, formatHour, formatPrice, formatFullDate, getEffectivePrice, STUDENT_DISCOUNT } from '@/lib/schedule'
+import type { TimeSlot, Booking, BlockedDate, SlotStatus, SlotPriceOverride } from '@/lib/types'
 
 interface Selection {
   date: string
@@ -14,6 +14,7 @@ interface SlotGridProps {
   date: string
   bookings: Booking[]
   blockedDates: BlockedDate[]
+  priceOverrides: SlotPriceOverride[]
   todayStr: string
   isStudent: boolean
   selection: Selection | null
@@ -102,12 +103,13 @@ export function SlotGrid({
   date,
   bookings,
   blockedDates,
+  priceOverrides,
   todayStr,
   isStudent,
   selection,
   onSlotClick,
 }: SlotGridProps) {
-  const slotPrice = (s: TimeSlot) => Math.max(0, s.price - (isStudent ? STUDENT_DISCOUNT : 0))
+  const slotPrice = (s: TimeSlot) => Math.max(0, getEffectivePrice(s, date, priceOverrides) - (isStudent ? STUDENT_DISCOUNT : 0))
   const activeDate = new Date(date + 'T00:00:00')
 
   const availableCount = slots.filter(s => {

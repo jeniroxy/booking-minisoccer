@@ -218,6 +218,7 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
           date={selectedDate}
           bookings={data.bookings}
           blockedDates={data.blockedDates}
+          priceOverrides={data.priceOverrides ?? []}
           todayStr={todayStr}
           isStudent={isStudent}
           selection={selection}
@@ -230,6 +231,7 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
         <FloatingBar
           slots={selection.slots}
           date={selection.date}
+          priceOverrides={data.priceOverrides ?? []}
           isStudent={isStudent}
           onPesan={() => setBookingOpen(true)}
           onCancel={() => setSelection(null)}
@@ -241,6 +243,7 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
         <BookingSheet
           slots={selection.slots}
           date={new Date(selection.date + 'T00:00:00')}
+          priceOverrides={data.priceOverrides ?? []}
           isStudent={isStudent}
           isOpen={bookingOpen}
           onClose={() => setBookingOpen(false)}

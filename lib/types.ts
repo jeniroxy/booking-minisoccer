@@ -26,10 +26,19 @@ export interface BlockedDate {
 
 export type SlotStatus = 'available' | 'pending' | 'confirmed' | 'blocked' | 'past'
 
+export interface SlotPriceOverride {
+  id: string
+  date: string           // 'YYYY-MM-DD'
+  time_slot_id: string
+  price: number
+  created_at: string
+}
+
 export interface ScheduleData {
   slots: TimeSlot[]
   bookings: Booking[]
   blockedDates: BlockedDate[]
+  priceOverrides: SlotPriceOverride[]
 }
 
 export type BookingWithSlot = Booking & { time_slots: TimeSlot }

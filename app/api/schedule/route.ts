@@ -20,13 +20,14 @@ export async function GET(request: NextRequest) {
 
   const supabase = createClient()
 
-  const [slotsRes, bookingsRes, blockedRes] = await Promise.all([
+  const [slotsRes, bookingsRes, blockedRes, overridesRes] = await Promise.all([
     supabase.from('time_slots').select('*').eq('is_active', true).order('start_hour'),
     supabase.from('bookings').select('*').gte('booking_date', startDate).lte('booking_date', endDate),
     supabase.from('blocked_dates').select('*').gte('date', startDate).lte('date', endDate),
+    supabase.from('slot_price_overrides').select('*').gte('date', startDate).lte('date', endDate),
   ])
 
-  if (slotsRes.error || bookingsRes.error || blockedRes.error) {
+  if (slotsRes.error || bookingsRes.error || blockedRes.error || overridesRes.error) {
     return NextResponse.json({ error: 'Failed to fetch schedule data' }, { status: 500 })
   }
 
@@ -34,5 +35,6 @@ export async function GET(request: NextRequest) {
     slots: slotsRes.data,
     bookings: bookingsRes.data,
     blockedDates: blockedRes.data,
+    priceOverrides: overridesRes.data,
   })
 }

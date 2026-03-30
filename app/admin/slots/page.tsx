@@ -3,15 +3,17 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { SlotManager } from '@/components/admin/SlotManager'
 import { BlockDateManager } from '@/components/admin/BlockDateManager'
+import { PriceOverrideManager } from '@/components/admin/PriceOverrideManager'
 
 export default async function AdminSlotsPage() {
   const supabase = createClient()
   const { data: { session } } = await supabase.auth.getSession()
   if (!session) redirect('/admin/login')
 
-  const [slotsRes, blockedRes] = await Promise.all([
+  const [slotsRes, blockedRes, overridesRes] = await Promise.all([
     supabase.from('time_slots').select('*').order('start_hour'),
     supabase.from('blocked_dates').select('*').order('date'),
+    supabase.from('slot_price_overrides').select('*').order('date'),
   ])
 
   return (
@@ -35,6 +37,12 @@ export default async function AdminSlotsPage() {
           initialBlocked={blockedRes.data ?? []}
           slots={slotsRes.data ?? []}
         />
+        <div className="lg:col-span-2">
+          <PriceOverrideManager
+            initialOverrides={overridesRes.data ?? []}
+            slots={slotsRes.data ?? []}
+          />
+        </div>
       </div>
     </main>
   )

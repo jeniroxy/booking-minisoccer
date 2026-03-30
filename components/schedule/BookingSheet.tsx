@@ -2,19 +2,20 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { buildWAUrl, formatDateLabel } from '@/lib/booking'
-import { formatHour, formatPrice, STUDENT_DISCOUNT, LOYALTY_DISCOUNT } from '@/lib/schedule'
-import type { TimeSlot } from '@/lib/types'
+import { formatHour, formatPrice, getEffectivePrice, STUDENT_DISCOUNT, LOYALTY_DISCOUNT } from '@/lib/schedule'
+import type { TimeSlot, SlotPriceOverride } from '@/lib/types'
 
 interface BookingSheetProps {
   slots: TimeSlot[]
   date: Date
+  priceOverrides: SlotPriceOverride[]
   isStudent: boolean
   isOpen: boolean
   onClose: () => void
   onSuccess: (bookingIds: string[]) => void
 }
 
-export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSuccess }: BookingSheetProps) {
+export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, onClose, onSuccess }: BookingSheetProps) {
   const [teamName, setTeamName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -24,7 +25,8 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
   const loyaltyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const sorted = [...slots].sort((a, b) => a.start_hour - b.start_hour)
-  const slotPrice = (s: TimeSlot) => Math.max(0, s.price - (isStudent ? STUDENT_DISCOUNT : 0))
+  const bookingDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  const slotPrice = (s: TimeSlot) => Math.max(0, getEffectivePrice(s, bookingDateStr, priceOverrides) - (isStudent ? STUDENT_DISCOUNT : 0))
   const baseTotal = sorted.reduce((sum, s) => sum + slotPrice(s), 0)
   const loyaltyDiscount = !isStudent && loyaltyEligible ? LOYALTY_DISCOUNT : 0
 
@@ -98,14 +100,12 @@ export function BookingSheet({ slots, date, isStudent, isOpen, onClose, onSucces
     setError('')
 
     try {
-      const bookingDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
-
       const results = await Promise.all(
         sorted.map(slot =>
           fetch('/api/bookings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ team_name: teamName.trim(), booking_date: bookingDate, time_slot_id: slot.id }),
+            body: JSON.stringify({ team_name: teamName.trim(), booking_date: bookingDateStr, time_slot_id: slot.id }),
           })
         )
       )
