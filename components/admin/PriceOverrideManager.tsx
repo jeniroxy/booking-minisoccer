@@ -12,40 +12,61 @@ interface PriceOverrideManagerProps {
 export function PriceOverrideManager({ initialOverrides, slots }: PriceOverrideManagerProps) {
   const [overrides, setOverrides] = useState(initialOverrides)
   const [date, setDate] = useState('')
-  const [selectedSlotId, setSelectedSlotId] = useState('')
+  const [selectedSlotIds, setSelectedSlotIds] = useState<string[]>([])
   const [price, setPrice] = useState('')
   const [saving, setSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [error, setError] = useState('')
 
+  const toggleSlot = (slotId: string) => {
+    setSelectedSlotIds(prev =>
+      prev.includes(slotId) ? prev.filter(id => id !== slotId) : [...prev, slotId]
+    )
+  }
+
   const addOverride = async () => {
     const parsedPrice = parseInt(price, 10)
-    if (!date || !selectedSlotId || !parsedPrice || parsedPrice <= 0) {
+    if (!date || selectedSlotIds.length === 0 || !parsedPrice || parsedPrice <= 0) {
       setError('Tanggal, jam, dan harga wajib diisi')
       return
     }
     setError('')
     setSaving(true)
 
-    const res = await fetch('/api/admin/price-overrides', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date, time_slot_id: selectedSlotId, price: parsedPrice }),
-    })
+    const results = await Promise.all(
+      selectedSlotIds.map(slotId =>
+        fetch('/api/admin/price-overrides', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date, time_slot_id: slotId, price: parsedPrice }),
+        })
+      )
+    )
 
-    if (res.ok) {
-      const newOverride: SlotPriceOverride = await res.json()
+    const newOverrides: SlotPriceOverride[] = []
+    let hasError = false
+    for (const res of results) {
+      if (res.ok) {
+        newOverrides.push(await res.json())
+      } else {
+        hasError = true
+      }
+    }
+
+    if (newOverrides.length > 0) {
       setOverrides(prev => {
         const filtered = prev.filter(
-          o => !(o.date === newOverride.date && o.time_slot_id === newOverride.time_slot_id)
+          o => !newOverrides.some(n => n.date === o.date && n.time_slot_id === o.time_slot_id)
         )
-        return [...filtered, newOverride].sort((a, b) => a.date.localeCompare(b.date))
+        return [...filtered, ...newOverrides].sort((a, b) => a.date.localeCompare(b.date))
       })
-      setDate('')
-      setSelectedSlotId('')
+      setSelectedSlotIds([])
       setPrice('')
-    } else {
-      setError('Gagal menyimpan. Coba lagi.')
+      if (!hasError) setDate('')
+    }
+
+    if (hasError) {
+      setError('Beberapa jam gagal disimpan. Coba lagi.')
     }
     setSaving(false)
   }
@@ -85,24 +106,6 @@ export function PriceOverrideManager({ initialOverrides, slots }: PriceOverrideM
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-medium text-slate-500">Jam</label>
-            <select
-              value={selectedSlotId}
-              onChange={e => setSelectedSlotId(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl text-[13px] px-3 py-2 text-slate-100 outline-none focus:border-green-500 transition-colors"
-            >
-              <option value="">Pilih jam...</option>
-              {slots.map(s => (
-                <option key={s.id} value={s.id}>
-                  {formatHour(s.start_hour)} – {formatHour(s.end_hour)} ({formatPrice(s.price)})
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="flex gap-2 items-end">
-          <div className="flex flex-col gap-1.5 flex-1">
             <label className="text-[11px] font-medium text-slate-500">Harga Baru (Rp)</label>
             <input
               type="number"
@@ -114,14 +117,45 @@ export function PriceOverrideManager({ initialOverrides, slots }: PriceOverrideM
               className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-[13px] text-slate-100 placeholder-slate-600 outline-none focus:border-green-500 transition-colors"
             />
           </div>
-          <button
-            onClick={addOverride}
-            disabled={saving || !date || !selectedSlotId || !price}
-            className="px-4 py-2 rounded-xl text-[12px] font-bold bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 disabled:opacity-40 transition-colors whitespace-nowrap"
-          >
-            {saving ? 'Menyimpan...' : '+ Simpan'}
-          </button>
         </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label className="text-[11px] font-medium text-slate-500">
+            Pilih Jam ({selectedSlotIds.length} dipilih)
+          </label>
+          <div className="grid grid-cols-2 gap-1.5">
+            {slots.map(s => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => toggleSlot(s.id)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] border transition-colors text-left ${
+                  selectedSlotIds.includes(s.id)
+                    ? 'bg-green-900/50 border-green-500 text-green-300'
+                    : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
+                }`}
+              >
+                <span className={`w-3.5 h-3.5 rounded flex-shrink-0 border flex items-center justify-center text-[8px] ${
+                  selectedSlotIds.includes(s.id)
+                    ? 'bg-green-500 border-green-500 text-green-950'
+                    : 'border-slate-600'
+                }`}>
+                  {selectedSlotIds.includes(s.id) && '✓'}
+                </span>
+                <span>{formatHour(s.start_hour)}–{formatHour(s.end_hour)}</span>
+                <span className="text-slate-600 ml-auto">{formatPrice(s.price)}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <button
+          onClick={addOverride}
+          disabled={saving || !date || selectedSlotIds.length === 0 || !price}
+          className="w-full py-2 rounded-xl text-[12px] font-bold bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 disabled:opacity-40 transition-colors"
+        >
+          {saving ? 'Menyimpan...' : `+ Simpan ${selectedSlotIds.length > 0 ? `(${selectedSlotIds.length} jam)` : ''}`}
+        </button>
 
         {error && <p className="text-[11px] text-red-400">{error}</p>}
       </div>
