@@ -1,6 +1,7 @@
 import type { TimeSlot, Booking, BlockedDate, SlotStatus, SlotPriceOverride } from './types'
 
 export const STUDENT_DISCOUNT = 50000
+export const MAX_STUDENT_PRICE = 125000
 export const LOYALTY_DISCOUNT = 50000
 
 export function getSlotStatus(

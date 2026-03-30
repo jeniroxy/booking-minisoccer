@@ -1,6 +1,6 @@
 'use client'
 
-import { formatPrice, formatHour, getEffectivePrice, STUDENT_DISCOUNT } from '@/lib/schedule'
+import { formatPrice, formatHour, getEffectivePrice, MAX_STUDENT_PRICE } from '@/lib/schedule'
 import type { TimeSlot, SlotPriceOverride } from '@/lib/types'
 
 interface FloatingBarProps {
@@ -14,7 +14,10 @@ interface FloatingBarProps {
 
 export function FloatingBar({ slots, date, priceOverrides, isStudent, onPesan, onCancel }: FloatingBarProps) {
   const sorted = [...slots].sort((a, b) => a.start_hour - b.start_hour)
-  const slotPrice = (s: TimeSlot) => Math.max(0, getEffectivePrice(s, date, priceOverrides) - (isStudent ? STUDENT_DISCOUNT : 0))
+  const slotPrice = (s: TimeSlot) => {
+    const p = getEffectivePrice(s, date, priceOverrides)
+    return isStudent ? Math.min(p, MAX_STUDENT_PRICE) : p
+  }
   const total = sorted.reduce((sum, s) => sum + slotPrice(s), 0)
   const dur = sorted.length
 

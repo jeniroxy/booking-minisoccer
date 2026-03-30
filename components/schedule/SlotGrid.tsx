@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { getSlotStatus, formatHour, formatPrice, formatFullDate, getEffectivePrice, STUDENT_DISCOUNT } from '@/lib/schedule'
+import { getSlotStatus, formatHour, formatPrice, formatFullDate, getEffectivePrice, MAX_STUDENT_PRICE } from '@/lib/schedule'
 import type { TimeSlot, Booking, BlockedDate, SlotStatus, SlotPriceOverride } from '@/lib/types'
 
 interface Selection {
@@ -109,7 +109,10 @@ export function SlotGrid({
   selection,
   onSlotClick,
 }: SlotGridProps) {
-  const slotPrice = (s: TimeSlot) => Math.max(0, getEffectivePrice(s, date, priceOverrides) - (isStudent ? STUDENT_DISCOUNT : 0))
+  const slotPrice = (s: TimeSlot) => {
+    const p = getEffectivePrice(s, date, priceOverrides)
+    return isStudent ? Math.min(p, MAX_STUDENT_PRICE) : p
+  }
   const activeDate = new Date(date + 'T00:00:00')
 
   const availableCount = slots.filter(s => {
