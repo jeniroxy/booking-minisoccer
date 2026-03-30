@@ -1,9 +1,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { SlotManager } from '@/components/admin/SlotManager'
-import { BlockDateManager } from '@/components/admin/BlockDateManager'
-import { PriceOverrideManager } from '@/components/admin/PriceOverrideManager'
+import { SlotPageTabs } from '@/components/admin/SlotPageTabs'
 
 export default async function AdminSlotsPage() {
   const supabase = createClient()
@@ -31,18 +29,12 @@ export default async function AdminSlotsPage() {
         </div>
       </nav>
 
-      <div className="max-w-[960px] mx-auto py-6 px-4 grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <SlotManager initialSlots={slotsRes.data ?? []} />
-        <BlockDateManager
-          initialBlocked={blockedRes.data ?? []}
+      <div className="max-w-[960px] mx-auto py-6 px-4">
+        <SlotPageTabs
           slots={slotsRes.data ?? []}
+          blocked={blockedRes.data ?? []}
+          overrides={overridesRes.data ?? []}
         />
-        <div className="lg:col-span-2">
-          <PriceOverrideManager
-            initialOverrides={overridesRes.data ?? []}
-            slots={slotsRes.data ?? []}
-          />
-        </div>
       </div>
     </main>
   )
