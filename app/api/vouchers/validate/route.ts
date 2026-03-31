@@ -24,8 +24,21 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ valid: false, error: 'Voucher tidak valid atau sudah kadaluarsa' })
   }
 
-  // Check if this team already used this voucher
-  if (teamName?.trim()) {
+  // Auto-generated follow-up vouchers (MAINLAGI-*) are single-use globally
+  const isFollowUpVoucher = data.code.startsWith('MAINLAGI-')
+  if (isFollowUpVoucher) {
+    const { data: used } = await supabase
+      .from('bookings')
+      .select('id')
+      .eq('voucher_id', data.id)
+      .neq('status', 'cancelled')
+      .limit(1)
+
+    if (used && used.length > 0) {
+      return NextResponse.json({ valid: false, error: 'Voucher ini sudah pernah digunakan' })
+    }
+  } else if (teamName?.trim()) {
+    // Regular vouchers: single-use per team
     const { data: used } = await supabase
       .from('bookings')
       .select('id')
