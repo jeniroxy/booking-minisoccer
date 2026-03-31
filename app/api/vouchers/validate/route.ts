@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code')
   const teamName = request.nextUrl.searchParams.get('team_name')
+  const phone = request.nextUrl.searchParams.get('phone')
   if (!code) {
     return NextResponse.json({ error: 'code is required' }, { status: 400 })
   }
@@ -37,18 +38,33 @@ export async function GET(request: NextRequest) {
     if (used && used.length > 0) {
       return NextResponse.json({ valid: false, error: 'Voucher ini sudah pernah digunakan' })
     }
-  } else if (teamName?.trim()) {
-    // Regular vouchers: single-use per team
-    const { data: used } = await supabase
-      .from('bookings')
-      .select('id')
-      .eq('voucher_id', data.id)
-      .ilike('team_name', teamName.trim())
-      .neq('status', 'cancelled')
-      .limit(1)
+  } else {
+    // Regular vouchers: single-use per team OR per phone
+    if (teamName?.trim()) {
+      const { data: usedByTeam } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('voucher_id', data.id)
+        .ilike('team_name', teamName.trim())
+        .neq('status', 'cancelled')
+        .limit(1)
 
-    if (used && used.length > 0) {
-      return NextResponse.json({ valid: false, error: 'Voucher sudah pernah digunakan oleh tim ini' })
+      if (usedByTeam && usedByTeam.length > 0) {
+        return NextResponse.json({ valid: false, error: 'Voucher sudah pernah digunakan oleh tim ini' })
+      }
+    }
+    if (phone?.trim()) {
+      const { data: usedByPhone } = await supabase
+        .from('bookings')
+        .select('id')
+        .eq('voucher_id', data.id)
+        .eq('phone', phone.trim())
+        .neq('status', 'cancelled')
+        .limit(1)
+
+      if (usedByPhone && usedByPhone.length > 0) {
+        return NextResponse.json({ valid: false, error: 'Voucher sudah pernah digunakan oleh nomor ini' })
+      }
     }
   }
 

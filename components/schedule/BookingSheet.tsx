@@ -114,6 +114,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
       try {
         const params = new URLSearchParams({ code: voucherCode.trim() })
         if (teamName.trim()) params.set('team_name', teamName.trim())
+        if (phone.trim()) params.set('phone', phone.trim())
         const res = await fetch(`/api/vouchers/validate?${params}`)
         const data = await res.json()
         if (data.valid) {
@@ -135,7 +136,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
     return () => {
       if (voucherTimerRef.current) clearTimeout(voucherTimerRef.current)
     }
-  }, [voucherCode, teamName])
+  }, [voucherCode, teamName, phone])
 
   // Geser sheet ke atas mengikuti keyboard — bekerja di iOS & Android
   useEffect(() => {
