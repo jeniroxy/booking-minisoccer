@@ -22,6 +22,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
   const [loyaltyEligible, setLoyaltyEligible] = useState(false)
   const [phone, setPhone] = useState('')
   const [voucherCode, setVoucherCode] = useState('')
+  const [voucherId, setVoucherId] = useState<string | null>(null)
   const [voucherDiscount, setVoucherDiscount] = useState<{ type: 'percent' | 'nominal'; value: number } | null>(null)
   const [voucherError, setVoucherError] = useState('')
   const [voucherLoading, setVoucherLoading] = useState(false)
@@ -70,6 +71,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
       setError('')
       setLoyaltyEligible(false)
       setVoucherCode('')
+      setVoucherId(null)
       setVoucherDiscount(null)
       setVoucherError('')
       if (sheetRef.current) sheetRef.current.style.bottom = '0px'
@@ -101,6 +103,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
   // Validasi voucher (debounce 600ms)
   useEffect(() => {
     if (!voucherCode.trim()) {
+      setVoucherId(null)
       setVoucherDiscount(null)
       setVoucherError('')
       return
@@ -109,16 +112,21 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
     voucherTimerRef.current = setTimeout(async () => {
       setVoucherLoading(true)
       try {
-        const res = await fetch(`/api/vouchers/validate?code=${encodeURIComponent(voucherCode.trim())}`)
+        const params = new URLSearchParams({ code: voucherCode.trim() })
+        if (teamName.trim()) params.set('team_name', teamName.trim())
+        const res = await fetch(`/api/vouchers/validate?${params}`)
         const data = await res.json()
         if (data.valid) {
+          setVoucherId(data.voucher.id)
           setVoucherDiscount({ type: data.voucher.discount_type, value: data.voucher.discount_value })
           setVoucherError('')
         } else {
+          setVoucherId(null)
           setVoucherDiscount(null)
           setVoucherError(data.error ?? 'Voucher tidak valid')
         }
       } catch {
+        setVoucherId(null)
         setVoucherDiscount(null)
         setVoucherError('Gagal memvalidasi voucher')
       }
@@ -127,7 +135,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
     return () => {
       if (voucherTimerRef.current) clearTimeout(voucherTimerRef.current)
     }
-  }, [voucherCode])
+  }, [voucherCode, teamName])
 
   // Geser sheet ke atas mengikuti keyboard — bekerja di iOS & Android
   useEffect(() => {
@@ -178,7 +186,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
           fetch('/api/bookings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ team_name: teamName.trim(), booking_date: bookingDateStr, time_slot_id: slot.id, total_price: slotTotals[i], phone: phone.trim() }),
+            body: JSON.stringify({ team_name: teamName.trim(), booking_date: bookingDateStr, time_slot_id: slot.id, total_price: slotTotals[i], phone: phone.trim(), ...(voucherId ? { voucher_id: voucherId } : {}) }),
           })
         )
       )

@@ -15,6 +15,7 @@ export interface Booking {
   time_slot_id: string
   status: 'pending' | 'confirmed' | 'cancelled'
   total_price: number | null
+  voucher_id: string | null
   followup_voucher_id: string | null
   created_at: string
 }

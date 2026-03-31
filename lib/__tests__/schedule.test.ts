@@ -58,7 +58,7 @@ describe('getSlotStatus', () => {
 
   it('returns pending for a pending booking', () => {
     const bookings: Booking[] = [
-      { id: 'bk1', team_name: 'A', booking_date: '2026-03-28', time_slot_id: 'slot-1', status: 'pending', total_price: null, phone: null, followup_voucher_id: null, created_at: '' },
+      { id: 'bk1', team_name: 'A', booking_date: '2026-03-28', time_slot_id: 'slot-1', status: 'pending', total_price: null, phone: null, voucher_id: null, followup_voucher_id: null, created_at: '' },
     ]
     const { status, bookingId } = getSlotStatus(slot, '2026-03-28', bookings, [], '2026-03-27')
     expect(status).toBe('pending')
@@ -67,7 +67,7 @@ describe('getSlotStatus', () => {
 
   it('returns confirmed for a confirmed booking', () => {
     const bookings: Booking[] = [
-      { id: 'bk1', team_name: 'A', booking_date: '2026-03-28', time_slot_id: 'slot-1', status: 'confirmed', total_price: null, phone: null, followup_voucher_id: null, created_at: '' },
+      { id: 'bk1', team_name: 'A', booking_date: '2026-03-28', time_slot_id: 'slot-1', status: 'confirmed', total_price: null, phone: null, voucher_id: null, followup_voucher_id: null, created_at: '' },
     ]
     const { status } = getSlotStatus(slot, '2026-03-28', bookings, [], '2026-03-27')
     expect(status).toBe('confirmed')
@@ -75,7 +75,7 @@ describe('getSlotStatus', () => {
 
   it('returns available when booking is cancelled (slot freed)', () => {
     const bookings: Booking[] = [
-      { id: 'bk1', team_name: 'A', booking_date: '2026-03-28', time_slot_id: 'slot-1', status: 'cancelled', total_price: null, phone: null, followup_voucher_id: null, created_at: '' },
+      { id: 'bk1', team_name: 'A', booking_date: '2026-03-28', time_slot_id: 'slot-1', status: 'cancelled', total_price: null, phone: null, voucher_id: null, followup_voucher_id: null, created_at: '' },
     ]
     const { status } = getSlotStatus(slot, '2026-03-28', bookings, [], '2026-03-27')
     expect(status).toBe('available')
@@ -86,7 +86,7 @@ describe('getSlotStatus', () => {
       { id: 'b1', date: '2026-03-28', time_slot_id: null, reason: null, created_at: '' },
     ]
     const bookings: Booking[] = [
-      { id: 'bk1', team_name: 'A', booking_date: '2026-03-28', time_slot_id: 'slot-1', status: 'pending', total_price: null, phone: null, followup_voucher_id: null, created_at: '' },
+      { id: 'bk1', team_name: 'A', booking_date: '2026-03-28', time_slot_id: 'slot-1', status: 'pending', total_price: null, phone: null, voucher_id: null, followup_voucher_id: null, created_at: '' },
     ]
     const { status } = getSlotStatus(slot, '2026-03-28', bookings, blocked, '2026-03-27')
     expect(status).toBe('blocked')
@@ -195,6 +195,7 @@ describe('getSlotStatus with teamName', () => {
       status: 'confirmed',
       total_price: null,
       phone: null,
+      voucher_id: null,
       followup_voucher_id: null,
       created_at: '2026-01-01T00:00:00Z',
     }
@@ -212,6 +213,7 @@ describe('getSlotStatus with teamName', () => {
       status: 'pending',
       total_price: null,
       phone: null,
+      voucher_id: null,
       followup_voucher_id: null,
       created_at: '2026-01-01T00:00:00Z',
     }
