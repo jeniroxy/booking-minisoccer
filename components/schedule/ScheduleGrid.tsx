@@ -149,6 +149,7 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
             time_slot_id: slot.id,
             status: 'pending' as const,
             total_price: null,
+            phone: null,
             created_at: new Date().toISOString(),
           })),
         ],

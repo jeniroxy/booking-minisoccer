@@ -116,7 +116,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
         <table className="w-full">
           <thead>
             <tr className="border-b border-slate-700">
-              {['Tanggal', 'Jam', 'Nama Tim', 'Harga', 'Status', 'Aksi'].map(h => (
+              {['Tanggal', 'Jam', 'Nama Tim', 'WA', 'Harga', 'Status', 'Aksi'].map(h => (
                 <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">
                   {h}
                 </th>
@@ -126,7 +126,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
           <tbody>
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-12 text-center text-[13px] text-slate-500">
+                <td colSpan={7} className="px-4 py-12 text-center text-[13px] text-slate-500">
                   Tidak ada booking
                 </td>
               </tr>
@@ -140,6 +140,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
                     : '–'}
                 </td>
                 <td className="px-4 py-3 text-[13px] font-medium text-slate-100">{booking.team_name}</td>
+                <td className="px-4 py-3 text-[13px] text-slate-400">{booking.phone || '–'}</td>
                 <td className="px-4 py-3 text-[13px] font-semibold text-green-400">
                   {booking.total_price != null
                     ? formatPrice(booking.total_price)
@@ -196,6 +197,9 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
             <div className="flex items-start justify-between gap-2">
               <div>
                 <p className="text-[13px] font-semibold text-slate-100">{booking.team_name}</p>
+                {booking.phone && (
+                  <p className="text-[11px] text-slate-400 mt-0.5">{booking.phone}</p>
+                )}
                 <p className="text-[11px] text-slate-500 mt-0.5">
                   {booking.booking_date}
                   {booking.time_slots && (

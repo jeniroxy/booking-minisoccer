@@ -11,6 +11,7 @@ export async function GET(req: NextRequest) {
   since.setDate(since.getDate() - 30)
   const sinceStr = since.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
 
+  // Check loyalty (booked within last 30 days)
   const { data } = await supabase
     .from('bookings')
     .select('id')
@@ -19,5 +20,16 @@ export async function GET(req: NextRequest) {
     .in('status', ['confirmed', 'pending'])
     .limit(1)
 
-  return NextResponse.json({ eligible: (data?.length ?? 0) > 0 })
+  // Check if team has ever booked before
+  const { data: anyBooking } = await supabase
+    .from('bookings')
+    .select('id')
+    .ilike('team_name', teamName)
+    .in('status', ['confirmed', 'pending'])
+    .limit(1)
+
+  return NextResponse.json({
+    eligible: (data?.length ?? 0) > 0,
+    isNewTeam: (anyBooking?.length ?? 0) === 0,
+  })
 }

@@ -10,6 +10,7 @@ export interface TimeSlot {
 export interface Booking {
   id: string
   team_name: string
+  phone: string | null
   booking_date: string   // 'YYYY-MM-DD'
   time_slot_id: string
   status: 'pending' | 'confirmed' | 'cancelled'
