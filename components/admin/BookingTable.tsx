@@ -27,19 +27,19 @@ function buildFollowUpUrl(booking: BookingWithSlot): string | null {
   if (!booking.phone) return null
   const phone = booking.phone.replace(/\D/g, '')
   const lines = [
-    `Halo ${booking.team_name}! Terima kasih sudah main di Zains Mini Soccer.`,
+    'Terima kasih sudah main di Zains Mini Soccer.',
     '',
   ]
   if (booking.vouchers) {
     lines.push(
       `Spesial buat kamu, pakai kode *${booking.vouchers.code}* untuk diskon Rp 50.000 di booking berikutnya!`,
-      `Berlaku sampai ${booking.vouchers.valid_until}.`,
+      `Berlaku sampai ${booking.vouchers.valid_until} (2 minggu ke depan).`,
       '',
     )
   }
   lines.push(
     'Yuk booking lagi di:',
-    'https://booking-minisoccer.vercel.app/jadwal',
+    'https://www.zains.id/jadwal',
     '',
     'Ditunggu kedatangannya lagi ya!',
   )
