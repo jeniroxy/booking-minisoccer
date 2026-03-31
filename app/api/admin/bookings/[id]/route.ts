@@ -38,24 +38,22 @@ export async function PATCH(
   }
 
   // Sync to Google Calendar
-  if (data.google_event_id) {
-    if (status === 'cancelled') {
+  if (status === 'cancelled') {
+    if (data.google_event_id) {
       await deleteCalendarEvent(data.google_event_id)
-    } else {
-      await updateCalendarEvent(data.google_event_id, {
-        teamName: data.team_name,
-        status,
-      })
     }
-  } else if (data.time_slots) {
-    // No calendar event yet — create one
+  } else if (status === 'confirmed' && data.time_slots) {
+    // Delete old pending event, then create new confirmed event
+    if (data.google_event_id) {
+      await deleteCalendarEvent(data.google_event_id)
+    }
     const eventId = await createCalendarEvent({
       bookingId: data.id,
       teamName: data.team_name,
       date: data.booking_date,
       startHour: data.time_slots.start_hour,
       endHour: data.time_slots.end_hour,
-      status,
+      status: 'confirmed',
     })
     if (eventId) {
       await supabase
