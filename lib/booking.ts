@@ -17,8 +17,7 @@ export function buildWAUrl(params: {
   }).format(params.totalPrice)
 
   const lines = [
-    'Halo Admin MiniSoccer!',
-    'Saya ingin booking lapangan.',
+    'A mau booking lapang buat:',
     '',
     `Nama Tim: ${params.teamName}`,
     `Tanggal: ${params.dateLabel}`,

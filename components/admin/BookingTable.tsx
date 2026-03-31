@@ -36,6 +36,7 @@ function StatusBadge({ status }: { status: string }) {
 export function BookingTable({ initialBookings }: { initialBookings: BookingWithSlot[] }) {
   const [bookings, setBookings] = useState(initialBookings)
   const [filter, setFilter] = useState<Filter>('all')
+  const [dateFilter, setDateFilter] = useState('')
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
@@ -47,8 +48,10 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
     return bHour - aHour
   })
   const filtered = sorted.filter(b => {
-    if (filter === 'all') return b.status !== 'cancelled'
-    return b.status === filter
+    if (filter === 'all' && b.status === 'cancelled') return false
+    if (filter !== 'all' && b.status !== filter) return false
+    if (dateFilter && b.booking_date !== dateFilter) return false
+    return true
   })
 
   const updateStatus = async (id: string, status: 'confirmed' | 'cancelled') => {
@@ -76,21 +79,39 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
 
   return (
     <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
-      {/* Filter pills */}
-      <div className="flex gap-2 p-3 border-b border-slate-700 overflow-x-auto">
-        {(['all', 'pending', 'confirmed', 'cancelled'] as Filter[]).map(f => (
-          <button
-            key={f}
-            onClick={() => setFilter(f)}
-            className={`flex-shrink-0 px-4 py-1.5 rounded-full text-[12px] font-medium transition-colors ${
-              filter === f
-                ? 'bg-green-500 text-green-950'
-                : 'bg-slate-900 border border-slate-700 text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            {filterLabels[f]}
-          </button>
-        ))}
+      {/* Filter pills + date filter */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 border-b border-slate-700">
+        <div className="flex gap-2 overflow-x-auto">
+          {(['all', 'pending', 'confirmed', 'cancelled'] as Filter[]).map(f => (
+            <button
+              key={f}
+              onClick={() => setFilter(f)}
+              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-[12px] font-medium transition-colors ${
+                filter === f
+                  ? 'bg-green-500 text-green-950'
+                  : 'bg-slate-900 border border-slate-700 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {filterLabels[f]}
+            </button>
+          ))}
+        </div>
+        <div className="flex items-center gap-2 sm:ml-auto">
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={e => setDateFilter(e.target.value)}
+            className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-[12px] text-slate-300 focus:outline-none focus:border-green-500 transition-colors"
+          />
+          {dateFilter && (
+            <button
+              onClick={() => setDateFilter('')}
+              className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              Reset
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Table — mobile: card list, desktop: table */}
