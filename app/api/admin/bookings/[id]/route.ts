@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminSession } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { updateCalendarEvent, deleteCalendarEvent } from '@/lib/google-calendar'
+import { createCalendarEvent, updateCalendarEvent, deleteCalendarEvent } from '@/lib/google-calendar'
 
 export async function PATCH(
   request: NextRequest,
@@ -30,7 +30,7 @@ export async function PATCH(
     .from('bookings')
     .update({ status })
     .eq('id', params.id)
-    .select()
+    .select('*, time_slots(start_hour, end_hour)')
     .single()
 
   if (error) {
@@ -46,6 +46,22 @@ export async function PATCH(
         teamName: data.team_name,
         status,
       })
+    }
+  } else if (data.time_slots) {
+    // No calendar event yet — create one
+    const eventId = await createCalendarEvent({
+      bookingId: data.id,
+      teamName: data.team_name,
+      date: data.booking_date,
+      startHour: data.time_slots.start_hour,
+      endHour: data.time_slots.end_hour,
+      status,
+    })
+    if (eventId) {
+      await supabase
+        .from('bookings')
+        .update({ google_event_id: eventId })
+        .eq('id', data.id)
     }
   }
 
