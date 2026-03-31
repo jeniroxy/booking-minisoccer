@@ -197,7 +197,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
             <div className="flex justify-between text-[11px]">
               <span className="text-slate-500">Kategori</span>
               <span className={`font-medium ${isStudent ? 'text-green-400' : 'text-slate-200'}`}>
-                {isStudent ? 'Pelajar (diskon 50K, maks 125K/jam)' : 'Umum'}
+                {isStudent ? 'Pelajar (diskon 50K)' : 'Umum'}
               </span>
             </div>
             {loyaltyDiscount > 0 && (
