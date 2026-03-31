@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 })
   }
 
-  // Sync to Google Calendar (non-blocking)
+  // Sync to Google Calendar (await — Vercel kills serverless after response)
   const { data: slot } = await supabase
     .from('time_slots')
     .select('start_hour, end_hour')
@@ -57,21 +57,20 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (slot) {
-    createCalendarEvent({
+    const eventId = await createCalendarEvent({
       bookingId: data.id,
       teamName: team_name.trim(),
       date: booking_date,
       startHour: slot.start_hour,
       endHour: slot.end_hour,
       status: 'pending',
-    }).then(async (eventId) => {
-      if (eventId) {
-        await supabase
-          .from('bookings')
-          .update({ google_event_id: eventId })
-          .eq('id', data.id)
-      }
     })
+    if (eventId) {
+      await supabase
+        .from('bookings')
+        .update({ google_event_id: eventId })
+        .eq('id', data.id)
+    }
   }
 
   return NextResponse.json(data, { status: 201 })
