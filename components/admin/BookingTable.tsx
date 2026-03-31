@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { formatHour, formatPrice } from '@/lib/schedule'
 import type { BookingWithSlot } from '@/lib/types'
 
@@ -35,21 +34,41 @@ function StatusBadge({ status }: { status: string }) {
 }
 
 export function BookingTable({ initialBookings }: { initialBookings: BookingWithSlot[] }) {
+  const [bookings, setBookings] = useState(initialBookings)
   const [filter, setFilter] = useState<Filter>('all')
   const [loadingId, setLoadingId] = useState<string | null>(null)
-  const router = useRouter()
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  const filtered = initialBookings.filter(b => filter === 'all' || b.status === filter)
+  const sorted = [...bookings].sort((a, b) => {
+    const dateCompare = b.booking_date.localeCompare(a.booking_date)
+    if (dateCompare !== 0) return dateCompare
+    const aHour = a.time_slots?.start_hour ?? 0
+    const bHour = b.time_slots?.start_hour ?? 0
+    return bHour - aHour
+  })
+  const filtered = sorted.filter(b => filter === 'all' || b.status === filter)
 
   const updateStatus = async (id: string, status: 'confirmed' | 'cancelled') => {
     setLoadingId(id)
-    await fetch(`/api/admin/bookings/${id}`, {
+    const res = await fetch(`/api/admin/bookings/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status }),
     })
+    if (res.ok) {
+      setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b))
+    }
     setLoadingId(null)
-    router.refresh()
+  }
+
+  const deleteBooking = async (id: string) => {
+    if (!confirm('Hapus booking ini? Data akan dihapus permanen.')) return
+    setDeletingId(id)
+    const res = await fetch(`/api/admin/bookings/${id}`, { method: 'DELETE' })
+    if (res.ok) {
+      setBookings(prev => prev.filter(b => b.id !== id))
+    }
+    setDeletingId(null)
   }
 
   return (
@@ -124,6 +143,13 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
                         Cancel
                       </button>
                     )}
+                    <button
+                      onClick={() => deleteBooking(booking.id)}
+                      disabled={deletingId === booking.id}
+                      className="px-3 py-1 rounded-lg text-[11px] font-bold bg-slate-700 border border-slate-600 text-slate-400 hover:text-red-400 hover:border-red-500/30 disabled:opacity-40 transition-colors"
+                    >
+                      {deletingId === booking.id ? '...' : 'Hapus'}
+                    </button>
                   </div>
                 </td>
               </tr>
@@ -175,6 +201,13 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
                   Cancel
                 </button>
               )}
+              <button
+                onClick={() => deleteBooking(booking.id)}
+                disabled={deletingId === booking.id}
+                className="flex-1 py-1.5 rounded-lg text-[12px] font-bold bg-slate-700 border border-slate-600 text-slate-400 hover:text-red-400 disabled:opacity-40 transition-colors"
+              >
+                {deletingId === booking.id ? '...' : 'Hapus'}
+              </button>
             </div>
           </div>
         ))}

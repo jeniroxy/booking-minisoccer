@@ -37,12 +37,12 @@ export async function PATCH(
     return NextResponse.json({ error: 'Failed to update booking' }, { status: 500 })
   }
 
-  // Sync to Google Calendar (non-blocking)
+  // Sync to Google Calendar
   if (data.google_event_id) {
     if (status === 'cancelled') {
-      deleteCalendarEvent(data.google_event_id)
+      await deleteCalendarEvent(data.google_event_id)
     } else {
-      updateCalendarEvent(data.google_event_id, {
+      await updateCalendarEvent(data.google_event_id, {
         teamName: data.team_name,
         status,
       })
@@ -50,4 +50,37 @@ export async function PATCH(
   }
 
   return NextResponse.json(data)
+}
+
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const authError = await requireAdminSession()
+  if (authError) return authError
+
+  const supabase = createAdminClient()
+
+  // Get booking first to check for calendar event
+  const { data: booking } = await supabase
+    .from('bookings')
+    .select('google_event_id')
+    .eq('id', params.id)
+    .single()
+
+  const { error } = await supabase
+    .from('bookings')
+    .delete()
+    .eq('id', params.id)
+
+  if (error) {
+    return NextResponse.json({ error: 'Failed to delete booking' }, { status: 500 })
+  }
+
+  // Remove from Google Calendar
+  if (booking?.google_event_id) {
+    await deleteCalendarEvent(booking.google_event_id)
+  }
+
+  return new NextResponse(null, { status: 204 })
 }
