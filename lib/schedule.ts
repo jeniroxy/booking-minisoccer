@@ -91,3 +91,8 @@ export function getEffectivePrice(slot: TimeSlot, dateStr: string, overrides: Sl
   const override = overrides.find(o => o.date === dateStr && o.time_slot_id === slot.id)
   return override ? override.price : slot.price
 }
+
+export function getStudentPrice(price: number): number {
+  const discounted = Math.max(0, price - STUDENT_DISCOUNT)
+  return price > MAX_STUDENT_PRICE ? Math.max(discounted, MAX_STUDENT_PRICE) : discounted
+}

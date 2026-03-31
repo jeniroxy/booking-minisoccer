@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { buildWAUrl, formatDateLabel } from '@/lib/booking'
-import { formatHour, formatPrice, getEffectivePrice, MAX_STUDENT_PRICE, LOYALTY_DISCOUNT } from '@/lib/schedule'
+import { formatHour, formatPrice, getEffectivePrice, getStudentPrice, LOYALTY_DISCOUNT } from '@/lib/schedule'
 import type { TimeSlot, SlotPriceOverride } from '@/lib/types'
 
 interface BookingSheetProps {
@@ -28,7 +28,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
   const bookingDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
   const slotPrice = (s: TimeSlot) => {
     const p = getEffectivePrice(s, bookingDateStr, priceOverrides)
-    return isStudent ? Math.min(p, MAX_STUDENT_PRICE) : p
+    return isStudent ? getStudentPrice(p) : p
   }
   const baseTotal = sorted.reduce((sum, s) => sum + slotPrice(s), 0)
   const loyaltyDiscount = !isStudent && loyaltyEligible ? LOYALTY_DISCOUNT : 0
@@ -186,7 +186,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
             <div className="flex justify-between text-[11px]">
               <span className="text-slate-500">Kategori</span>
               <span className={`font-medium ${isStudent ? 'text-green-400' : 'text-slate-200'}`}>
-                {isStudent ? 'Pelajar (maks Rp125.000/jam)' : 'Umum'}
+                {isStudent ? 'Pelajar (diskon 50K, maks 125K/jam)' : 'Umum'}
               </span>
             </div>
             {loyaltyDiscount > 0 && (
