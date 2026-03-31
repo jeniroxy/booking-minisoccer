@@ -40,13 +40,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
-  const sorted = [...bookings].sort((a, b) => {
-    const dateCompare = b.booking_date.localeCompare(a.booking_date)
-    if (dateCompare !== 0) return dateCompare
-    const aHour = a.time_slots?.start_hour ?? 0
-    const bHour = b.time_slots?.start_hour ?? 0
-    return bHour - aHour
-  })
+  const sorted = [...bookings].sort((a, b) => b.created_at.localeCompare(a.created_at))
   const filtered = sorted.filter(b => {
     if (filter === 'all' && b.status === 'cancelled') return false
     if (filter !== 'all' && b.status !== filter) return false
