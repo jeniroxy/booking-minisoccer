@@ -97,12 +97,19 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
           ))}
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
-          <input
-            type="date"
-            value={dateFilter}
-            onChange={e => setDateFilter(e.target.value)}
-            className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-[12px] text-slate-300 focus:outline-none focus:border-green-500 transition-colors"
-          />
+          <div className="relative">
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={e => setDateFilter(e.target.value)}
+              className={`bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-[12px] focus:outline-none focus:border-green-500 transition-colors ${dateFilter ? 'text-slate-300' : 'text-slate-500'}`}
+            />
+            {!dateFilter && (
+              <span className="pointer-events-none absolute inset-0 flex items-center px-3 text-[12px] text-slate-500">
+                Filter by Date
+              </span>
+            )}
+          </div>
           {dateFilter && (
             <button
               onClick={() => setDateFilter('')}
