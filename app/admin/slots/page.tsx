@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
+import { AdminNav } from '@/components/admin/AdminNav'
 import { SlotPageTabs } from '@/components/admin/SlotPageTabs'
 
 export default async function AdminSlotsPage() {
@@ -16,18 +16,7 @@ export default async function AdminSlotsPage() {
 
   return (
     <main className="min-h-screen bg-slate-950">
-      <nav className="bg-slate-950 border-b border-slate-800 px-4 py-2.5 sticky top-0 z-30">
-        <div className="max-w-[960px] mx-auto flex items-center gap-3">
-          <Link
-            href="/admin"
-            className="text-[12px] text-slate-500 hover:text-green-400 transition-colors"
-          >
-            ← Dashboard
-          </Link>
-          <span className="text-slate-700">|</span>
-          <span className="text-[14px] font-bold text-slate-100">Kelola Slot</span>
-        </div>
-      </nav>
+      <AdminNav />
 
       <div className="max-w-[960px] mx-auto py-6 px-4">
         <SlotPageTabs
