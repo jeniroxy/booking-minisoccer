@@ -16,7 +16,7 @@ export function FloatingBar({ slots, date, priceOverrides, isStudent, onPesan, o
   const sorted = [...slots].sort((a, b) => a.start_hour - b.start_hour)
   const slotPrice = (s: TimeSlot) => {
     const p = getEffectivePrice(s, date, priceOverrides)
-    return isStudent ? getStudentPrice(p) : p
+    return isStudent ? getStudentPrice(p, s.start_hour) : p
   }
   const total = sorted.reduce((sum, s) => sum + slotPrice(s), 0)
   const dur = sorted.length

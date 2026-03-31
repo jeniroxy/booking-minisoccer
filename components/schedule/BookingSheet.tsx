@@ -28,7 +28,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
   const bookingDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
   const slotPrice = (s: TimeSlot) => {
     const p = getEffectivePrice(s, bookingDateStr, priceOverrides)
-    return isStudent ? getStudentPrice(p) : p
+    return isStudent ? getStudentPrice(p, s.start_hour) : p
   }
   const baseTotal = sorted.reduce((sum, s) => sum + slotPrice(s), 0)
   const loyaltyDiscount = !isStudent && loyaltyEligible ? LOYALTY_DISCOUNT : 0

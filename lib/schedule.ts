@@ -2,6 +2,9 @@ import type { TimeSlot, Booking, BlockedDate, SlotStatus, SlotPriceOverride } fr
 
 export const STUDENT_DISCOUNT = 50000
 export const MAX_STUDENT_PRICE = 125000
+export const STUDENT_ROYALTY_DISCOUNT = 50000
+export const STUDENT_ROYALTY_START = 16  // 16:00
+export const STUDENT_ROYALTY_END = 21    // 21:00
 export const LOYALTY_DISCOUNT = 50000
 
 export function getSlotStatus(
@@ -92,7 +95,10 @@ export function getEffectivePrice(slot: TimeSlot, dateStr: string, overrides: Sl
   return override ? override.price : slot.price
 }
 
-export function getStudentPrice(price: number): number {
-  if (price <= MAX_STUDENT_PRICE) return price
-  return Math.max(price - STUDENT_DISCOUNT, MAX_STUDENT_PRICE)
+export function getStudentPrice(price: number, startHour?: number): number {
+  let p = price <= MAX_STUDENT_PRICE ? price : Math.max(price - STUDENT_DISCOUNT, MAX_STUDENT_PRICE)
+  if (startHour !== undefined && startHour >= STUDENT_ROYALTY_START && startHour < STUDENT_ROYALTY_END) {
+    p = Math.max(0, p - STUDENT_ROYALTY_DISCOUNT)
+  }
+  return p
 }
