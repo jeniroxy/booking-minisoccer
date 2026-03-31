@@ -13,6 +13,7 @@ export interface Booking {
   booking_date: string   // 'YYYY-MM-DD'
   time_slot_id: string
   status: 'pending' | 'confirmed' | 'cancelled'
+  total_price: number | null
   created_at: string
 }
 

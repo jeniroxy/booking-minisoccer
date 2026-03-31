@@ -162,12 +162,16 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
     setError('')
 
     try {
+      // Distribute total price proportionally across slots
+      const slotPrices = sorted.map(s => slotPrice(s))
+      const slotTotals = slotPrices.map(p => Math.round(p / baseTotal * totalPrice))
+
       const results = await Promise.all(
-        sorted.map(slot =>
+        sorted.map((slot, i) =>
           fetch('/api/bookings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ team_name: teamName.trim(), booking_date: bookingDateStr, time_slot_id: slot.id }),
+            body: JSON.stringify({ team_name: teamName.trim(), booking_date: bookingDateStr, time_slot_id: slot.id, total_price: slotTotals[i] }),
           })
         )
       )

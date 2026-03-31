@@ -151,7 +151,9 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
                 </td>
                 <td className="px-4 py-3 text-[13px] font-medium text-slate-100">{booking.team_name}</td>
                 <td className="px-4 py-3 text-[13px] font-semibold text-green-400">
-                  {booking.time_slots ? formatPrice(booking.time_slots.price) : '–'}
+                  {booking.total_price != null
+                    ? formatPrice(booking.total_price)
+                    : booking.time_slots ? formatPrice(booking.time_slots.price) : '–'}
                 </td>
                 <td className="px-4 py-3"><StatusBadge status={booking.status} /></td>
                 <td className="px-4 py-3">
@@ -214,9 +216,11 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
               <div className="flex items-center gap-2">
                 <div className="flex flex-col items-end gap-1.5">
                   <StatusBadge status={booking.status} />
-                  {booking.time_slots && (
-                    <span className="text-[12px] font-bold text-green-400">{formatPrice(booking.time_slots.price)}</span>
-                  )}
+                  <span className="text-[12px] font-bold text-green-400">
+                    {booking.total_price != null
+                      ? formatPrice(booking.total_price)
+                      : booking.time_slots ? formatPrice(booking.time_slots.price) : ''}
+                  </span>
                 </div>
                 {booking.status === 'cancelled' && (
                   <button
