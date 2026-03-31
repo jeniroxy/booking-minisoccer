@@ -13,6 +13,30 @@ const filterLabels: Record<Filter, string> = {
   cancelled: 'Cancelled',
 }
 
+function isBookingDone(booking: BookingWithSlot): boolean {
+  if (booking.status !== 'confirmed') return false
+  const now = new Date()
+  const jakartaStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+  const jakartaHour = parseInt(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false }))
+  if (booking.booking_date < jakartaStr) return true
+  if (booking.booking_date === jakartaStr && booking.time_slots && jakartaHour >= booking.time_slots.end_hour) return true
+  return false
+}
+
+function buildFollowUpUrl(booking: BookingWithSlot): string | null {
+  if (!booking.phone) return null
+  const phone = booking.phone.replace(/\D/g, '')
+  const msg = [
+    `Halo ${booking.team_name}! Terima kasih sudah main di Zains Mini Soccer.`,
+    '',
+    'Yuk booking lagi! Cek jadwal dan langsung booking di:',
+    'https://booking-minisoccer.vercel.app/jadwal',
+    '',
+    'Ditunggu kedatangannya lagi ya!',
+  ].join('\n')
+  return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
+}
+
 function StatusBadge({ status }: { status: string }) {
   if (status === 'pending')
     return (
@@ -179,6 +203,16 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
                         )}
                       </button>
                     )}
+                    {isBookingDone(booking) && buildFollowUpUrl(booking) && (
+                      <a
+                        href={buildFollowUpUrl(booking)!}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1 rounded-lg text-[11px] font-bold bg-blue-500/20 border border-blue-500/40 text-blue-400 hover:bg-blue-500/30 transition-colors"
+                      >
+                        Follow-up
+                      </a>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -249,6 +283,16 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
                   Cancel
                 </button>
               </div>
+            )}
+            {isBookingDone(booking) && buildFollowUpUrl(booking) && (
+              <a
+                href={buildFollowUpUrl(booking)!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block w-full text-center py-1.5 rounded-lg text-[12px] font-bold bg-blue-500/20 border border-blue-500/40 text-blue-400 hover:bg-blue-500/30 transition-colors"
+              >
+                Follow-up WA
+              </a>
             )}
           </div>
         ))}
