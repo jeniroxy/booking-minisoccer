@@ -91,12 +91,14 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
           ))}
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
-          <label className="text-[11px] text-slate-500 flex-shrink-0">Filter Tanggal:</label>
           <input
-            type="date"
+            type="text"
+            placeholder="Filter by Date"
             value={dateFilter}
+            onFocus={e => { e.target.type = 'date' }}
+            onBlur={e => { if (!e.target.value) e.target.type = 'text' }}
             onChange={e => setDateFilter(e.target.value)}
-            className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-[12px] text-slate-300 focus:outline-none focus:border-green-500 transition-colors [color-scheme:dark]"
+            className="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-[12px] text-slate-300 placeholder-slate-500 focus:outline-none focus:border-green-500 transition-colors [color-scheme:dark]"
           />
           {dateFilter && (
             <button
