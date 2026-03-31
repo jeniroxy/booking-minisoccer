@@ -13,7 +13,7 @@ export default async function AdminPage() {
 
   const { data: bookings } = await supabase
     .from('bookings')
-    .select('*, time_slots(*)')
+    .select('*, time_slots(*), vouchers:followup_voucher_id(code, valid_until)')
     .order('booking_date', { ascending: false })
 
   return (

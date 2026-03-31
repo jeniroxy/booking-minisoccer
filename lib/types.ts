@@ -15,6 +15,7 @@ export interface Booking {
   time_slot_id: string
   status: 'pending' | 'confirmed' | 'cancelled'
   total_price: number | null
+  followup_voucher_id: string | null
   created_at: string
 }
 
@@ -43,7 +44,10 @@ export interface ScheduleData {
   priceOverrides: SlotPriceOverride[]
 }
 
-export type BookingWithSlot = Booking & { time_slots: TimeSlot }
+export type BookingWithSlot = Booking & {
+  time_slots: TimeSlot
+  vouchers?: { code: string; valid_until: string } | null
+}
 
 export interface Voucher {
   id: string

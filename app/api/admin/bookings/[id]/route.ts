@@ -61,6 +61,36 @@ export async function PATCH(
         .update({ google_event_id: eventId })
         .eq('id', data.id)
     }
+
+    // Auto-generate follow-up voucher (50K discount, valid 14 days from booking date)
+    const voucherCode = `MAINLAGI-${data.team_name.replace(/\s+/g, '').toUpperCase().slice(0, 10)}-${Date.now().toString(36).toUpperCase()}`
+    const validFrom = data.booking_date
+    const validUntilDate = new Date(data.booking_date)
+    validUntilDate.setDate(validUntilDate.getDate() + 14)
+    const validUntil = validUntilDate.toISOString().split('T')[0]
+
+    const { data: voucher } = await supabase
+      .from('vouchers')
+      .insert({
+        code: voucherCode,
+        name: `Follow-up ${data.team_name}`,
+        discount_type: 'nominal',
+        discount_value: 50000,
+        valid_from: validFrom,
+        valid_until: validUntil,
+        is_active: true,
+      })
+      .select('id, code, valid_until')
+      .single()
+
+    if (voucher) {
+      await supabase
+        .from('bookings')
+        .update({ followup_voucher_id: voucher.id })
+        .eq('id', data.id)
+      data.followup_voucher_id = voucher.id
+      data._followup_voucher = { code: voucher.code, valid_until: voucher.valid_until }
+    }
   }
 
   return NextResponse.json(data)

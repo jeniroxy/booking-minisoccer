@@ -150,6 +150,7 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
             status: 'pending' as const,
             total_price: null,
             phone: null,
+            followup_voucher_id: null,
             created_at: new Date().toISOString(),
           })),
         ],

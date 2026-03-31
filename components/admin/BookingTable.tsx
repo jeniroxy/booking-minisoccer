@@ -26,15 +26,24 @@ function isBookingDone(booking: BookingWithSlot): boolean {
 function buildFollowUpUrl(booking: BookingWithSlot): string | null {
   if (!booking.phone) return null
   const phone = booking.phone.replace(/\D/g, '')
-  const msg = [
+  const lines = [
     `Halo ${booking.team_name}! Terima kasih sudah main di Zains Mini Soccer.`,
     '',
-    'Yuk booking lagi! Cek jadwal dan langsung booking di:',
+  ]
+  if (booking.vouchers) {
+    lines.push(
+      `Spesial buat kamu, pakai kode *${booking.vouchers.code}* untuk diskon Rp 50.000 di booking berikutnya!`,
+      `Berlaku sampai ${booking.vouchers.valid_until}.`,
+      '',
+    )
+  }
+  lines.push(
+    'Yuk booking lagi di:',
     'https://booking-minisoccer.vercel.app/jadwal',
     '',
     'Ditunggu kedatangannya lagi ya!',
-  ].join('\n')
-  return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`
+  )
+  return `https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`
 }
 
 function StatusBadge({ status }: { status: string }) {
