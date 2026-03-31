@@ -111,7 +111,7 @@ export function SlotGrid({
 }: SlotGridProps) {
   const slotPrice = (s: TimeSlot) => {
     const p = getEffectivePrice(s, date, priceOverrides)
-    return isStudent ? getStudentPrice(p, s.start_hour) : p
+    return isStudent ? getStudentPrice(p) : p
   }
   const activeDate = new Date(date + 'T00:00:00')
 

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { buildWAUrl, formatDateLabel } from '@/lib/booking'
-import { formatHour, formatPrice, getEffectivePrice, getStudentPrice, LOYALTY_DISCOUNT } from '@/lib/schedule'
+import { formatHour, formatPrice, getEffectivePrice, getStudentPrice, LOYALTY_DISCOUNT, STUDENT_LOYALTY_DISCOUNT, STUDENT_LOYALTY_START, STUDENT_LOYALTY_END } from '@/lib/schedule'
 import type { TimeSlot, SlotPriceOverride } from '@/lib/types'
 
 interface BookingSheetProps {
@@ -28,10 +28,21 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
   const bookingDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
   const slotPrice = (s: TimeSlot) => {
     const p = getEffectivePrice(s, bookingDateStr, priceOverrides)
-    return isStudent ? getStudentPrice(p, s.start_hour) : p
+    return isStudent ? getStudentPrice(p) : p
   }
   const baseTotal = sorted.reduce((sum, s) => sum + slotPrice(s), 0)
-  const loyaltyDiscount = !isStudent && loyaltyEligible ? LOYALTY_DISCOUNT : 0
+
+  // Loyalty discount: Umum = flat 50K, Pelajar = 50K per slot jam 16:00-21:00
+  let loyaltyDiscount = 0
+  if (loyaltyEligible) {
+    if (!isStudent) {
+      loyaltyDiscount = LOYALTY_DISCOUNT
+    } else {
+      loyaltyDiscount = sorted
+        .filter(s => s.start_hour >= STUDENT_LOYALTY_START && s.start_hour < STUDENT_LOYALTY_END)
+        .length * STUDENT_LOYALTY_DISCOUNT
+    }
+  }
 
   const totalPrice = Math.max(0, baseTotal - loyaltyDiscount)
 
@@ -46,9 +57,9 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
     }
   }, [isOpen])
 
-  // Cek loyalty saat user mengetik nama tim (debounce 600ms, hanya untuk Umum)
+  // Cek loyalty saat user mengetik nama tim (debounce 600ms)
   useEffect(() => {
-    if (isStudent || !teamName.trim()) {
+    if (!teamName.trim()) {
       setLoyaltyEligible(false)
       return
     }
@@ -191,7 +202,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
             </div>
             {loyaltyDiscount > 0 && (
               <div className="flex justify-between text-[11px]">
-                <span className="text-amber-400 font-medium">🎉 Diskon Loyal</span>
+                <span className="text-amber-400 font-medium">🎉 Diskon Royalti</span>
                 <span className="text-amber-400 font-semibold">-{formatPrice(loyaltyDiscount)}</span>
               </div>
             )}
