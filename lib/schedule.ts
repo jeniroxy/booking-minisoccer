@@ -93,6 +93,6 @@ export function getEffectivePrice(slot: TimeSlot, dateStr: string, overrides: Sl
 }
 
 export function getStudentPrice(price: number): number {
-  const discounted = Math.max(0, price - STUDENT_DISCOUNT)
-  return price > MAX_STUDENT_PRICE ? Math.max(discounted, MAX_STUDENT_PRICE) : discounted
+  if (price <= MAX_STUDENT_PRICE) return price
+  return Math.max(price - STUDENT_DISCOUNT, MAX_STUDENT_PRICE)
 }
