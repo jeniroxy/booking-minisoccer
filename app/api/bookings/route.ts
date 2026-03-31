@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createCalendarEvent } from '@/lib/google-calendar'
 
 export async function POST(request: NextRequest) {
   let body: unknown
@@ -46,6 +47,31 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 })
+  }
+
+  // Sync to Google Calendar (non-blocking)
+  const { data: slot } = await supabase
+    .from('time_slots')
+    .select('start_hour, end_hour')
+    .eq('id', time_slot_id)
+    .single()
+
+  if (slot) {
+    createCalendarEvent({
+      bookingId: data.id,
+      teamName: team_name.trim(),
+      date: booking_date,
+      startHour: slot.start_hour,
+      endHour: slot.end_hour,
+      status: 'pending',
+    }).then(async (eventId) => {
+      if (eventId) {
+        await supabase
+          .from('bookings')
+          .update({ google_event_id: eventId })
+          .eq('id', data.id)
+      }
+    })
   }
 
   return NextResponse.json(data, { status: 201 })

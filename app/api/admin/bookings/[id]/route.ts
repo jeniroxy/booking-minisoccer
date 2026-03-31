@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminSession } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { updateCalendarEvent, deleteCalendarEvent } from '@/lib/google-calendar'
 
 export async function PATCH(
   request: NextRequest,
@@ -34,6 +35,18 @@ export async function PATCH(
 
   if (error) {
     return NextResponse.json({ error: 'Failed to update booking' }, { status: 500 })
+  }
+
+  // Sync to Google Calendar (non-blocking)
+  if (data.google_event_id) {
+    if (status === 'cancelled') {
+      deleteCalendarEvent(data.google_event_id)
+    } else {
+      updateCalendarEvent(data.google_event_id, {
+        teamName: data.team_name,
+        status,
+      })
+    }
   }
 
   return NextResponse.json(data)
