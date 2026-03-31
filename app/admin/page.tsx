@@ -4,6 +4,8 @@ import { AdminNav } from '@/components/admin/AdminNav'
 import { BookingTable } from '@/components/admin/BookingTable'
 import type { BookingWithSlot } from '@/lib/types'
 
+export const dynamic = 'force-dynamic'
+
 export default async function AdminPage() {
   const supabase = createClient()
   const { data: { session } } = await supabase.auth.getSession()
