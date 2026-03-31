@@ -20,16 +20,17 @@ export async function GET(req: NextRequest) {
     .in('status', ['confirmed', 'pending'])
     .limit(1)
 
-  // Check if team has ever booked before
-  const { data: anyBooking } = await supabase
+  // Get last known phone for this team
+  const { data: lastBooking } = await supabase
     .from('bookings')
-    .select('id')
+    .select('phone')
     .ilike('team_name', teamName)
-    .in('status', ['confirmed', 'pending'])
+    .not('phone', 'is', null)
+    .order('created_at', { ascending: false })
     .limit(1)
 
   return NextResponse.json({
     eligible: (data?.length ?? 0) > 0,
-    isNewTeam: (anyBooking?.length ?? 0) === 0,
+    lastPhone: lastBooking?.[0]?.phone ?? null,
   })
 }

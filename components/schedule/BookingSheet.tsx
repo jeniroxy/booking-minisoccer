@@ -20,7 +20,6 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [loyaltyEligible, setLoyaltyEligible] = useState(false)
-  const [isNewTeam, setIsNewTeam] = useState(false)
   const [phone, setPhone] = useState('')
   const [voucherCode, setVoucherCode] = useState('')
   const [voucherDiscount, setVoucherDiscount] = useState<{ type: 'percent' | 'nominal'; value: number } | null>(null)
@@ -70,7 +69,6 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
       setPhone('')
       setError('')
       setLoyaltyEligible(false)
-      setIsNewTeam(false)
       setVoucherCode('')
       setVoucherDiscount(null)
       setVoucherError('')
@@ -82,19 +80,17 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
   useEffect(() => {
     if (!teamName.trim()) {
       setLoyaltyEligible(false)
-      setIsNewTeam(false)
       return
     }
     if (loyaltyTimerRef.current) clearTimeout(loyaltyTimerRef.current)
     loyaltyTimerRef.current = setTimeout(async () => {
       try {
         const res = await fetch(`/api/bookings/loyalty?team_name=${encodeURIComponent(teamName.trim())}`)
-        const { eligible, isNewTeam: newTeam } = await res.json()
+        const { eligible, lastPhone } = await res.json()
         setLoyaltyEligible(eligible)
-        setIsNewTeam(newTeam)
+        if (lastPhone && !phone) setPhone(lastPhone)
       } catch {
         setLoyaltyEligible(false)
-        setIsNewTeam(false)
       }
     }, 600)
     return () => {
@@ -160,8 +156,8 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
       setError('Nama tim wajib diisi')
       return
     }
-    if (isNewTeam && !phone.trim()) {
-      setError('No WhatsApp wajib diisi untuk tim baru')
+    if (!phone.trim()) {
+      setError('No WhatsApp wajib diisi')
       return
     }
 
@@ -182,7 +178,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
           fetch('/api/bookings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ team_name: teamName.trim(), booking_date: bookingDateStr, time_slot_id: slot.id, total_price: slotTotals[i], ...(isNewTeam && phone.trim() ? { phone: phone.trim() } : {}) }),
+            body: JSON.stringify({ team_name: teamName.trim(), booking_date: bookingDateStr, time_slot_id: slot.id, total_price: slotTotals[i], phone: phone.trim() }),
           })
         )
       )
@@ -293,15 +289,13 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
             onChange={e => setTeamName(e.target.value)}
             className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[12px] text-slate-100 placeholder-slate-500 outline-none focus:border-green-500"
           />
-          {isNewTeam && teamName.trim() && (
-            <input
-              type="tel"
-              placeholder="No WhatsApp (wajib untuk tim baru)"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[12px] text-slate-100 placeholder-slate-500 outline-none focus:border-green-500"
-            />
-          )}
+          <input
+            type="tel"
+            placeholder="No WhatsApp"
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[12px] text-slate-100 placeholder-slate-500 outline-none focus:border-green-500"
+          />
           <div className="relative">
             <input
               type="text"
