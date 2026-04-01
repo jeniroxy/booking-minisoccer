@@ -73,7 +73,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
         const res = await fetch(`/api/bookings/loyalty?team_name=${encodeURIComponent(teamName.trim())}`)
         const { lastPhone, voucherCode: availableVoucher } = await res.json()
         if (lastPhone && !phone) setPhone(lastPhone)
-        if (availableVoucher && !voucherCode) setVoucherCode(availableVoucher)
+        if (availableVoucher && !voucherCode && baseTotal >= 200000) setVoucherCode(availableVoucher)
       } catch {
         // ignore
       }
