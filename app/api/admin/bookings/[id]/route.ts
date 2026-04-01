@@ -62,7 +62,21 @@ export async function PATCH(
         .eq('id', data.id)
     }
 
-    // Auto-generate follow-up voucher (50K discount, valid 14 days from booking date)
+    // Auto-generate follow-up voucher only if total booking >= 200K
+    const { data: allSlots } = await supabase
+      .from('bookings')
+      .select('total_price, followup_voucher_id')
+      .eq('team_name', data.team_name)
+      .eq('booking_date', data.booking_date)
+      .neq('status', 'cancelled')
+
+    const bookingTotal = (allSlots ?? []).reduce((sum, b) => sum + (b.total_price ?? 0), 0)
+    const alreadyHasVoucher = (allSlots ?? []).some(b => b.followup_voucher_id)
+
+    if (bookingTotal < 200000 || alreadyHasVoucher) {
+      return NextResponse.json(data)
+    }
+
     const voucherCode = `MAINLAGI-${data.team_name.replace(/\s+/g, '').toUpperCase().slice(0, 10)}-${Date.now().toString(36).toUpperCase()}`
     const validFrom = data.booking_date
     const validUntilDate = new Date(data.booking_date)
