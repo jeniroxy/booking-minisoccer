@@ -65,12 +65,15 @@ export async function PATCH(
     // Auto-generate follow-up voucher only if total booking >= 200K
     const { data: allSlots } = await supabase
       .from('bookings')
-      .select('total_price, followup_voucher_id')
+      .select('total_price, followup_voucher_id, time_slots(price)')
       .eq('team_name', data.team_name)
       .eq('booking_date', data.booking_date)
       .neq('status', 'cancelled')
 
-    const bookingTotal = (allSlots ?? []).reduce((sum, b) => sum + (b.total_price ?? 0), 0)
+    const bookingTotal = (allSlots ?? []).reduce((sum, b) => {
+      const price = b.total_price ?? (b.time_slots as unknown as { price: number })?.price ?? 0
+      return sum + price
+    }, 0)
     const alreadyHasVoucher = (allSlots ?? []).some(b => b.followup_voucher_id)
 
     if (bookingTotal < 200000 || alreadyHasVoucher) {
