@@ -2,10 +2,6 @@ import type { TimeSlot, Booking, BlockedDate, SlotStatus, SlotPriceOverride } fr
 
 export const STUDENT_DISCOUNT = 50000
 export const MAX_STUDENT_PRICE = 125000
-export const LOYALTY_DISCOUNT = 50000
-export const STUDENT_LOYALTY_DISCOUNT = 50000
-export const STUDENT_LOYALTY_START = 16  // 16:00
-export const STUDENT_LOYALTY_END = 21    // 21:00
 
 export function getSlotStatus(
   slot: TimeSlot,

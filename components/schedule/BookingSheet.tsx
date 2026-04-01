@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { buildWAUrl, formatDateLabel } from '@/lib/booking'
-import { formatHour, formatPrice, getEffectivePrice, getStudentPrice, LOYALTY_DISCOUNT, STUDENT_LOYALTY_DISCOUNT, STUDENT_LOYALTY_START, STUDENT_LOYALTY_END } from '@/lib/schedule'
+import { formatHour, formatPrice, getEffectivePrice, getStudentPrice } from '@/lib/schedule'
 import type { TimeSlot, SlotPriceOverride } from '@/lib/types'
 
 interface BookingSheetProps {
@@ -19,7 +19,6 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
   const [teamName, setTeamName] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-  const [loyaltyEligible, setLoyaltyEligible] = useState(false)
   const [phone, setPhone] = useState('')
   const [voucherCode, setVoucherCode] = useState('')
   const [voucherId, setVoucherId] = useState<string | null>(null)
@@ -28,7 +27,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
   const [voucherLoading, setVoucherLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
   const sheetRef = useRef<HTMLDivElement>(null)
-  const loyaltyTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const teamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const voucherTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const sorted = [...slots].sort((a, b) => a.start_hour - b.start_hour)
@@ -39,28 +38,16 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
   }
   const baseTotal = sorted.reduce((sum, s) => sum + slotPrice(s), 0)
 
-  // Loyalty discount: Umum = flat 50K, Pelajar = 50K per slot jam 16:00-21:00
-  let loyaltyDiscount = 0
-  if (loyaltyEligible) {
-    if (!isStudent) {
-      loyaltyDiscount = LOYALTY_DISCOUNT
-    } else {
-      loyaltyDiscount = sorted
-        .filter(s => s.start_hour >= STUDENT_LOYALTY_START && s.start_hour < STUDENT_LOYALTY_END)
-        .length * STUDENT_LOYALTY_DISCOUNT
-    }
-  }
-
   let voucherAmount = 0
   if (voucherDiscount) {
     if (voucherDiscount.type === 'nominal') {
       voucherAmount = voucherDiscount.value
     } else {
-      voucherAmount = Math.round((baseTotal - loyaltyDiscount) * voucherDiscount.value / 100)
+      voucherAmount = Math.round(baseTotal * voucherDiscount.value / 100)
     }
   }
 
-  const totalPrice = Math.max(0, baseTotal - loyaltyDiscount - voucherAmount)
+  const totalPrice = Math.max(0, baseTotal - voucherAmount)
 
   useEffect(() => {
     if (isOpen) {
@@ -69,7 +56,6 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
       setTeamName('')
       setPhone('')
       setError('')
-      setLoyaltyEligible(false)
       setVoucherCode('')
       setVoucherId(null)
       setVoucherDiscount(null)
@@ -78,27 +64,24 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
     }
   }, [isOpen])
 
-  // Cek loyalty saat user mengetik nama tim (debounce 600ms)
+  // Cek tim returning: auto-fill phone & voucher follow-up (debounce 600ms)
   useEffect(() => {
-    if (!teamName.trim()) {
-      setLoyaltyEligible(false)
-      return
-    }
-    if (loyaltyTimerRef.current) clearTimeout(loyaltyTimerRef.current)
-    loyaltyTimerRef.current = setTimeout(async () => {
+    if (!teamName.trim()) return
+    if (teamTimerRef.current) clearTimeout(teamTimerRef.current)
+    teamTimerRef.current = setTimeout(async () => {
       try {
         const res = await fetch(`/api/bookings/loyalty?team_name=${encodeURIComponent(teamName.trim())}`)
-        const { eligible, lastPhone } = await res.json()
-        setLoyaltyEligible(eligible)
+        const { lastPhone, voucherCode: availableVoucher } = await res.json()
         if (lastPhone && !phone) setPhone(lastPhone)
+        if (availableVoucher && !voucherCode) setVoucherCode(availableVoucher)
       } catch {
-        setLoyaltyEligible(false)
+        // ignore
       }
     }, 600)
     return () => {
-      if (loyaltyTimerRef.current) clearTimeout(loyaltyTimerRef.current)
+      if (teamTimerRef.current) clearTimeout(teamTimerRef.current)
     }
-  }, [teamName, isStudent])
+  }, [teamName])
 
   // Validasi voucher (debounce 600ms)
   useEffect(() => {
@@ -269,12 +252,6 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
                 {isStudent ? 'Pelajar (diskon 50K)' : 'Umum'}
               </span>
             </div>
-            {loyaltyDiscount > 0 && (
-              <div className="flex justify-between text-[11px]">
-                <span className="text-amber-400 font-medium">🎉 Diskon Royalti</span>
-                <span className="text-amber-400 font-semibold">-{formatPrice(loyaltyDiscount)}</span>
-              </div>
-            )}
             {voucherAmount > 0 && (
               <div className="flex justify-between text-[11px]">
                 <span className="text-purple-400 font-medium">🎟️ Voucher ({voucherCode.toUpperCase()})</span>
