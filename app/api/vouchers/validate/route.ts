@@ -5,6 +5,7 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get('code')
   const teamName = request.nextUrl.searchParams.get('team_name')
   const phone = request.nextUrl.searchParams.get('phone')
+  const baseTotal = Number(request.nextUrl.searchParams.get('base_total') || '0')
   if (!code) {
     return NextResponse.json({ error: 'code is required' }, { status: 400 })
   }
@@ -28,6 +29,10 @@ export async function GET(request: NextRequest) {
   // Auto-generated follow-up vouchers (MAINLAGI-*) are single-use globally
   const isFollowUpVoucher = data.code.startsWith('MAINLAGI-')
   if (isFollowUpVoucher) {
+    if (baseTotal < 200000) {
+      return NextResponse.json({ valid: false, error: 'Voucher ini hanya berlaku untuk booking minimal Rp 200.000' })
+    }
+
     const { data: used } = await supabase
       .from('bookings')
       .select('id')

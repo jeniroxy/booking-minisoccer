@@ -95,7 +95,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
     voucherTimerRef.current = setTimeout(async () => {
       setVoucherLoading(true)
       try {
-        const params = new URLSearchParams({ code: voucherCode.trim() })
+        const params = new URLSearchParams({ code: voucherCode.trim(), base_total: String(baseTotal) })
         if (teamName.trim()) params.set('team_name', teamName.trim())
         if (phone.trim()) params.set('phone', phone.trim())
         const res = await fetch(`/api/vouchers/validate?${params}`)
