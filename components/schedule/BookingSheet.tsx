@@ -20,7 +20,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [phone, setPhone] = useState('')
-  const [isReturningTeam, setIsReturningTeam] = useState(false)
+  const [showPhone, setShowPhone] = useState(false)
   const [voucherCode, setVoucherCode] = useState('')
   const [voucherId, setVoucherId] = useState<string | null>(null)
   const [voucherDiscount, setVoucherDiscount] = useState<{ type: 'percent' | 'nominal'; value: number } | null>(null)
@@ -56,7 +56,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
     } else {
       setTeamName('')
       setPhone('')
-      setIsReturningTeam(false)
+      setShowPhone(false)
       setError('')
       setVoucherCode('')
       setVoucherId(null)
@@ -75,10 +75,10 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
         const res = await fetch(`/api/bookings/loyalty?team_name=${encodeURIComponent(teamName.trim())}`)
         const { lastPhone, voucherCode: availableVoucher } = await res.json()
         if (lastPhone) {
-          setIsReturningTeam(true)
+          setShowPhone(false)
           if (!phone) setPhone(lastPhone)
         } else {
-          setIsReturningTeam(false)
+          setShowPhone(true)
         }
         if (availableVoucher && !voucherCode && baseTotal >= 200000) setVoucherCode(availableVoucher)
       } catch {
@@ -282,7 +282,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
             onChange={e => setTeamName(e.target.value)}
             className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[12px] text-slate-100 placeholder-slate-500 outline-none focus:border-green-500"
           />
-          {!isReturningTeam && (
+          {showPhone && (
             <input
               type="tel"
               placeholder="No WhatsApp"
