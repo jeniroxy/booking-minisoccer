@@ -73,14 +73,20 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
   const [dateFilter, setDateFilter] = useState('')
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const sendViaWABusiness = (url: string) => {
+  const toWABusinessUrl = (waUrl: string): string => {
     const isAndroid = /Android/i.test(navigator.userAgent)
-    const params = url.replace('whatsapp://send?', '')
-    const businessUrl = isAndroid
-      ? `intent://send?${params}#Intent;package=com.whatsapp.w4b;scheme=whatsapp;end`
-      : url
-    window.open(businessUrl, '_blank')
+    if (isAndroid) {
+      const params = waUrl.replace('whatsapp://send?', '')
+      return `intent://send?${params}#Intent;package=com.whatsapp.w4b;scheme=whatsapp;end`
+    }
+    // Desktop: wa.me opens WA Web (works without WA Desktop installed)
+    const urlParams = new URLSearchParams(waUrl.replace('whatsapp://send?', ''))
+    const phone = urlParams.get('phone') ?? ''
+    const text = urlParams.get('text') ?? ''
+    return `https://wa.me/${phone}?text=${encodeURIComponent(decodeURIComponent(text))}`
   }
+
+  const sendViaWABusiness = (url: string) => window.open(toWABusinessUrl(url), '_blank')
 
   const sorted = [...bookings].sort((a, b) => b.created_at.localeCompare(a.created_at))
   const filtered = sorted.filter(b => {
@@ -92,6 +98,9 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
 
   const updateStatus = async (id: string, status: 'confirmed' | 'cancelled') => {
     const bookingSnapshot = status === 'confirmed' ? bookings.find(b => b.id === id) : undefined
+    const waUrl = bookingSnapshot ? buildConfirmUrl(bookingSnapshot) : null
+    // Open blank window synchronously (before await) to avoid popup blocker
+    const newWindow = waUrl ? window.open('', '_blank') : null
     setLoadingId(id)
     const res = await fetch(`/api/admin/bookings/${id}`, {
       method: 'PATCH',
@@ -100,10 +109,13 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
     })
     if (res.ok) {
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b))
-      if (bookingSnapshot) {
-        const waUrl = buildConfirmUrl(bookingSnapshot)
-        if (waUrl) sendViaWABusiness(waUrl)
+      if (newWindow && waUrl) {
+        newWindow.location.href = toWABusinessUrl(waUrl)
+      } else {
+        newWindow?.close()
       }
+    } else {
+      newWindow?.close()
     }
     setLoadingId(null)
   }
