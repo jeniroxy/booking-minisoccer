@@ -113,7 +113,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b))
       if (bookingSnapshot) {
         const waUrl = buildConfirmUrl(bookingSnapshot)
-        if (waUrl) openWAPicker(waUrl)
+        if (waUrl) sendViaWABusiness(waUrl)
       }
     }
     setLoadingId(null)
