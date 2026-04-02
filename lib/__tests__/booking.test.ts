@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildWAUrl, formatDateLabel, buildConfirmUrl } from '../booking'
+import { buildWAUrl, formatDateLabel, buildConfirmUrl, normalizePhone } from '../booking'
 
 describe('buildWAUrl', () => {
   it('returns a whatsapp:// URL with the correct phone number', () => {
@@ -96,14 +96,19 @@ describe('buildConfirmUrl', () => {
     expect(buildConfirmUrl({ ...baseBooking, phone: '' })).toBeNull()
   })
 
-  it('returns a whatsapp:// URL with digits-only phone', () => {
+  it('returns a whatsapp:// URL with normalized phone', () => {
     const url = buildConfirmUrl(baseBooking)
-    expect(url).toMatch(/^whatsapp:\/\/send\?phone=08123456789/)
+    expect(url).toMatch(/^whatsapp:\/\/send\?phone=628123456789/)
   })
 
   it('strips non-digit characters from phone', () => {
     const url = buildConfirmUrl({ ...baseBooking, phone: '+62 812-3456-789' })
     expect(url).toMatch(/^whatsapp:\/\/send\?phone=62812345678/)
+  })
+
+  it('converts Indonesian local format (08xx) to international format (628xx)', () => {
+    const url = buildConfirmUrl({ ...baseBooking, phone: '081399939894' })
+    expect(url).toMatch(/^whatsapp:\/\/send\?phone=6281399939894/)
   })
 
   it('includes team name in message', () => {
@@ -140,5 +145,23 @@ describe('buildConfirmUrl', () => {
     const url = buildConfirmUrl({ ...baseBooking, time_slots: null, total_price: 120000 })!
     expect(url).not.toBeNull()
     expect(decodeURIComponent(url)).toContain('120')
+  })
+})
+
+describe('normalizePhone', () => {
+  it('converts 08xx to 628xx', () => {
+    expect(normalizePhone('081399939894')).toBe('6281399939894')
+  })
+
+  it('keeps 62xx unchanged', () => {
+    expect(normalizePhone('6281399939894')).toBe('6281399939894')
+  })
+
+  it('strips non-digit characters from +62 format', () => {
+    expect(normalizePhone('+62 813-9993-9894')).toBe('6281399939894')
+  })
+
+  it('strips spaces from local format and converts to international', () => {
+    expect(normalizePhone('0813 9993 9894')).toBe('6281399939894')
   })
 })

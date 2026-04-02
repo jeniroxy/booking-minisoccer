@@ -1,3 +1,9 @@
+export function normalizePhone(phone: string): string {
+  const digits = phone.replace(/\D/g, '')
+  if (digits.startsWith('0')) return '62' + digits.slice(1)
+  return digits
+}
+
 function formatPriceIDR(amount: number): string {
   return new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -53,7 +59,7 @@ export function buildConfirmUrl(booking: {
   total_price: number | null
 }): string | null {
   if (!booking.phone) return null
-  const phone = booking.phone.replace(/\D/g, '')
+  const phone = normalizePhone(booking.phone)
 
   const [year, month, day] = booking.booking_date.split('-').map(Number)
   const dateLabel = formatDateLabel(new Date(year, month - 1, day))

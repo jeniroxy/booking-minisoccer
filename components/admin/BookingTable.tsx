@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { formatHour, formatPrice } from '@/lib/schedule'
-import { buildConfirmUrl } from '@/lib/booking'
+import { buildConfirmUrl, normalizePhone } from '@/lib/booking'
 import type { BookingWithSlot } from '@/lib/types'
 
 type Filter = 'all' | 'pending' | 'confirmed' | 'cancelled'
@@ -26,7 +26,7 @@ function isBookingDone(booking: BookingWithSlot): boolean {
 
 function buildFollowUpUrl(booking: BookingWithSlot): string | null {
   if (!booking.phone) return null
-  const phone = booking.phone.replace(/\D/g, '')
+  const phone = normalizePhone(booking.phone)
   const lines = [
     'Terima kasih sudah main di Zains Mini Soccer.',
     '',
