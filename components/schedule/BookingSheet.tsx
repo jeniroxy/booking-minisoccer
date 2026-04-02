@@ -20,7 +20,6 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [phone, setPhone] = useState('')
-  const [showPhone, setShowPhone] = useState(false)
   const [voucherCode, setVoucherCode] = useState('')
   const [voucherId, setVoucherId] = useState<string | null>(null)
   const [voucherDiscount, setVoucherDiscount] = useState<{ type: 'percent' | 'nominal'; value: number } | null>(null)
@@ -56,7 +55,6 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
     } else {
       setTeamName('')
       setPhone('')
-      setShowPhone(false)
       setError('')
       setVoucherCode('')
       setVoucherId(null)
@@ -74,12 +72,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
       try {
         const res = await fetch(`/api/bookings/loyalty?team_name=${encodeURIComponent(teamName.trim())}`)
         const { lastPhone, voucherCode: availableVoucher } = await res.json()
-        if (lastPhone) {
-          setShowPhone(false)
-          if (!phone) setPhone(lastPhone)
-        } else {
-          setShowPhone(true)
-        }
+        if (lastPhone && !phone) setPhone(lastPhone)
         if (availableVoucher && !voucherCode && baseTotal >= 200000) setVoucherCode(availableVoucher)
       } catch {
         // ignore
@@ -282,15 +275,13 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
             onChange={e => setTeamName(e.target.value)}
             className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[12px] text-slate-100 placeholder-slate-500 outline-none focus:border-green-500"
           />
-          {showPhone && (
-            <input
-              type="tel"
-              placeholder="No WhatsApp"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[12px] text-slate-100 placeholder-slate-500 outline-none focus:border-green-500"
-            />
-          )}
+          <input
+            type="tel"
+            placeholder="No WhatsApp"
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[12px] text-slate-100 placeholder-slate-500 outline-none focus:border-green-500"
+          />
           <div className="relative">
             <input
               type="text"
