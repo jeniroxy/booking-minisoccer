@@ -83,6 +83,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
   })
 
   const updateStatus = async (id: string, status: 'confirmed' | 'cancelled') => {
+    const bookingSnapshot = status === 'confirmed' ? bookings.find(b => b.id === id) : undefined
     setLoadingId(id)
     const res = await fetch(`/api/admin/bookings/${id}`, {
       method: 'PATCH',
@@ -91,12 +92,9 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
     })
     if (res.ok) {
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b))
-      if (status === 'confirmed') {
-        const booking = bookings.find(b => b.id === id)
-        if (booking) {
-          const waUrl = buildConfirmUrl(booking)
-          if (waUrl) window.open(waUrl, '_blank')
-        }
+      if (bookingSnapshot) {
+        const waUrl = buildConfirmUrl(bookingSnapshot)
+        if (waUrl) window.open(waUrl, '_blank')
       }
     }
     setLoadingId(null)
