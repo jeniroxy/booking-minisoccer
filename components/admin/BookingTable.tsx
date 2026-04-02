@@ -4,6 +4,12 @@ import { useState } from 'react'
 import { formatHour, formatPrice } from '@/lib/schedule'
 import { buildConfirmUrl, normalizePhone } from '@/lib/booking'
 import type { BookingWithSlot } from '@/lib/types'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 type Filter = 'all' | 'pending' | 'confirmed' | 'cancelled'
 
@@ -73,6 +79,11 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
   const [dateFilter, setDateFilter] = useState('')
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [pendingWAUrl, setPendingWAUrl] = useState<string | null>(null)
+
+  const openWAPicker = (url: string) => setPendingWAUrl(url)
+  const sendViaWA = (url: string) => { window.open(url, '_blank'); setPendingWAUrl(null) }
+  const sendViaWABusiness = (url: string) => { window.open(url.replace('whatsapp://', 'whatsapp.business://'), '_blank'); setPendingWAUrl(null) }
 
   const sorted = [...bookings].sort((a, b) => b.created_at.localeCompare(a.created_at))
   const filtered = sorted.filter(b => {
@@ -94,7 +105,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b))
       if (bookingSnapshot) {
         const waUrl = buildConfirmUrl(bookingSnapshot)
-        if (waUrl) window.open(waUrl, '_blank')
+        if (waUrl) openWAPicker(waUrl)
       }
     }
     setLoadingId(null)
@@ -219,14 +230,12 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
                       </button>
                     )}
                     {isBookingDone(booking) && buildFollowUpUrl(booking) && (
-                      <a
-                        href={buildFollowUpUrl(booking)!}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={() => openWAPicker(buildFollowUpUrl(booking)!)}
                         className="px-3 py-1 rounded-lg text-[11px] font-bold bg-blue-500/20 border border-blue-500/40 text-blue-400 hover:bg-blue-500/30 transition-colors"
                       >
                         Follow-up
-                      </a>
+                      </button>
                     )}
                   </div>
                 </td>
@@ -300,18 +309,39 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
               </div>
             )}
             {isBookingDone(booking) && buildFollowUpUrl(booking) && (
-              <a
-                href={buildFollowUpUrl(booking)!}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => openWAPicker(buildFollowUpUrl(booking)!)}
                 className="block w-full text-center py-1.5 rounded-lg text-[12px] font-bold bg-blue-500/20 border border-blue-500/40 text-blue-400 hover:bg-blue-500/30 transition-colors"
               >
                 Follow-up WA
-              </a>
+              </button>
             )}
           </div>
         ))}
       </div>
+
+      {/* WA App Picker */}
+      <Dialog open={pendingWAUrl !== null} onOpenChange={open => { if (!open) setPendingWAUrl(null) }}>
+        <DialogContent showCloseButton={false} className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle className="text-center text-[14px]">Kirim via aplikasi mana?</DialogTitle>
+          </DialogHeader>
+          <div className="flex gap-3 pt-1">
+            <button
+              onClick={() => sendViaWA(pendingWAUrl!)}
+              className="flex-1 py-2.5 rounded-xl text-[13px] font-bold bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 transition-colors"
+            >
+              WhatsApp
+            </button>
+            <button
+              onClick={() => sendViaWABusiness(pendingWAUrl!)}
+              className="flex-1 py-2.5 rounded-xl text-[13px] font-bold bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 hover:bg-emerald-500/30 transition-colors"
+            >
+              WA Business
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
