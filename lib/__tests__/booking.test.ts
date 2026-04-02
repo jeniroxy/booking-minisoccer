@@ -135,4 +135,10 @@ describe('buildConfirmUrl', () => {
     const url = buildConfirmUrl(baseBooking)!
     expect(decodeURIComponent(url)).toContain('Toleransi waktu 15 menit')
   })
+
+  it('handles null time_slots gracefully', () => {
+    const url = buildConfirmUrl({ ...baseBooking, time_slots: null, total_price: 120000 })!
+    expect(url).not.toBeNull()
+    expect(decodeURIComponent(url)).toContain('120')
+  })
 })

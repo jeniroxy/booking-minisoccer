@@ -1,3 +1,11 @@
+function formatPriceIDR(amount: number): string {
+  return new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+  }).format(amount)
+}
+
 export function buildWAUrl(params: {
   teamName: string
   dateLabel: string
@@ -10,11 +18,7 @@ export function buildWAUrl(params: {
 }): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   const timeRange = `${pad(params.startHour)}:00-${pad(params.endHour)}:00`
-  const priceFormatted = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(params.totalPrice)
+  const priceFormatted = formatPriceIDR(params.totalPrice)
 
   const lines = [
     'A mau booking lapang buat:',
@@ -52,13 +56,7 @@ export function buildConfirmUrl(booking: {
   const phone = booking.phone.replace(/\D/g, '')
 
   const [year, month, day] = booking.booking_date.split('-').map(Number)
-  const dateObj = new Date(year, month - 1, day)
-  const dateLabel = dateObj.toLocaleDateString('id-ID', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  })
+  const dateLabel = formatDateLabel(new Date(year, month - 1, day))
 
   const pad = (n: number) => String(n).padStart(2, '0')
   const timeRange = booking.time_slots
@@ -66,11 +64,7 @@ export function buildConfirmUrl(booking: {
     : '–'
 
   const price = booking.total_price ?? booking.time_slots?.price ?? 0
-  const priceFormatted = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    minimumFractionDigits: 0,
-  }).format(price)
+  const priceFormatted = formatPriceIDR(price)
 
   const lines = [
     `Tos di booking ya a, atas nama ${booking.team_name} 🎉`,
