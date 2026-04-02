@@ -30,6 +30,19 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
   const teamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const voucherTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  const [phoneError, setPhoneError] = useState('')
+  const [returningPhone, setReturningPhone] = useState<string | null>(null)
+
+  // Validasi format nomor HP Indonesia: 08xx (10-13 digit), +628xx, 628xx
+  const validatePhone = (num: string): string => {
+    const cleaned = num.replace(/[\s\-().]/g, '')
+    if (!cleaned) return ''
+    if (/^08\d{8,11}$/.test(cleaned)) return ''
+    if (/^\+62\d{9,12}$/.test(cleaned)) return ''
+    if (/^62\d{9,12}$/.test(cleaned)) return ''
+    return 'Format nomor tidak valid (contoh: 08123456789)'
+  }
+
   const sorted = [...slots].sort((a, b) => a.start_hour - b.start_hour)
   const bookingDateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
   const slotPrice = (s: TimeSlot) => {
@@ -60,19 +73,29 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
       setVoucherId(null)
       setVoucherDiscount(null)
       setVoucherError('')
+      setPhoneError('')
+      setReturningPhone(null)
       if (sheetRef.current) sheetRef.current.style.bottom = '0px'
     }
   }, [isOpen])
 
-  // Cek tim returning: auto-fill phone & voucher follow-up (debounce 600ms)
+  // Cek tim returning: simpan phone tersembunyi & voucher follow-up (debounce 600ms)
   useEffect(() => {
-    if (!teamName.trim()) return
+    if (!teamName.trim()) {
+      setReturningPhone(null)
+      return
+    }
     if (teamTimerRef.current) clearTimeout(teamTimerRef.current)
     teamTimerRef.current = setTimeout(async () => {
       try {
         const res = await fetch(`/api/bookings/loyalty?team_name=${encodeURIComponent(teamName.trim())}`)
         const { lastPhone, voucherCode: availableVoucher } = await res.json()
-        if (lastPhone && !phone) setPhone(lastPhone)
+        if (lastPhone) {
+          setReturningPhone(lastPhone)
+          setPhone('')
+        } else {
+          setReturningPhone(null)
+        }
         if (availableVoucher && !voucherCode && baseTotal >= 200000) setVoucherCode(availableVoucher)
       } catch {
         // ignore
@@ -148,9 +171,17 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
       setError('Nama tim wajib diisi')
       return
     }
-    if (!phone.trim()) {
+    const finalPhone = returningPhone || phone.trim()
+    if (!finalPhone) {
       setError('No WhatsApp wajib diisi')
       return
+    }
+    if (!returningPhone) {
+      const phoneErr = validatePhone(finalPhone)
+      if (phoneErr) {
+        setPhoneError(phoneErr)
+        return
+      }
     }
 
     setLoading(true)
@@ -166,7 +197,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
           fetch('/api/bookings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ team_name: teamName.trim(), booking_date: bookingDateStr, time_slot_id: slot.id, total_price: slotTotals[i], phone: phone.trim(), ...(voucherId ? { voucher_id: voucherId } : {}) }),
+            body: JSON.stringify({ team_name: teamName.trim(), booking_date: bookingDateStr, time_slot_id: slot.id, total_price: slotTotals[i], phone: finalPhone, ...(voucherId ? { voucher_id: voucherId } : {}) }),
           })
         )
       )
@@ -265,13 +296,24 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
             onChange={e => setTeamName(e.target.value)}
             className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[12px] text-slate-100 placeholder-slate-500 outline-none focus:border-green-500"
           />
-          <input
-            type="tel"
-            placeholder="No WhatsApp"
-            value={phone}
-            onChange={e => setPhone(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[12px] text-slate-100 placeholder-slate-500 outline-none focus:border-green-500"
-          />
+          {returningPhone ? (
+            <div className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[12px] text-slate-400">
+              No WA sudah tersimpan dari booking sebelumnya
+            </div>
+          ) : (
+            <>
+              <input
+                type="tel"
+                placeholder="No WhatsApp (contoh: 08123456789)"
+                value={phone}
+                onChange={e => { setPhone(e.target.value); setPhoneError('') }}
+                className={`w-full bg-slate-900 border rounded-xl px-3 py-2.5 text-[12px] text-slate-100 placeholder-slate-500 outline-none ${
+                  phoneError ? 'border-red-500/50' : 'border-slate-700 focus:border-green-500'
+                }`}
+              />
+              {phoneError && <p className="text-[10px] text-red-400">{phoneError}</p>}
+            </>
+          )}
           <div className="relative">
             <input
               type="text"
