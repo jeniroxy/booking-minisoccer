@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { formatHour, formatPrice } from '@/lib/schedule'
+import { buildConfirmUrl } from '@/lib/booking'
 import type { BookingWithSlot } from '@/lib/types'
 
 type Filter = 'all' | 'pending' | 'confirmed' | 'cancelled'
@@ -90,6 +91,13 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
     })
     if (res.ok) {
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b))
+      if (status === 'confirmed') {
+        const booking = bookings.find(b => b.id === id)
+        if (booking) {
+          const waUrl = buildConfirmUrl(booking)
+          if (waUrl) window.open(waUrl, '_blank')
+        }
+      }
     }
     setLoadingId(null)
   }
