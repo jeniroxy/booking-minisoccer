@@ -8,23 +8,28 @@ export async function GET(req: NextRequest) {
   const supabase = createClient()
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
 
-  // Get last known phone for this team
+  // Get last known phone for this team (exact match, case-insensitive)
   const { data: lastBooking } = await supabase
     .from('bookings')
-    .select('phone')
+    .select('phone, team_name')
     .ilike('team_name', teamName)
     .not('phone', 'is', null)
     .order('created_at', { ascending: false })
     .limit(1)
 
+  // Only auto-fill if team name matches exactly (ignore case)
+  const exactMatch = lastBooking?.[0]?.team_name?.toLowerCase() === teamName.toLowerCase()
+
   // Find available follow-up voucher (MAINLAGI-*) linked to this team's confirmed bookings
-  const { data: bookingsWithVoucher } = await supabase
-    .from('bookings')
-    .select('followup_voucher_id')
-    .ilike('team_name', teamName)
-    .eq('status', 'confirmed')
-    .not('followup_voucher_id', 'is', null)
-    .order('created_at', { ascending: false })
+  const { data: bookingsWithVoucher } = exactMatch
+    ? await supabase
+        .from('bookings')
+        .select('followup_voucher_id')
+        .ilike('team_name', teamName)
+        .eq('status', 'confirmed')
+        .not('followup_voucher_id', 'is', null)
+        .order('created_at', { ascending: false })
+    : { data: null }
 
   let voucherCode: string | null = null
 
@@ -60,7 +65,7 @@ export async function GET(req: NextRequest) {
   }
 
   return NextResponse.json({
-    lastPhone: lastBooking?.[0]?.phone ?? null,
+    lastPhone: exactMatch ? (lastBooking?.[0]?.phone ?? null) : null,
     voucherCode,
   })
 }
