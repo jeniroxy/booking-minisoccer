@@ -153,10 +153,6 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
       return
     }
 
-    // Buka window di sini (synchronous, masih dalam user gesture)
-    // Safari iOS memblokir window.open() yang dipanggil setelah await
-    const waWindow = window.open('', '_blank')
-
     setLoading(true)
     setError('')
 
@@ -177,7 +173,6 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
 
       const failed = results.find(r => !r.ok)
       if (failed) {
-        waWindow?.close()
         setError(failed.status === 409
           ? 'Salah satu slot sudah dipesan. Silakan pilih ulang.'
           : 'Gagal membuat booking. Silakan coba lagi.')
@@ -198,14 +193,9 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
         voucherCode: voucherDiscount ? voucherCode.trim().toUpperCase() : undefined,
         waNumber: process.env.NEXT_PUBLIC_ADMIN_WA_NUMBER!,
       })
-      if (waWindow) {
-        waWindow.location.href = waUrl
-      } else {
-        window.location.href = waUrl
-      }
+      window.location.href = waUrl
       setTeamName('')
     } catch {
-      waWindow?.close()
       setError('Terjadi kesalahan. Silakan coba lagi.')
       setLoading(false)
     }
