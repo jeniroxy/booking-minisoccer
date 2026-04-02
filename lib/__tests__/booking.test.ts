@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { buildWAUrl, formatDateLabel } from '../booking'
 
 describe('buildWAUrl', () => {
-  it('returns a wa.me URL with the correct phone number', () => {
+  it('returns a whatsapp:// URL with the correct phone number', () => {
     const url = buildWAUrl({
       teamName: 'Tim Garuda',
       dateLabel: 'Rabu, 27 Mar 2026',
@@ -12,7 +12,7 @@ describe('buildWAUrl', () => {
       isStudent: false,
       waNumber: '6281400842380',
     })
-    expect(url).toMatch(/^https:\/\/wa\.me\/6281400842380/)
+    expect(url).toMatch(/^whatsapp:\/\/send\?phone=6281400842380/)
   })
 
   it('encodes the message as a query param containing team name', () => {
@@ -25,7 +25,7 @@ describe('buildWAUrl', () => {
       isStudent: false,
       waNumber: '6281400842380',
     })
-    expect(url).toContain('?text=')
+    expect(url).toContain('&text=')
     expect(url).toContain('Tim%20Garuda')
   })
 

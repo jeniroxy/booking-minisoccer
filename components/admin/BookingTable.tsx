@@ -43,7 +43,7 @@ function buildFollowUpUrl(booking: BookingWithSlot): string | null {
     '',
     'Ditunggu kedatangannya lagi ya!',
   )
-  return `https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`
+  return `whatsapp://send?phone=${phone}&text=${encodeURIComponent(lines.join('\n'))}`
 }
 
 function StatusBadge({ status }: { status: string }) {

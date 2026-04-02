@@ -29,7 +29,7 @@ export function buildWAUrl(params: {
   }
   lines.push(`Total Harga: ${priceFormatted}`, '', 'Mohon konfirmasi ketersediaan. Terima kasih!')
 
-  return `https://api.whatsapp.com/send?phone=${params.waNumber}&text=${encodeURIComponent(lines.join('\n'))}`
+  return `whatsapp://send?phone=${params.waNumber}&text=${encodeURIComponent(lines.join('\n'))}`
 }
 
 export function formatDateLabel(date: Date): string {
