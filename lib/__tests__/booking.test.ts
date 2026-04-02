@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { buildWAUrl, formatDateLabel } from '../booking'
+import { buildWAUrl, formatDateLabel, buildConfirmUrl } from '../booking'
 
 describe('buildWAUrl', () => {
   it('returns a whatsapp:// URL with the correct phone number', () => {
@@ -78,8 +78,6 @@ describe('formatDateLabel', () => {
     expect(label.length).toBeGreaterThan(5)
   })
 })
-
-import { buildConfirmUrl } from '../booking'
 
 const baseBooking = {
   phone: '08123456789',
