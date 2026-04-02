@@ -83,7 +83,15 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
 
   const openWAPicker = (url: string) => setPendingWAUrl(url)
   const sendViaWA = (url: string) => { window.open(url, '_blank'); setPendingWAUrl(null) }
-  const sendViaWABusiness = (url: string) => { window.open(url.replace('whatsapp://', 'whatsapp.business://'), '_blank'); setPendingWAUrl(null) }
+  const sendViaWABusiness = (url: string) => {
+    const isAndroid = /Android/i.test(navigator.userAgent)
+    const params = url.replace('whatsapp://send?', '')
+    const businessUrl = isAndroid
+      ? `intent://send?${params}#Intent;package=com.whatsapp.w4b;scheme=whatsapp;end`
+      : url
+    window.open(businessUrl, '_blank')
+    setPendingWAUrl(null)
+  }
 
   const sorted = [...bookings].sort((a, b) => b.created_at.localeCompare(a.created_at))
   const filtered = sorted.filter(b => {
