@@ -99,8 +99,10 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
   const updateStatus = async (id: string, status: 'confirmed' | 'cancelled') => {
     const bookingSnapshot = status === 'confirmed' ? bookings.find(b => b.id === id) : undefined
     const waUrl = bookingSnapshot ? buildConfirmUrl(bookingSnapshot) : null
-    // Open blank window synchronously (before await) to avoid popup blocker
-    const newWindow = waUrl ? window.open('', '_blank') : null
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+    // Desktop only: open blank window before await to bypass popup blocker.
+    // Mobile browsers are lenient — window.open after await works fine there.
+    const newWindow = (waUrl && !isMobile) ? window.open('', '_blank') : null
     setLoadingId(id)
     const res = await fetch(`/api/admin/bookings/${id}`, {
       method: 'PATCH',
@@ -109,8 +111,13 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
     })
     if (res.ok) {
       setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b))
-      if (newWindow && waUrl) {
-        newWindow.location.href = toWABusinessUrl(waUrl)
+      if (waUrl) {
+        const businessUrl = toWABusinessUrl(waUrl)
+        if (newWindow) {
+          newWindow.location.href = businessUrl  // desktop: reuse pre-opened tab
+        } else {
+          window.open(businessUrl, '_blank')     // mobile: direct open
+        }
       } else {
         newWindow?.close()
       }
