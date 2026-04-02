@@ -78,3 +78,63 @@ describe('formatDateLabel', () => {
     expect(label.length).toBeGreaterThan(5)
   })
 })
+
+import { buildConfirmUrl } from '../booking'
+
+const baseBooking = {
+  phone: '08123456789',
+  team_name: 'Tim Garuda',
+  booking_date: '2026-04-05',
+  time_slots: { start_hour: 8, end_hour: 9, id: '1', price: 150000, is_active: true, created_at: '' },
+  total_price: 150000,
+}
+
+describe('buildConfirmUrl', () => {
+  it('returns null when phone is null', () => {
+    expect(buildConfirmUrl({ ...baseBooking, phone: null })).toBeNull()
+  })
+
+  it('returns null when phone is empty string', () => {
+    expect(buildConfirmUrl({ ...baseBooking, phone: '' })).toBeNull()
+  })
+
+  it('returns a whatsapp:// URL with digits-only phone', () => {
+    const url = buildConfirmUrl(baseBooking)
+    expect(url).toMatch(/^whatsapp:\/\/send\?phone=08123456789/)
+  })
+
+  it('strips non-digit characters from phone', () => {
+    const url = buildConfirmUrl({ ...baseBooking, phone: '+62 812-3456-789' })
+    expect(url).toMatch(/^whatsapp:\/\/send\?phone=62812345678/)
+  })
+
+  it('includes team name in message', () => {
+    const url = buildConfirmUrl(baseBooking)!
+    expect(decodeURIComponent(url)).toContain('Tim Garuda')
+  })
+
+  it('includes zero-padded time range in message', () => {
+    const url = buildConfirmUrl(baseBooking)!
+    expect(decodeURIComponent(url)).toContain('08:00–09:00')
+  })
+
+  it('includes price in message', () => {
+    const url = buildConfirmUrl(baseBooking)!
+    expect(decodeURIComponent(url)).toContain('150')
+  })
+
+  it('uses total_price when available, falls back to time_slots.price', () => {
+    const url = buildConfirmUrl({ ...baseBooking, total_price: null })!
+    expect(decodeURIComponent(url)).toContain('150')
+  })
+
+  it('includes the Sundanese closing phrase', () => {
+    const url = buildConfirmUrl(baseBooking)!
+    expect(decodeURIComponent(url)).toContain('Di antos kasumpingana')
+  })
+
+  it('includes the 15-minute tolerance note', () => {
+    const url = buildConfirmUrl(baseBooking)!
+    expect(decodeURIComponent(url)).toContain('Toleransi waktu 15 menit')
+  })
+})
