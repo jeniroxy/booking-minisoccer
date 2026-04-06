@@ -56,6 +56,7 @@ export interface Voucher {
   name: string
   discount_type: 'percent' | 'nominal'
   discount_value: number
+  max_usage: number | null  // null = unlimited
   valid_from: string   // 'YYYY-MM-DD'
   valid_until: string  // 'YYYY-MM-DD'
   is_active: boolean

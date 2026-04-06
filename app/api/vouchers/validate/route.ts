@@ -44,6 +44,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ valid: false, error: 'Voucher ini sudah pernah digunakan' })
     }
   } else {
+    // Check global max_usage limit
+    if (data.max_usage !== null) {
+      const { count } = await supabase
+        .from('bookings')
+        .select('id', { count: 'exact', head: true })
+        .eq('voucher_id', data.id)
+        .neq('status', 'cancelled')
+
+      if ((count ?? 0) >= data.max_usage) {
+        return NextResponse.json({ valid: false, error: 'Voucher sudah mencapai batas pemakaian' })
+      }
+    }
+
     // Regular vouchers: single-use per team OR per phone
     if (teamName?.trim()) {
       const { data: usedByTeam } = await supabase

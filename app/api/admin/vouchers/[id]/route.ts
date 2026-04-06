@@ -17,15 +17,18 @@ export async function PATCH(
   }
 
   const updates = body as {
+    code?: string
     name?: string
     discount_type?: 'percent' | 'nominal'
     discount_value?: number
+    max_usage?: number | null
     valid_from?: string
     valid_until?: string
     is_active?: boolean
   }
   const allowed: Record<string, unknown> = {}
 
+  if (updates.code !== undefined) allowed.code = String(updates.code).toUpperCase().trim()
   if (updates.name !== undefined) allowed.name = String(updates.name).trim()
   if (updates.discount_type !== undefined) {
     if (!['percent', 'nominal'].includes(updates.discount_type)) {
@@ -39,6 +42,7 @@ export async function PATCH(
     }
     allowed.discount_value = updates.discount_value
   }
+  if (updates.max_usage !== undefined) allowed.max_usage = updates.max_usage
   if (updates.valid_from !== undefined) allowed.valid_from = updates.valid_from
   if (updates.valid_until !== undefined) allowed.valid_until = updates.valid_until
   if (updates.is_active !== undefined) allowed.is_active = Boolean(updates.is_active)

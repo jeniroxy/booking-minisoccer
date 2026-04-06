@@ -27,11 +27,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { code, name, discount_type, discount_value, valid_from, valid_until } = body as {
+  const { code, name, discount_type, discount_value, max_usage, valid_from, valid_until } = body as {
     code: string
     name: string
     discount_type: 'percent' | 'nominal'
     discount_value: number
+    max_usage?: number | null
     valid_from: string
     valid_until: string
   }
@@ -57,6 +58,7 @@ export async function POST(request: NextRequest) {
       name: name.trim(),
       discount_type,
       discount_value,
+      max_usage: max_usage ?? null,
       valid_from,
       valid_until,
     })

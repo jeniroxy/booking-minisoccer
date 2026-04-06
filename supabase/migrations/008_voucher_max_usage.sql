@@ -1,0 +1,1 @@
+ALTER TABLE vouchers ADD COLUMN max_usage INT DEFAULT NULL;

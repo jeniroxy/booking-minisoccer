@@ -11,26 +11,42 @@ export function VoucherManager({ initialVouchers }: { initialVouchers: Voucher[]
   const [error, setError] = useState('')
 
   // Form state
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [code, setCode] = useState('')
   const [name, setName] = useState('')
   const [discountType, setDiscountType] = useState<'nominal' | 'percent'>('nominal')
   const [discountValue, setDiscountValue] = useState('')
+  const [maxUsage, setMaxUsage] = useState('')
   const [validFrom, setValidFrom] = useState('')
   const [validUntil, setValidUntil] = useState('')
 
   const today = new Date().toISOString().split('T')[0]
 
   const resetForm = () => {
+    setEditingId(null)
     setCode('')
     setName('')
     setDiscountType('nominal')
     setDiscountValue('')
+    setMaxUsage('')
     setValidFrom('')
     setValidUntil('')
     setError('')
   }
 
-  const addVoucher = async () => {
+  const startEdit = (v: Voucher) => {
+    setEditingId(v.id)
+    setCode(v.code)
+    setName(v.name)
+    setDiscountType(v.discount_type)
+    setDiscountValue(String(v.discount_value))
+    setMaxUsage(v.max_usage !== null ? String(v.max_usage) : '')
+    setValidFrom(v.valid_from)
+    setValidUntil(v.valid_until)
+    setError('')
+  }
+
+  const saveVoucher = async () => {
     if (!code || !name || !discountValue || !validFrom || !validUntil) {
       setError('Semua field wajib diisi')
       return
@@ -48,29 +64,61 @@ export function VoucherManager({ initialVouchers }: { initialVouchers: Voucher[]
       setError('Tanggal akhir harus setelah tanggal mulai')
       return
     }
+    const parsedMaxUsage = maxUsage.trim() ? parseInt(maxUsage) : null
+    if (parsedMaxUsage !== null && (isNaN(parsedMaxUsage) || parsedMaxUsage <= 0)) {
+      setError('Batas pemakaian harus angka positif')
+      return
+    }
 
     setSaving(true)
     setError('')
-    const res = await fetch('/api/admin/vouchers', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        code: code.toUpperCase().trim(),
-        name: name.trim(),
-        discount_type: discountType,
-        discount_value: value,
-        valid_from: validFrom,
-        valid_until: validUntil,
-      }),
-    })
 
-    if (res.ok) {
-      const newVoucher: Voucher = await res.json()
-      setVouchers(prev => [newVoucher, ...prev])
-      resetForm()
+    if (editingId) {
+      // Update existing
+      const res = await fetch(`/api/admin/vouchers/${editingId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: code.toUpperCase().trim(),
+          name: name.trim(),
+          discount_type: discountType,
+          discount_value: value,
+          max_usage: parsedMaxUsage,
+          valid_from: validFrom,
+          valid_until: validUntil,
+        }),
+      })
+      if (res.ok) {
+        const updated: Voucher = await res.json()
+        setVouchers(prev => prev.map(v => (v.id === updated.id ? updated : v)))
+        resetForm()
+      } else {
+        const body = await res.json()
+        setError(body.error ?? 'Gagal mengupdate voucher')
+      }
     } else {
-      const body = await res.json()
-      setError(body.error ?? 'Gagal menyimpan voucher')
+      // Create new
+      const res = await fetch('/api/admin/vouchers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: code.toUpperCase().trim(),
+          name: name.trim(),
+          discount_type: discountType,
+          discount_value: value,
+          max_usage: parsedMaxUsage,
+          valid_from: validFrom,
+          valid_until: validUntil,
+        }),
+      })
+      if (res.ok) {
+        const newVoucher: Voucher = await res.json()
+        setVouchers(prev => [newVoucher, ...prev])
+        resetForm()
+      } else {
+        const body = await res.json()
+        setError(body.error ?? 'Gagal menyimpan voucher')
+      }
     }
     setSaving(false)
   }
@@ -79,6 +127,7 @@ export function VoucherManager({ initialVouchers }: { initialVouchers: Voucher[]
     setDeletingId(id)
     await fetch(`/api/admin/vouchers/${id}`, { method: 'DELETE' })
     setVouchers(prev => prev.filter(v => v.id !== id))
+    if (editingId === id) resetForm()
     setDeletingId(null)
   }
 
@@ -110,6 +159,13 @@ export function VoucherManager({ initialVouchers }: { initialVouchers: Voucher[]
 
       {/* Form */}
       <div className="p-4 border-b border-slate-700 space-y-3">
+        {editingId && (
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-amber-400">Edit Voucher</span>
+            <button onClick={resetForm} className="text-[11px] text-slate-400 hover:text-slate-200">Batal</button>
+          </div>
+        )}
+
         <div className="grid grid-cols-2 gap-2">
           <div className="flex flex-col gap-1.5">
             <label className="text-[11px] font-medium text-slate-500">Kode Voucher</label>
@@ -168,7 +224,18 @@ export function VoucherManager({ initialVouchers }: { initialVouchers: Voucher[]
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-medium text-slate-500">Batas Pemakaian</label>
+            <input
+              type="number"
+              value={maxUsage}
+              onChange={e => setMaxUsage(e.target.value)}
+              placeholder="Unlimited"
+              min={1}
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-[13px] text-slate-100 placeholder-slate-600 outline-none focus:border-green-500 transition-colors"
+            />
+          </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-[11px] font-medium text-slate-500">Berlaku Mulai</label>
             <input
@@ -194,11 +261,11 @@ export function VoucherManager({ initialVouchers }: { initialVouchers: Voucher[]
         {error && <p className="text-[11px] text-red-400">{error}</p>}
 
         <button
-          onClick={addVoucher}
+          onClick={saveVoucher}
           disabled={saving}
           className="w-full px-4 py-2 rounded-xl text-[12px] font-bold bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 disabled:opacity-40 transition-colors"
         >
-          {saving ? 'Menyimpan...' : '+ Tambah Voucher'}
+          {saving ? 'Menyimpan...' : editingId ? 'Simpan Perubahan' : '+ Tambah Voucher'}
         </button>
       </div>
 
@@ -222,7 +289,12 @@ export function VoucherManager({ initialVouchers }: { initialVouchers: Voucher[]
                   </div>
                   <p className="text-[11px] text-slate-400 mt-0.5">{v.name}</p>
                   <p className="text-[11px] text-green-400 font-semibold">{formatDiscount(v)}</p>
-                  <p className="text-[10px] text-slate-600 mt-0.5">{v.valid_from} – {v.valid_until}</p>
+                  <div className="flex items-center gap-3 mt-0.5">
+                    <p className="text-[10px] text-slate-600">{v.valid_from} – {v.valid_until}</p>
+                    <p className="text-[10px] text-slate-500">
+                      Pemakaian: {v.max_usage !== null ? `maks ${v.max_usage}x` : 'Unlimited'}
+                    </p>
+                  </div>
                 </div>
                 <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
                   <button
@@ -235,6 +307,12 @@ export function VoucherManager({ initialVouchers }: { initialVouchers: Voucher[]
                     }`}
                   >
                     {v.is_active ? 'Aktif' : 'Nonaktif'}
+                  </button>
+                  <button
+                    onClick={() => startEdit(v)}
+                    className="text-[11px] text-amber-400 hover:text-amber-300 transition-colors"
+                  >
+                    Edit
                   </button>
                   <button
                     onClick={() => deleteVoucher(v.id)}
