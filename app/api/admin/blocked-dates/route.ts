@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdminSession } from '@/lib/supabase/server'
+import { requireRole } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function GET() {
-  const authError = await requireAdminSession()
-  if (authError) return authError
+  const auth = await requireRole(['admin'])
+  if (auth.error) return auth.error
 
   const supabase = createAdminClient()
   const { data, error } = await supabase.from('blocked_dates').select('*').order('date')
@@ -14,8 +14,8 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const authError = await requireAdminSession()
-  if (authError) return authError
+  const auth = await requireRole(['admin'])
+  if (auth.error) return auth.error
 
   let body: unknown
   try {

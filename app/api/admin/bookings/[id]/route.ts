@@ -7,8 +7,8 @@ export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const authError = await requireAdminSession()
-  if (authError) return authError
+  const auth = await requireAdminSession()
+  if (auth.error) return auth.error
 
   let body: unknown
   try {
@@ -17,8 +17,34 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { status } = body as { status: string }
-  if (!['confirmed', 'cancelled'].includes(status)) {
+  const { status, phone, total_price, booking_date, time_slot_id } = body as {
+    status?: string
+    phone?: string
+    total_price?: number
+    booking_date?: string
+    time_slot_id?: string
+  }
+
+  // Field-level update (no status change)
+  if (!status && (phone !== undefined || total_price !== undefined || booking_date !== undefined || time_slot_id !== undefined)) {
+    const supabase = createAdminClient()
+    const updates: Record<string, unknown> = {}
+    if (phone !== undefined) updates.phone = phone.trim() || null
+    if (total_price !== undefined) updates.total_price = total_price
+    if (booking_date !== undefined) updates.booking_date = booking_date
+    if (time_slot_id !== undefined) updates.time_slot_id = time_slot_id
+
+    const { data, error } = await supabase
+      .from('bookings')
+      .update(updates)
+      .eq('id', params.id)
+      .select('*, time_slots(id, start_hour, end_hour, price)')
+      .single()
+    if (error) return NextResponse.json({ error: 'Failed to update booking' }, { status: 500 })
+    return NextResponse.json(data)
+  }
+
+  if (!status || !['confirmed', 'cancelled'].includes(status)) {
     return NextResponse.json(
       { error: 'status must be confirmed or cancelled' },
       { status: 400 }
@@ -114,8 +140,8 @@ export async function DELETE(
   _request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const authError = await requireAdminSession()
-  if (authError) return authError
+  const auth = await requireAdminSession()
+  if (auth.error) return auth.error
 
   const supabase = createAdminClient()
 

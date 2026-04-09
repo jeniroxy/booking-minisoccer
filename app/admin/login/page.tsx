@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 
@@ -10,6 +10,13 @@ export default function AdminLoginPage() {
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('error') === 'not_admin') {
+      setError('Akun tidak terdaftar sebagai admin')
+    }
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,7 +45,7 @@ export default function AdminLoginPage() {
           <p className="text-[12px] text-slate-500 mt-1">Admin Dashboard</p>
         </div>
 
-        <div className="bg-slate-800 rounded-2xl border border-slate-700 p-6">
+        <div className="bg-slate-900/50 rounded-2xl border border-slate-800/80 p-6">
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div className="flex flex-col gap-1.5">
               <label htmlFor="email" className="text-[12px] font-medium text-slate-400">Email</label>
@@ -49,7 +56,7 @@ export default function AdminLoginPage() {
                 onChange={e => setEmail(e.target.value)}
                 placeholder="admin@example.com"
                 required
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[13px] text-slate-100 placeholder-slate-600 outline-none focus:border-green-500 transition-colors"
+                className="w-full bg-slate-900 border border-slate-800/80 rounded-xl px-3 py-2.5 text-[13px] text-slate-100 placeholder-slate-600 outline-none focus:border-green-500 transition-colors"
               />
             </div>
             <div className="flex flex-col gap-1.5">
@@ -61,7 +68,7 @@ export default function AdminLoginPage() {
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
                 required
-                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[13px] text-slate-100 placeholder-slate-600 outline-none focus:border-green-500 transition-colors"
+                className="w-full bg-slate-900 border border-slate-800/80 rounded-xl px-3 py-2.5 text-[13px] text-slate-100 placeholder-slate-600 outline-none focus:border-green-500 transition-colors"
               />
             </div>
             {error && <p className="text-[12px] text-red-400">{error}</p>}

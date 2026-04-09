@@ -1,5 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
+import { createAdminClient } from './admin'
+import type { AdminRole } from '@/lib/rbac'
 
 export function createClient() {
   const cookieStore = cookies()
@@ -29,13 +31,95 @@ export async function getServerSession() {
   return session
 }
 
-export async function requireAdminSession(): Promise<Response | null> {
+export async function getAdminRole(userId: string): Promise<AdminRole | null> {
+  const supabase = createAdminClient()
+  const { data } = await supabase
+    .from('admin_users')
+    .select('role')
+    .eq('user_id', userId)
+    .single()
+  return data?.role ?? null
+}
+
+export async function getAdminProps(): Promise<{ role: AdminRole; userId: string } | null> {
+  // Try reading auth info injected by middleware (supports both cookie and Bearer token auth)
+  const headerStore = headers()
+  const role = headerStore.get('x-admin-role') as AdminRole | null
+  const userId = headerStore.get('x-admin-user-id')
+  if (role && userId) {
+    return { role, userId }
+  }
+
+  // Fallback to session-based auth
+  const session = await getServerSession()
+  if (!session) return null
+  const sessionRole = await getAdminRole(session.user.id)
+  if (!sessionRole) return null
+  return { role: sessionRole, userId: session.user.id }
+}
+
+type AuthResult =
+  | { error: Response; role?: never; userId?: never }
+  | { error?: never; role: AdminRole; userId: string }
+
+export async function requireAdminSession(): Promise<AuthResult> {
+  // Try Bearer token auth first (for API clients)
+  const headerStore = headers()
+  const authHeader = headerStore.get('authorization')
+  if (authHeader?.startsWith('Bearer ')) {
+    const token = authHeader.split(' ')[1]
+    const adminClient = createAdminClient()
+    const { data: { user }, error } = await adminClient.auth.getUser(token)
+    if (user && !error) {
+      const role = await getAdminRole(user.id)
+      if (!role) {
+        return {
+          error: new Response(JSON.stringify({ error: 'Not an admin' }), {
+            status: 403,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        }
+      }
+      return { role, userId: user.id }
+    }
+  }
+
+  // Fall back to cookie-based auth
   const session = await getServerSession()
   if (!session) {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), {
-      status: 401,
-      headers: { 'Content-Type': 'application/json' },
-    })
+    return {
+      error: new Response(JSON.stringify({ error: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    }
   }
-  return null
+
+  const role = await getAdminRole(session.user.id)
+  if (!role) {
+    return {
+      error: new Response(JSON.stringify({ error: 'Not an admin' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    }
+  }
+
+  return { role, userId: session.user.id }
+}
+
+export async function requireRole(allowedRoles: AdminRole[]): Promise<AuthResult> {
+  const result = await requireAdminSession()
+  if (result.error) return result
+
+  if (!allowedRoles.includes(result.role)) {
+    return {
+      error: new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    }
+  }
+
+  return result
 }

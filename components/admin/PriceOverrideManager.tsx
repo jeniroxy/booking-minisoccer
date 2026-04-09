@@ -2,11 +2,17 @@
 
 import { useState } from 'react'
 import { formatHour, formatPrice } from '@/lib/schedule'
+import { DollarSign, Trash2 } from 'lucide-react'
 import type { TimeSlot, SlotPriceOverride } from '@/lib/types'
 
 interface PriceOverrideManagerProps {
   initialOverrides: SlotPriceOverride[]
   slots: TimeSlot[]
+}
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  return d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export function PriceOverrideManager({ initialOverrides, slots }: PriceOverrideManagerProps) {
@@ -91,29 +97,29 @@ export function PriceOverrideManager({ initialOverrides, slots }: PriceOverrideM
   }
 
   return (
-    <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
-      <div className="px-4 py-3 border-b border-slate-700">
-        <h2 className="text-[13px] font-bold text-slate-100">Harga Custom per Tanggal</h2>
-        <p className="text-[11px] text-slate-500 mt-0.5">
-          Override harga untuk jam tertentu pada tanggal tertentu. Tanggal lain tetap harga normal.
+    <div className="bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-800/80 overflow-hidden">
+      <div className="px-4 py-3.5 border-b border-slate-800/80">
+        <h2 className="text-[15px] font-bold text-slate-100">Harga Custom per Tanggal</h2>
+        <p className="text-xs text-slate-500 mt-0.5">
+          Override harga untuk jam tertentu pada tanggal tertentu.
         </p>
       </div>
 
       {/* Form */}
-      <div className="p-4 border-b border-slate-700 space-y-3">
-        <div className="grid grid-cols-2 gap-2">
+      <div className="p-4 border-b border-slate-800/80 space-y-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-medium text-slate-500">Tanggal</label>
+            <label className="text-xs font-medium text-slate-400">Tanggal</label>
             <input
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
               min={new Date().toISOString().split('T')[0]}
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-[13px] text-slate-100 outline-none focus:border-green-500 transition-colors [color-scheme:dark]"
+              className="w-full bg-slate-900/80 border border-slate-800/80 rounded-xl px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20 transition-all [color-scheme:dark]"
             />
           </div>
           <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-medium text-slate-500">Harga Baru (Rp)</label>
+            <label className="text-xs font-medium text-slate-400">Harga Baru (Rp)</label>
             <input
               type="number"
               value={price}
@@ -121,26 +127,27 @@ export function PriceOverrideManager({ initialOverrides, slots }: PriceOverrideM
               placeholder="misal: 120000"
               min={1000}
               step={1000}
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-[13px] text-slate-100 placeholder-slate-600 outline-none focus:border-green-500 transition-colors"
+              className="w-full bg-slate-900/80 border border-slate-800/80 rounded-xl px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20 transition-all"
             />
           </div>
         </div>
 
+        {/* Slot selector grid */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-[11px] font-medium text-slate-500">
-            Pilih Jam ({selectedSlotIds.length} dipilih)
+          <label className="text-xs font-medium text-slate-400">
+            Pilih Jam <span className="text-slate-600">({selectedSlotIds.length} dipilih)</span>
           </label>
           <div className="grid grid-cols-2 gap-1.5">
             <button
               type="button"
               onClick={toggleAll}
-              className={`col-span-2 flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] border transition-colors text-left font-bold ${
+              className={`col-span-2 flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-sm border transition-all text-left font-bold ${
                 allSelected
-                  ? 'bg-green-900/50 border-green-500 text-green-300'
-                  : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
+                  ? 'bg-green-500/15 border-green-500/30 text-green-300'
+                  : 'bg-slate-900/80 border-slate-800/80 text-slate-400 hover:border-slate-700'
               }`}
             >
-              <span className={`w-3.5 h-3.5 rounded flex-shrink-0 border flex items-center justify-center text-[8px] ${
+              <span className={`w-5 h-5 rounded-md flex-shrink-0 border-2 flex items-center justify-center text-[10px] transition-all ${
                 allSelected
                   ? 'bg-green-500 border-green-500 text-green-950'
                   : 'border-slate-600'
@@ -154,55 +161,65 @@ export function PriceOverrideManager({ initialOverrides, slots }: PriceOverrideM
                 key={s.id}
                 type="button"
                 onClick={() => toggleSlot(s.id)}
-                className={`flex items-center gap-2 px-3 py-2 rounded-xl text-[12px] border transition-colors text-left ${
+                className={`flex items-center gap-2.5 px-3.5 py-3 rounded-xl text-sm border transition-all text-left ${
                   selectedSlotIds.includes(s.id)
-                    ? 'bg-green-900/50 border-green-500 text-green-300'
-                    : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
+                    ? 'bg-green-500/15 border-green-500/30 text-green-300'
+                    : 'bg-slate-900/80 border-slate-800/80 text-slate-400 hover:border-slate-700'
                 }`}
               >
-                <span className={`w-3.5 h-3.5 rounded flex-shrink-0 border flex items-center justify-center text-[8px] ${
+                <span className={`w-5 h-5 rounded-md flex-shrink-0 border-2 flex items-center justify-center text-[10px] transition-all ${
                   selectedSlotIds.includes(s.id)
                     ? 'bg-green-500 border-green-500 text-green-950'
                     : 'border-slate-600'
                 }`}>
                   {selectedSlotIds.includes(s.id) && '✓'}
                 </span>
-                <span>{formatHour(s.start_hour)}–{formatHour(s.end_hour)}</span>
-                <span className="text-slate-600 ml-auto">{formatPrice(s.price)}</span>
+                <span className="font-medium">{formatHour(s.start_hour)}–{formatHour(s.end_hour)}</span>
+                <span className="text-slate-600 ml-auto text-xs">{formatPrice(s.price)}</span>
               </button>
             ))}
           </div>
         </div>
 
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2">
+            <p className="text-xs text-red-400">{error}</p>
+          </div>
+        )}
+
         <button
           onClick={addOverride}
           disabled={saving || !date || selectedSlotIds.length === 0 || !price}
-          className="w-full py-2 rounded-xl text-[12px] font-bold bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 disabled:opacity-40 transition-colors"
+          className="w-full py-3 rounded-xl text-sm font-bold bg-green-500 text-green-950 hover:bg-green-400 active:bg-green-600 disabled:opacity-40 transition-colors shadow-lg shadow-green-500/20"
         >
-          {saving ? 'Menyimpan...' : `+ Simpan ${selectedSlotIds.length > 0 ? `(${selectedSlotIds.length} jam)` : ''}`}
+          {saving ? 'Menyimpan...' : `Simpan ${selectedSlotIds.length > 0 ? `(${selectedSlotIds.length} jam)` : ''}`}
         </button>
-
-        {error && <p className="text-[11px] text-red-400">{error}</p>}
       </div>
 
       {/* List */}
       {overrides.length === 0 ? (
-        <p className="px-4 py-8 text-center text-[13px] text-slate-500">Belum ada harga custom</p>
+        <div className="px-4 py-12 text-center">
+          <DollarSign size={32} className="mx-auto text-slate-700 mb-2" />
+          <p className="text-sm text-slate-500">Belum ada harga custom</p>
+        </div>
       ) : (
-        <div className="divide-y divide-slate-700/50">
+        <div className="divide-y divide-slate-800/30">
           {overrides.map(o => (
-            <div key={o.id} className="flex items-center justify-between px-4 py-3">
-              <div>
-                <span className="text-[13px] font-medium text-slate-200">{o.date}</span>
-                <span className="text-[11px] text-slate-500 ml-2">{slotLabel(o.time_slot_id)}</span>
-                <span className="text-[12px] font-bold text-green-400 ml-2">{formatPrice(o.price)}</span>
+            <div key={o.id} className="flex items-center justify-between px-4 py-3.5 gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-200">{formatDate(o.date)}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-xs text-slate-500">{slotLabel(o.time_slot_id)}</span>
+                  <span className="text-xs font-bold text-green-400">{formatPrice(o.price)}</span>
+                </div>
               </div>
               <button
                 onClick={() => removeOverride(o.id)}
                 disabled={deletingId === o.id}
-                className="text-[11px] text-red-400 hover:text-red-300 transition-colors disabled:opacity-40"
+                className="flex-shrink-0 p-2.5 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
+                title="Hapus"
               >
-                {deletingId === o.id ? '...' : 'Hapus'}
+                {deletingId === o.id ? '...' : <Trash2 size={16} />}
               </button>
             </div>
           ))}

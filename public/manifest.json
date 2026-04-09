@@ -1,0 +1,11 @@
+{
+  "name": "Zains Mini Soccer Admin",
+  "short_name": "ZMS Admin",
+  "start_url": "/admin",
+  "display": "standalone",
+  "background_color": "#020617",
+  "theme_color": "#020617",
+  "icons": [
+    { "src": "/logo-icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

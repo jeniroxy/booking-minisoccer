@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { sendPushToAdmins } from '@/lib/push'
+import { formatHour } from '@/lib/schedule'
 
 export async function POST(request: NextRequest) {
   let body: unknown
@@ -49,6 +51,24 @@ export async function POST(request: NextRequest) {
 
   if (error) {
     return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 })
+  }
+
+  // Send push notification to admins (non-blocking)
+  const { data: slot } = await supabase
+    .from('time_slots')
+    .select('start_hour, end_hour')
+    .eq('id', time_slot_id)
+    .single()
+
+  if (slot) {
+    sendPushToAdmins(
+      {
+        title: 'Booking Baru!',
+        body: `${data.team_name} — ${booking_date} ${formatHour(slot.start_hour)}-${formatHour(slot.end_hour)}`,
+        url: '/admin',
+      },
+      'notify_new_booking'
+    ).catch(console.error)
   }
 
   return NextResponse.json(data, { status: 201 })

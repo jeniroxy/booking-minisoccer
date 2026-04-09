@@ -62,3 +62,131 @@ export interface Voucher {
   is_active: boolean
   created_at: string
 }
+
+// ─── PS Rental Types ────────────────────────────────────────
+
+export interface PsUnit {
+  id: string
+  name: string
+  type: 'PS4' | 'PS5'
+  status: 'available' | 'occupied' | 'maintenance'
+  display_order: number
+  is_active: boolean
+  created_at: string
+}
+
+export interface PsPricingRule {
+  id: string
+  name: string
+  unit_type: 'PS4' | 'PS5' | 'all'
+  rule_type: 'hourly' | 'package' | 'promo'
+  price: number
+  duration_minutes: number | null
+  day_types: string[]
+  valid_from: string | null
+  valid_until: string | null
+  priority: number
+  is_active: boolean
+  created_at: string
+}
+
+export interface PsSession {
+  id: string
+  ps_unit_id: string
+  customer_name: string
+  phone: string | null
+  status: 'active' | 'paused' | 'completed'
+  started_at: string
+  paused_at: string | null
+  total_paused_seconds: number
+  ended_at: string | null
+  pricing_rule_id: string | null
+  duration_minutes: number | null
+  base_amount: number | null
+  discount_amount: number
+  final_amount: number | null
+  payment_method: 'cash' | 'transfer' | 'qris' | null
+  notes: string | null
+  created_at: string
+}
+
+export interface PsBooking {
+  id: string
+  ps_unit_id: string
+  customer_name: string
+  phone: string | null
+  booking_date: string
+  start_hour: number
+  duration_hours: number
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
+  pricing_rule_id: string | null
+  estimated_amount: number | null
+  created_at: string
+}
+
+export type PsSessionWithUnit = PsSession & {
+  ps_units: PsUnit
+}
+
+export type PsBookingWithUnit = PsBooking & {
+  ps_units: PsUnit
+}
+
+// ─── Financial Reporting Types ──────────────────────────────
+
+export type RevenueCategory = 'mini_soccer' | 'kantin' | 'ps' | 'sewa_sepatu' | 'photography'
+
+export interface RevenueEntry {
+  id: string
+  date: string
+  category: RevenueCategory
+  amount: number
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface ExpenseCategory {
+  id: string
+  name: string
+  is_active: boolean
+  sort_order: number
+  created_at: string
+}
+
+export interface ExpenseEntry {
+  id: string
+  date: string
+  expense_category_id: string
+  amount: number
+  description: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type ExpenseEntryWithCategory = ExpenseEntry & {
+  expense_categories: ExpenseCategory
+}
+
+export interface CapitalExpense {
+  id: string
+  date: string
+  description: string
+  amount: number
+  notes: string | null
+  created_at: string
+}
+
+export interface CategoryAmount {
+  category: string
+  amount: number
+}
+
+export interface MonthlyBalance {
+  month: number
+  total_revenue: number
+  total_expenses: number
+  total_capital_expenses: number
+  balance: number
+  cumulative_balance: number
+}

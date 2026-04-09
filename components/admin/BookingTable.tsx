@@ -1,40 +1,57 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { formatHour, formatPrice } from '@/lib/schedule'
 import { buildConfirmUrl, normalizePhone } from '@/lib/booking'
-import type { BookingWithSlot } from '@/lib/types'
+import type { BookingWithSlot, TimeSlot } from '@/lib/types'
+import { CustomSelect } from '@/components/ui/custom-select'
+import {
+  Search,
+  CalendarDays,
+  X,
+  Check,
+  Ban,
+  Trash2,
+  MessageCircle,
+  Pencil,
+} from 'lucide-react'
 
 type Filter = 'all' | 'pending' | 'confirmed' | 'cancelled'
 
-const filterLabels: Record<Filter, string> = {
-  all: 'Semua',
-  pending: 'Pending',
-  confirmed: 'Confirmed',
-  cancelled: 'Cancelled',
+const filterConfig: Record<Filter, { label: string; color: string; activeColor: string }> = {
+  all: { label: 'Semua', color: 'text-slate-400', activeColor: 'bg-slate-100/10 text-slate-200' },
+  pending: { label: 'Pending', color: 'text-yellow-400', activeColor: 'bg-yellow-500/15 text-yellow-400' },
+  confirmed: { label: 'Confirmed', color: 'text-green-400', activeColor: 'bg-green-500/15 text-green-400' },
+  cancelled: { label: 'Cancelled', color: 'text-slate-400', activeColor: 'bg-slate-600/15 text-slate-300' },
 }
 
-function isBookingDone(booking: BookingWithSlot): boolean {
-  if (booking.status !== 'confirmed') return false
+function formatDateShort(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  return d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
+}
+
+function isGroupDone(group: GroupedBooking): boolean {
+  if (group.status !== 'confirmed') return false
   const now = new Date()
   const jakartaStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
   const jakartaHour = parseInt(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false }))
-  if (booking.booking_date < jakartaStr) return true
-  if (booking.booking_date === jakartaStr && booking.time_slots && jakartaHour >= booking.time_slots.end_hour) return true
+  if (group.booking_date < jakartaStr) return true
+  if (group.booking_date === jakartaStr && jakartaHour >= group.end_hour) return true
   return false
 }
 
-function buildFollowUpUrl(booking: BookingWithSlot): string | null {
-  if (!booking.phone) return null
-  const phone = normalizePhone(booking.phone)
+function buildFollowUpUrl(group: GroupedBooking): string | null {
+  if (!group.phone) return null
+  const phone = normalizePhone(group.phone)
   const lines = [
     'Terima kasih sudah main di Zains Mini Soccer.',
     '',
   ]
-  if (booking.vouchers) {
+  if (group.vouchers) {
     lines.push(
-      `Spesial buat kamu, pakai kode *${booking.vouchers.code}* untuk diskon Rp 50.000 di booking berikutnya!`,
-      `Berlaku sampai ${booking.vouchers.valid_until} (2 minggu ke depan).`,
+      `Spesial buat kamu, pakai kode *${group.vouchers.code}* untuk diskon Rp 50.000 di booking berikutnya!`,
+      `Berlaku sampai ${group.vouchers.valid_until} (2 minggu ke depan).`,
+      'Note: Voucher akan otomatis terpasang jika menggunakan nama tim yang sama saat main sekarang.',
       '',
     )
   }
@@ -47,39 +64,271 @@ function buildFollowUpUrl(booking: BookingWithSlot): string | null {
   return `whatsapp://send?phone=${phone}&text=${encodeURIComponent(lines.join('\n'))}`
 }
 
-function StatusBadge({ status }: { status: string }) {
-  if (status === 'pending')
+function EditablePhone({ bookingId, phone, onSaved }: { bookingId: string; phone: string | null; onSaved: (id: string, phone: string) => void }) {
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState(phone ?? '')
+  const [saving, setSaving] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    if (editing) inputRef.current?.focus()
+  }, [editing])
+
+  const save = async () => {
+    setSaving(true)
+    const res = await fetch(`/api/admin/bookings/${bookingId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ phone: value.trim() }),
+    })
+    if (res.ok) {
+      onSaved(bookingId, value.trim())
+      setEditing(false)
+    }
+    setSaving(false)
+  }
+
+  if (editing) {
     return (
-      <span className="inline-flex items-center gap-1 bg-yellow-500/20 border border-yellow-500/30 rounded-md px-2 py-0.5 text-[10px] font-bold text-yellow-400 uppercase tracking-wider">
-        Pending
-      </span>
+      <div className="flex items-center gap-1">
+        <input
+          ref={inputRef}
+          type="tel"
+          value={value}
+          onChange={e => setValue(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setEditing(false); setValue(phone ?? '') } }}
+          className="bg-slate-900 border border-green-500/50 rounded-lg px-2 py-1 text-[12px] text-slate-100 outline-none w-[130px]"
+          disabled={saving}
+        />
+        <button onClick={save} disabled={saving} className="p-1 rounded-md text-green-400 hover:bg-green-500/15 transition-colors">
+          <Check size={13} />
+        </button>
+        <button onClick={() => { setEditing(false); setValue(phone ?? '') }} className="p-1 rounded-md text-slate-500 hover:bg-slate-700 transition-colors">
+          <X size={13} />
+        </button>
+      </div>
     )
-  if (status === 'confirmed')
-    return (
-      <span className="inline-flex items-center gap-1 bg-green-500/20 border border-green-500/30 rounded-md px-2 py-0.5 text-[10px] font-bold text-green-400 uppercase tracking-wider">
-        Confirmed
-      </span>
-    )
+  }
+
   return (
-    <span className="inline-flex items-center gap-1 bg-slate-700 border border-slate-600 rounded-md px-2 py-0.5 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-      Cancelled
-    </span>
+    <button
+      onClick={() => setEditing(true)}
+      className="group flex items-center gap-1.5 text-sm text-slate-400 hover:text-slate-200 transition-colors"
+    >
+      <span>{phone || '–'}</span>
+      <Pencil size={12} className="opacity-0 group-hover:opacity-100 text-slate-500 transition-opacity" />
+    </button>
   )
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const base = 'inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide'
+  if (status === 'pending')
+    return <span className={`${base} bg-yellow-500/15 text-yellow-400 ring-1 ring-yellow-500/25`}>Pending</span>
+  if (status === 'confirmed')
+    return <span className={`${base} bg-green-500/15 text-green-400 ring-1 ring-green-500/25`}>Confirmed</span>
+  return <span className={`${base} bg-slate-700/50 text-slate-400 ring-1 ring-slate-600/50`}>Cancelled</span>
+}
+
+function EditBookingModal({
+  booking,
+  slots,
+  onClose,
+  onSaved,
+}: {
+  booking: BookingWithSlot
+  slots: TimeSlot[]
+  onClose: () => void
+  onSaved: (updated: BookingWithSlot) => void
+}) {
+  const [date, setDate] = useState(booking.booking_date)
+  const [slotId, setSlotId] = useState(booking.time_slot_id)
+  const [price, setPrice] = useState(String(booking.total_price ?? booking.time_slots?.price ?? ''))
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => { window.removeEventListener('keydown', onKey); document.body.style.overflow = '' }
+  }, [onClose])
+
+  const handleSave = async () => {
+    setSaving(true)
+    const body: Record<string, unknown> = {}
+    if (date !== booking.booking_date) body.booking_date = date
+    if (slotId !== booking.time_slot_id) body.time_slot_id = slotId
+    const priceNum = parseInt(price)
+    if (!isNaN(priceNum) && priceNum !== booking.total_price) body.total_price = priceNum
+
+    if (Object.keys(body).length === 0) { onClose(); return }
+
+    const res = await fetch(`/api/admin/bookings/${booking.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (res.ok) {
+      const updated = await res.json()
+      onSaved(updated)
+      onClose()
+    }
+    setSaving(false)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full sm:max-w-md bg-slate-900/50 backdrop-blur border border-slate-800/80 rounded-t-2xl sm:rounded-2xl shadow-2xl">
+        <div className="px-5 pt-5 pb-3 border-b border-slate-800/80">
+          <div className="w-9 h-1 bg-slate-600 rounded-full mx-auto mb-4 sm:hidden" />
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-[15px] font-bold text-slate-100">Edit Booking</h3>
+              <p className="text-[12px] text-slate-500">{booking.team_name}</p>
+            </div>
+            <button onClick={onClose} className="p-2 -mr-1 rounded-xl text-slate-400 hover:text-slate-200 hover:bg-slate-700/50 transition-colors">
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+        <div className="p-5 space-y-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-medium text-slate-500">Tanggal</label>
+            <input
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-[13px] text-slate-100 outline-none focus:border-green-500 transition-colors [color-scheme:dark]"
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-medium text-slate-500">Jam</label>
+            <CustomSelect
+              value={slotId}
+              onChange={setSlotId}
+              options={slots.filter(s => s.is_active).map(s => ({
+                value: s.id,
+                label: `${formatHour(s.start_hour)} – ${formatHour(s.end_hour)}`,
+              }))}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-medium text-slate-500">Harga (Rp)</label>
+            <input
+              type="number"
+              value={price}
+              onChange={e => setPrice(e.target.value)}
+              min={0}
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-[13px] text-slate-100 outline-none focus:border-green-500 transition-colors"
+            />
+          </div>
+          <div className="flex gap-2 pt-1">
+            <button
+              onClick={onClose}
+              className="flex-1 py-2.5 rounded-xl text-[12px] font-bold bg-slate-700 border border-slate-600 text-slate-300 hover:bg-slate-600 transition-colors"
+            >
+              Batal
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="flex-1 py-2.5 rounded-xl text-[12px] font-bold bg-green-500 text-green-950 hover:bg-green-400 disabled:opacity-40 transition-colors shadow-lg shadow-green-500/20"
+            >
+              {saving ? 'Menyimpan...' : 'Simpan'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+interface GroupedBooking {
+  ids: string[]
+  bookings: BookingWithSlot[]
+  team_name: string
+  phone: string | null
+  booking_date: string
+  status: string
+  start_hour: number
+  end_hour: number
+  total_price: number
+  created_at: string
+  vouchers?: { code: string; valid_until: string } | null
+  primary: BookingWithSlot // first booking, used for actions like WA
+}
+
+function groupBookings(bookings: BookingWithSlot[]): GroupedBooking[] {
+  // Sort by date, team, start_hour
+  const sorted = [...bookings].sort((a, b) => {
+    const d = a.booking_date.localeCompare(b.booking_date)
+    if (d !== 0) return d
+    const t = a.team_name.localeCompare(b.team_name)
+    if (t !== 0) return t
+    return (a.time_slots?.start_hour ?? 0) - (b.time_slots?.start_hour ?? 0)
+  })
+
+  const groups: GroupedBooking[] = []
+
+  for (const b of sorted) {
+    const last = groups[groups.length - 1]
+    if (
+      last &&
+      last.team_name === b.team_name &&
+      last.booking_date === b.booking_date &&
+      last.status === b.status &&
+      b.time_slots &&
+      last.end_hour === b.time_slots.start_hour
+    ) {
+      // Merge into existing group
+      last.ids.push(b.id)
+      last.bookings.push(b)
+      last.end_hour = b.time_slots.end_hour
+      last.total_price += b.total_price ?? b.time_slots.price ?? 0
+      if (!last.phone && b.phone) last.phone = b.phone
+      if (!last.vouchers && b.vouchers) last.vouchers = b.vouchers
+    } else {
+      groups.push({
+        ids: [b.id],
+        bookings: [b],
+        team_name: b.team_name,
+        phone: b.phone,
+        booking_date: b.booking_date,
+        status: b.status,
+        start_hour: b.time_slots?.start_hour ?? 0,
+        end_hour: b.time_slots?.end_hour ?? 0,
+        total_price: b.total_price ?? b.time_slots?.price ?? 0,
+        created_at: b.created_at,
+        vouchers: b.vouchers,
+        primary: b,
+      })
+    }
+  }
+
+  return groups
 }
 
 export function BookingTable({ initialBookings }: { initialBookings: BookingWithSlot[] }) {
   const [bookings, setBookings] = useState(initialBookings)
   const [filter, setFilter] = useState<Filter>('all')
   const [dateFilter, setDateFilter] = useState('')
+  const [search, setSearch] = useState('')
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [editingBooking, setEditingBooking] = useState<BookingWithSlot | null>(null)
+  const [slots, setSlots] = useState<TimeSlot[]>([])
+
+  useEffect(() => {
+    fetch('/api/admin/slots').then(r => r.ok ? r.json() : []).then(setSlots)
+  }, [])
+
   const toWABusinessUrl = (waUrl: string): string => {
     const isAndroid = /Android/i.test(navigator.userAgent)
     if (isAndroid) {
       const params = waUrl.replace('whatsapp://send?', '')
       return `intent://send?${params}#Intent;package=com.whatsapp.w4b;scheme=whatsapp;end`
     }
-    // Desktop: wa.me opens WA Web (works without WA Desktop installed)
     const urlParams = new URLSearchParams(waUrl.replace('whatsapp://send?', ''))
     const phone = urlParams.get('phone') ?? ''
     const text = urlParams.get('text') ?? ''
@@ -88,35 +337,49 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
 
   const sendViaWABusiness = (url: string) => window.open(toWABusinessUrl(url), '_blank')
 
-  const sorted = [...bookings].sort((a, b) => b.created_at.localeCompare(a.created_at))
-  const filtered = sorted.filter(b => {
-    if (filter === 'all' && b.status === 'cancelled') return false
-    if (filter !== 'all' && b.status !== filter) return false
-    if (dateFilter && b.booking_date !== dateFilter) return false
+  const grouped = groupBookings(bookings)
+
+  // Counts for filter badges (based on grouped)
+  const counts = {
+    all: grouped.filter(g => g.status !== 'cancelled').length,
+    pending: grouped.filter(g => g.status === 'pending').length,
+    confirmed: grouped.filter(g => g.status === 'confirmed').length,
+    cancelled: grouped.filter(g => g.status === 'cancelled').length,
+  }
+
+  const sortedGroups = [...grouped].sort((a, b) => b.created_at.localeCompare(a.created_at))
+  const filtered = sortedGroups.filter(g => {
+    if (filter === 'all' && g.status === 'cancelled') return false
+    if (filter !== 'all' && g.status !== filter) return false
+    if (dateFilter && g.booking_date !== dateFilter) return false
+    if (search && !g.team_name.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
 
-  const updateStatus = async (id: string, status: 'confirmed' | 'cancelled') => {
-    const bookingSnapshot = status === 'confirmed' ? bookings.find(b => b.id === id) : undefined
+  const updateGroupStatus = async (group: GroupedBooking, status: 'confirmed' | 'cancelled') => {
+    const bookingSnapshot = status === 'confirmed' ? group.primary : undefined
     const waUrl = bookingSnapshot ? buildConfirmUrl(bookingSnapshot) : null
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
-    // Desktop only: open blank window before await to bypass popup blocker.
-    // Mobile browsers are lenient — window.open after await works fine there.
     const newWindow = (waUrl && !isMobile) ? window.open('', '_blank') : null
-    setLoadingId(id)
-    const res = await fetch(`/api/admin/bookings/${id}`, {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status }),
-    })
-    if (res.ok) {
-      setBookings(prev => prev.map(b => b.id === id ? { ...b, status } : b))
+    setLoadingId(group.ids[0])
+    const results = await Promise.all(
+      group.ids.map(id =>
+        fetch(`/api/admin/bookings/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        })
+      )
+    )
+    if (results.every(r => r.ok)) {
+      const idSet = new Set(group.ids)
+      setBookings(prev => prev.map(b => idSet.has(b.id) ? { ...b, status } : b))
       if (waUrl) {
         const businessUrl = toWABusinessUrl(waUrl)
         if (newWindow) {
-          newWindow.location.href = businessUrl  // desktop: reuse pre-opened tab
+          newWindow.location.href = businessUrl
         } else {
-          window.open(businessUrl, '_blank')     // mobile: direct open
+          window.open(businessUrl, '_blank')
         }
       } else {
         newWindow?.close()
@@ -127,215 +390,300 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
     setLoadingId(null)
   }
 
-  const deleteBooking = async (id: string) => {
+  const deleteGroup = async (group: GroupedBooking) => {
     if (!confirm('Hapus booking ini? Data akan dihapus permanen.')) return
-    setDeletingId(id)
-    const res = await fetch(`/api/admin/bookings/${id}`, { method: 'DELETE' })
-    if (res.ok) {
-      setBookings(prev => prev.filter(b => b.id !== id))
+    setDeletingId(group.ids[0])
+    const results = await Promise.all(
+      group.ids.map(id => fetch(`/api/admin/bookings/${id}`, { method: 'DELETE' }))
+    )
+    if (results.every(r => r.ok)) {
+      const idSet = new Set(group.ids)
+      setBookings(prev => prev.filter(b => !idSet.has(b.id)))
     }
     setDeletingId(null)
   }
 
   return (
-    <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
-      {/* Filter pills + date filter */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2 p-3 border-b border-slate-700">
-        <div className="flex gap-2 overflow-x-auto">
+    <div className="space-y-3">
+      {editingBooking && (
+        <EditBookingModal
+          booking={editingBooking}
+          slots={slots}
+          onClose={() => setEditingBooking(null)}
+          onSaved={(updated) => setBookings(prev => prev.map(b => b.id === updated.id ? updated : b))}
+        />
+      )}
+
+      {/* ── Summary stats ── */}
+      {counts.pending > 0 && (
+        <div className="bg-yellow-500/10 border border-yellow-500/20 rounded-2xl px-4 py-3 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center flex-shrink-0">
+            <CalendarDays size={20} className="text-yellow-400" />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-yellow-300">{counts.pending} booking menunggu konfirmasi</p>
+            <p className="text-xs text-yellow-400/70">Segera proses booking pending</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Search ── */}
+      <div className="relative">
+        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+        <input
+          type="text"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          placeholder="Cari nama tim..."
+          className="w-full bg-slate-900/50 border border-slate-800/80 rounded-2xl pl-9 pr-3 py-2.5 text-sm text-slate-100 placeholder-slate-500 outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20 transition-all"
+        />
+        {search && (
+          <button
+            onClick={() => setSearch('')}
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 rounded-lg text-slate-500 hover:text-slate-300"
+          >
+            <X size={14} />
+          </button>
+        )}
+      </div>
+
+      {/* ── Filter pills + date ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+        <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mb-0.5">
           {(['all', 'pending', 'confirmed', 'cancelled'] as Filter[]).map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`flex-shrink-0 px-4 py-1.5 rounded-full text-[12px] font-medium transition-colors ${
+              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
                 filter === f
-                  ? 'bg-green-500 text-green-950'
-                  : 'bg-slate-900 border border-slate-700 text-slate-400 hover:text-slate-200'
+                  ? filterConfig[f].activeColor + ' shadow-sm'
+                  : 'bg-slate-900/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
               }`}
             >
-              {filterLabels[f]}
+              {filterConfig[f].label}
+              {counts[f] > 0 && (
+                <span className={`text-[10px] min-w-[18px] h-[18px] flex items-center justify-center rounded-full ${
+                  filter === f ? 'bg-black/15' : 'bg-slate-800/80'
+                }`}>
+                  {counts[f]}
+                </span>
+              )}
             </button>
           ))}
         </div>
         <div className="flex items-center gap-2 sm:ml-auto">
           <input
-            type="text"
-            placeholder="Filter by Date"
+            type="date"
             value={dateFilter}
-            onFocus={e => { e.target.type = 'date' }}
-            onBlur={e => { if (!e.target.value) e.target.type = 'text' }}
             onChange={e => setDateFilter(e.target.value)}
-            className="w-[140px] bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-[12px] text-slate-300 placeholder-slate-500 focus:outline-none focus:border-green-500 transition-colors [color-scheme:dark]"
+            className="bg-slate-900/50 border border-slate-800/80 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-green-500/50 transition-colors [color-scheme:dark]"
           />
           {dateFilter && (
             <button
               onClick={() => setDateFilter('')}
-              className="text-[11px] text-slate-500 hover:text-slate-300 transition-colors"
+              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 transition-colors"
             >
-              Reset
+              <X size={14} />
             </button>
           )}
         </div>
       </div>
 
-      {/* Table — mobile: card list, desktop: table */}
-      <div className="hidden md:block overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-slate-700">
-              {['Tanggal', 'Jam', 'Nama Tim', 'WA', 'Harga', 'Status', 'Aksi'].map(h => (
-                <th key={h} className="px-4 py-3 text-left text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                  {h}
-                </th>
+      {/* ── Booking list card ── */}
+      <div className="bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-800/80 overflow-hidden">
+        {/* ── Desktop table ── */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-slate-800/80">
+                {['Tanggal', 'Jam', 'Nama Tim', 'WA', 'Harga', 'Status', 'Aksi'].map(h => (
+                  <th key={h} className="px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                    {h}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="px-4 py-16 text-center">
+                    <p className="text-sm text-slate-500">Tidak ada booking</p>
+                    <p className="text-xs text-slate-600 mt-1">Coba ubah filter atau kata kunci pencarian</p>
+                  </td>
+                </tr>
+              )}
+              {filtered.map(group => (
+                <tr key={group.ids.join('-')} className="border-b border-slate-800/30 hover:bg-slate-800/20 transition-colors">
+                  <td className="px-4 py-3.5 text-sm text-slate-300">{formatDateShort(group.booking_date)}</td>
+                  <td className="px-4 py-3.5 text-sm text-slate-300 whitespace-nowrap">
+                    {formatHour(group.start_hour)}–{formatHour(group.end_hour)}
+                    {group.ids.length > 1 && (
+                      <span className="ml-1.5 text-[10px] text-slate-500">({group.end_hour - group.start_hour} jam)</span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3.5 text-sm font-semibold text-slate-100">{group.team_name}</td>
+                  <td className="px-4 py-3.5">
+                    <EditablePhone
+                      bookingId={group.primary.id}
+                      phone={group.phone}
+                      onSaved={(id, ph) => {
+                        const idSet = new Set(group.ids)
+                        setBookings(prev => prev.map(b => idSet.has(b.id) ? { ...b, phone: ph || null } : b))
+                      }}
+                    />
+                  </td>
+                  <td className="px-4 py-3.5 text-sm font-bold text-green-400">
+                    {formatPrice(group.total_price)}
+                  </td>
+                  <td className="px-4 py-3.5"><StatusBadge status={group.status} /></td>
+                  <td className="px-4 py-3.5">
+                    <div className="flex gap-1.5 items-center">
+                      {group.status !== 'cancelled' && (
+                        <button
+                          onClick={() => setEditingBooking(group.primary)}
+                          className="p-2 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-slate-800/50 transition-colors"
+                          title="Edit booking"
+                        >
+                          <Pencil size={14} />
+                        </button>
+                      )}
+                      {group.status === 'pending' && (
+                        <button
+                          onClick={() => updateGroupStatus(group, 'confirmed')}
+                          disabled={loadingId === group.ids[0]}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-green-500/15 ring-1 ring-green-500/30 text-green-400 hover:bg-green-500/25 disabled:opacity-40 transition-colors"
+                        >
+                          <Check size={13} /> Confirm
+                        </button>
+                      )}
+                      {group.status !== 'cancelled' && (
+                        <button
+                          onClick={() => updateGroupStatus(group, 'cancelled')}
+                          disabled={loadingId === group.ids[0]}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-red-500/10 ring-1 ring-red-500/25 text-red-400 hover:bg-red-500/20 disabled:opacity-40 transition-colors"
+                        >
+                          <Ban size={13} /> Cancel
+                        </button>
+                      )}
+                      {group.status === 'cancelled' && (
+                        <button
+                          onClick={() => deleteGroup(group)}
+                          disabled={deletingId === group.ids[0]}
+                          className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
+                          title="Hapus permanen"
+                        >
+                          {deletingId === group.ids[0] ? '...' : <Trash2 size={15} />}
+                        </button>
+                      )}
+                      {isGroupDone(group) && buildFollowUpUrl(group) && (
+                        <button
+                          onClick={() => sendViaWABusiness(buildFollowUpUrl(group)!)}
+                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-blue-500/15 ring-1 ring-blue-500/30 text-blue-400 hover:bg-blue-500/25 transition-colors"
+                        >
+                          <MessageCircle size={13} /> Follow-up
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
               ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-12 text-center text-[13px] text-slate-500">
-                  Tidak ada booking
-                </td>
-              </tr>
-            )}
-            {filtered.map(booking => (
-              <tr key={booking.id} className="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors">
-                <td className="px-4 py-3 text-[13px] text-slate-300">{booking.booking_date}</td>
-                <td className="px-4 py-3 text-[13px] text-slate-300 whitespace-nowrap">
-                  {booking.time_slots
-                    ? `${formatHour(booking.time_slots.start_hour)}–${formatHour(booking.time_slots.end_hour)}`
-                    : '–'}
-                </td>
-                <td className="px-4 py-3 text-[13px] font-medium text-slate-100">{booking.team_name}</td>
-                <td className="px-4 py-3 text-[13px] text-slate-400">{booking.phone || '–'}</td>
-                <td className="px-4 py-3 text-[13px] font-semibold text-green-400">
-                  {booking.total_price != null
-                    ? formatPrice(booking.total_price)
-                    : booking.time_slots ? formatPrice(booking.time_slots.price) : '–'}
-                </td>
-                <td className="px-4 py-3"><StatusBadge status={booking.status} /></td>
-                <td className="px-4 py-3">
-                  <div className="flex gap-1.5 items-center">
-                    {booking.status === 'pending' && (
-                      <button
-                        onClick={() => updateStatus(booking.id, 'confirmed')}
-                        disabled={loadingId === booking.id}
-                        className="px-3 py-1 rounded-lg text-[11px] font-bold bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 disabled:opacity-40 transition-colors"
-                      >
-                        Confirm
-                      </button>
-                    )}
-                    {booking.status !== 'cancelled' && (
-                      <button
-                        onClick={() => updateStatus(booking.id, 'cancelled')}
-                        disabled={loadingId === booking.id}
-                        className="px-3 py-1 rounded-lg text-[11px] font-bold bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 disabled:opacity-40 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    )}
-                    {booking.status === 'cancelled' && (
-                      <button
-                        onClick={() => deleteBooking(booking.id)}
-                        disabled={deletingId === booking.id}
-                        className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 disabled:opacity-40 transition-colors"
-                        title="Hapus permanen"
-                      >
-                        {deletingId === booking.id ? '...' : (
-                          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                        )}
-                      </button>
-                    )}
-                    {isBookingDone(booking) && buildFollowUpUrl(booking) && (
-                      <button
-                        onClick={() => sendViaWABusiness(buildFollowUpUrl(booking)!)}
-                        className="px-3 py-1 rounded-lg text-[11px] font-bold bg-blue-500/20 border border-blue-500/40 text-blue-400 hover:bg-blue-500/30 transition-colors"
-                      >
-                        Follow-up
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </tbody>
+          </table>
+        </div>
 
-      {/* Mobile card list */}
-      <div className="md:hidden divide-y divide-slate-700/50">
-        {filtered.length === 0 && (
-          <p className="px-4 py-12 text-center text-[13px] text-slate-500">Tidak ada booking</p>
-        )}
-        {filtered.map(booking => (
-          <div key={booking.id} className="px-4 py-3 space-y-2">
-            <div className="flex items-start justify-between gap-2">
-              <div>
-                <p className="text-[13px] font-semibold text-slate-100">{booking.team_name}</p>
-                {booking.phone && (
-                  <p className="text-[11px] text-slate-400 mt-0.5">{booking.phone}</p>
-                )}
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  {booking.booking_date}
-                  {booking.time_slots && (
-                    <> · {formatHour(booking.time_slots.start_hour)}–{formatHour(booking.time_slots.end_hour)}</>
-                  )}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex flex-col items-end gap-1.5">
-                  <StatusBadge status={booking.status} />
-                  <span className="text-[12px] font-bold text-green-400">
-                    {booking.total_price != null
-                      ? formatPrice(booking.total_price)
-                      : booking.time_slots ? formatPrice(booking.time_slots.price) : ''}
+        {/* ── Mobile card list ── */}
+        <div className="md:hidden divide-y divide-slate-800/30">
+          {filtered.length === 0 && (
+            <div className="px-4 py-16 text-center">
+              <p className="text-sm text-slate-500">Tidak ada booking</p>
+              <p className="text-xs text-slate-600 mt-1">Coba ubah filter atau kata kunci</p>
+            </div>
+          )}
+          {filtered.map(group => (
+            <div key={group.ids.join('-')} className="px-4 py-4 space-y-3">
+              {/* Header: team name + status */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <p className="text-[15px] font-bold text-slate-100 truncate">{group.team_name}</p>
+                  <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-400">
+                    <CalendarDays size={13} className="flex-shrink-0 text-slate-500" />
+                    <span>{formatDateShort(group.booking_date)}</span>
+                    <span className="text-slate-600">·</span>
+                    <span>
+                      {formatHour(group.start_hour)}–{formatHour(group.end_hour)}
+                      {group.ids.length > 1 && ` (${group.end_hour - group.start_hour} jam)`}
+                    </span>
+                  </div>
+                  <div className="mt-0.5">
+                    <EditablePhone
+                      bookingId={group.primary.id}
+                      phone={group.phone}
+                      onSaved={(id, ph) => {
+                        const idSet = new Set(group.ids)
+                        setBookings(prev => prev.map(b => idSet.has(b.id) ? { ...b, phone: ph || null } : b))
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <StatusBadge status={group.status} />
+                  <span className="text-sm font-bold text-green-400">
+                    {formatPrice(group.total_price)}
                   </span>
                 </div>
-                {booking.status === 'cancelled' && (
-                  <button
-                    onClick={() => deleteBooking(booking.id)}
-                    disabled={deletingId === booking.id}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-red-400 disabled:opacity-40 transition-colors"
-                    title="Hapus permanen"
-                  >
-                    {deletingId === booking.id ? '...' : (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-                    )}
-                  </button>
-                )}
               </div>
-            </div>
-            {booking.status !== 'cancelled' && (
-              <div className="flex gap-2">
-                {booking.status === 'pending' && (
-                  <button
-                    onClick={() => updateStatus(booking.id, 'confirmed')}
-                    disabled={loadingId === booking.id}
-                    className="flex-1 py-1.5 rounded-lg text-[12px] font-bold bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 disabled:opacity-40 transition-colors"
-                  >
-                    Confirm
-                  </button>
-                )}
-                <button
-                  onClick={() => updateStatus(booking.id, 'cancelled')}
-                  disabled={loadingId === booking.id}
-                  className="flex-1 py-1.5 rounded-lg text-[12px] font-bold bg-red-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 disabled:opacity-40 transition-colors"
-                >
-                  Cancel
-                </button>
-              </div>
-            )}
-            {isBookingDone(booking) && buildFollowUpUrl(booking) && (
-              <button
-                onClick={() => sendViaWABusiness(buildFollowUpUrl(booking)!)}
-                className="block w-full text-center py-1.5 rounded-lg text-[12px] font-bold bg-blue-500/20 border border-blue-500/40 text-blue-400 hover:bg-blue-500/30 transition-colors"
-              >
-                Follow-up WA
-              </button>
-            )}
-          </div>
-        ))}
-      </div>
 
+              {/* Action buttons */}
+              {group.status !== 'cancelled' && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setEditingBooking(group.primary)}
+                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[13px] font-bold bg-slate-800/50 ring-1 ring-slate-700/50 text-slate-300 hover:bg-slate-800 transition-colors"
+                  >
+                    <Pencil size={14} />
+                  </button>
+                  {group.status === 'pending' && (
+                    <button
+                      onClick={() => updateGroupStatus(group, 'confirmed')}
+                      disabled={loadingId === group.ids[0]}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold bg-green-500/15 ring-1 ring-green-500/30 text-green-400 hover:bg-green-500/25 active:bg-green-500/30 disabled:opacity-40 transition-colors"
+                    >
+                      <Check size={15} /> Confirm
+                    </button>
+                  )}
+                  <button
+                    onClick={() => updateGroupStatus(group, 'cancelled')}
+                    disabled={loadingId === group.ids[0]}
+                    className={`${group.status === 'pending' ? 'flex-1' : 'w-full'} flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold bg-red-500/10 ring-1 ring-red-500/25 text-red-400 hover:bg-red-500/20 active:bg-red-500/25 disabled:opacity-40 transition-colors`}
+                  >
+                    <Ban size={15} /> Cancel
+                  </button>
+                </div>
+              )}
+
+              {group.status === 'cancelled' && (
+                <button
+                  onClick={() => deleteGroup(group)}
+                  disabled={deletingId === group.ids[0]}
+                  className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-[13px] font-bold text-slate-400 bg-slate-800/30 ring-1 ring-slate-700/50 hover:text-red-400 hover:ring-red-500/30 disabled:opacity-40 transition-colors"
+                >
+                  <Trash2 size={15} />
+                  {deletingId === group.ids[0] ? 'Menghapus...' : 'Hapus Permanen'}
+                </button>
+              )}
+
+              {isGroupDone(group) && buildFollowUpUrl(group) && (
+                <button
+                  onClick={() => sendViaWABusiness(buildFollowUpUrl(group)!)}
+                  className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-[13px] font-bold bg-blue-500/15 ring-1 ring-blue-500/30 text-blue-400 hover:bg-blue-500/25 active:bg-blue-500/30 transition-colors"
+                >
+                  <MessageCircle size={15} /> Follow-up WA
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }

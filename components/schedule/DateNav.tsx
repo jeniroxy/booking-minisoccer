@@ -161,7 +161,7 @@ export function DateNav({
               </span>
               <span className={cn(
                 'w-9 h-9 flex items-center justify-center rounded-xl text-[13px] font-medium transition-colors',
-                isActive && 'bg-green-500 text-green-950 font-bold',
+                isActive && 'bg-green-500/15 text-green-400 font-bold',
                 !isActive && isToday && 'bg-slate-800 text-slate-300 border border-slate-700',
                 !isActive && !isToday && 'text-slate-500 hover:text-slate-300'
               )}>

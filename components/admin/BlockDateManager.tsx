@@ -2,11 +2,18 @@
 
 import { useState } from 'react'
 import { formatHour } from '@/lib/schedule'
+import { CalendarOff, Trash2, Plus } from 'lucide-react'
 import type { BlockedDate, TimeSlot } from '@/lib/types'
+import { CustomSelect } from '@/components/ui/custom-select'
 
 interface BlockDateManagerProps {
   initialBlocked: BlockedDate[]
   slots: TimeSlot[]
+}
+
+function formatDate(dateStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  return d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export function BlockDateManager({ initialBlocked, slots }: BlockDateManagerProps) {
@@ -56,83 +63,89 @@ export function BlockDateManager({ initialBlocked, slots }: BlockDateManagerProp
   }
 
   return (
-    <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
-      <div className="px-4 py-3 border-b border-slate-700">
-        <h2 className="text-[13px] font-bold text-slate-100">Blokir Tanggal</h2>
-        <p className="text-[11px] text-slate-500 mt-0.5">Blokir hari atau jam tertentu agar tidak bisa dipesan.</p>
+    <div className="bg-slate-800/80 backdrop-blur rounded-2xl border border-slate-700/50 overflow-hidden">
+      <div className="px-4 py-3.5 border-b border-slate-700/50">
+        <h2 className="text-[15px] font-bold text-slate-100">Blokir Tanggal</h2>
+        <p className="text-xs text-slate-500 mt-0.5">Blokir hari atau jam tertentu agar tidak bisa dipesan.</p>
       </div>
 
       {/* Form */}
-      <div className="p-4 border-b border-slate-700 space-y-3">
+      <div className="p-4 border-b border-slate-700/50 space-y-3">
+        {/* Date + button */}
         <div className="flex gap-2 items-end">
           <div className="flex flex-col gap-1.5 flex-1">
-            <label className="text-[11px] font-medium text-slate-500">Tanggal</label>
+            <label className="text-xs font-medium text-slate-400">Tanggal</label>
             <input
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
               min={new Date().toISOString().split('T')[0]}
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-[13px] text-slate-100 outline-none focus:border-green-500 transition-colors [color-scheme:dark]"
+              className="w-full bg-slate-900/80 border border-slate-700 rounded-xl px-3 py-2.5 text-sm text-slate-100 outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20 transition-all [color-scheme:dark]"
             />
           </div>
           <button
             onClick={addBlock}
             disabled={saving || !date}
-            className="px-4 py-2 rounded-xl text-[12px] font-bold bg-green-500/20 border border-green-500/40 text-green-400 hover:bg-green-500/30 disabled:opacity-40 transition-colors whitespace-nowrap"
+            className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-bold bg-green-500 text-green-950 hover:bg-green-400 active:bg-green-600 disabled:opacity-40 transition-colors shadow-lg shadow-green-500/20 whitespace-nowrap"
           >
-            {saving ? 'Menyimpan...' : '+ Blokir'}
+            <Plus size={16} />
+            {saving ? 'Menyimpan...' : 'Blokir'}
           </button>
         </div>
 
-        <div className="flex gap-4">
+        {/* Block type selector */}
+        <div className="flex gap-2">
           {(['full', 'specific'] as const).map(type => (
-            <label key={type} className="flex items-center gap-2 text-[12px] text-slate-400 cursor-pointer">
-              <input
-                type="radio"
-                name="blockType"
-                value={type}
-                checked={blockType === type}
-                onChange={() => setBlockType(type)}
-                className="accent-green-500"
-              />
+            <button
+              key={type}
+              type="button"
+              onClick={() => setBlockType(type)}
+              className={`flex-1 py-2.5 rounded-xl text-xs font-bold transition-all ${
+                blockType === type
+                  ? 'bg-green-500/15 ring-1 ring-green-500/30 text-green-400'
+                  : 'bg-slate-900/80 ring-1 ring-slate-700 text-slate-400 hover:text-slate-300'
+              }`}
+            >
               {type === 'full' ? 'Seluruh hari' : 'Jam tertentu'}
-            </label>
+            </button>
           ))}
         </div>
 
+        {/* Slot selector */}
         {blockType === 'specific' && (
-          <select
+          <CustomSelect
             value={selectedSlotId}
-            onChange={e => setSelectedSlotId(e.target.value)}
-            className="w-full bg-slate-900 border border-slate-700 rounded-xl text-[13px] px-3 py-2 text-slate-100 outline-none focus:border-green-500 transition-colors"
-          >
-            <option value="">Pilih jam...</option>
-            {slots.map(s => (
-              <option key={s.id} value={s.id}>
-                {formatHour(s.start_hour)} – {formatHour(s.end_hour)}
-              </option>
-            ))}
-          </select>
+            onChange={setSelectedSlotId}
+            placeholder="Pilih jam..."
+            options={slots.map(s => ({
+              value: s.id,
+              label: `${formatHour(s.start_hour)} – ${formatHour(s.end_hour)}`,
+            }))}
+          />
         )}
       </div>
 
       {/* List */}
       {blocked.length === 0 ? (
-        <p className="px-4 py-8 text-center text-[13px] text-slate-500">Belum ada tanggal yang diblokir</p>
+        <div className="px-4 py-12 text-center">
+          <CalendarOff size={32} className="mx-auto text-slate-700 mb-2" />
+          <p className="text-sm text-slate-500">Belum ada tanggal yang diblokir</p>
+        </div>
       ) : (
-        <div className="divide-y divide-slate-700/50">
+        <div className="divide-y divide-slate-700/30">
           {blocked.map(bd => (
-            <div key={bd.id} className="flex items-center justify-between px-4 py-3">
-              <div>
-                <span className="text-[13px] font-medium text-slate-200">{bd.date}</span>
-                <span className="text-[11px] text-slate-500 ml-2">{slotLabel(bd)}</span>
+            <div key={bd.id} className="flex items-center justify-between px-4 py-3.5 gap-3">
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-slate-200">{formatDate(bd.date)}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{slotLabel(bd)}</p>
               </div>
               <button
                 onClick={() => removeBlock(bd.id)}
                 disabled={deletingId === bd.id}
-                className="text-[11px] text-red-400 hover:text-red-300 transition-colors disabled:opacity-40"
+                className="flex-shrink-0 p-2.5 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
+                title="Hapus"
               >
-                {deletingId === bd.id ? '...' : 'Hapus'}
+                {deletingId === bd.id ? '...' : <Trash2 size={16} />}
               </button>
             </div>
           ))}

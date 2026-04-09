@@ -18,6 +18,20 @@ interface ScheduleGridProps {
   initialStartDate: string
 }
 
+function getJakartaHour(): number {
+  return new Date().toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false }) as unknown as number
+}
+
+function getDefaultDate(): string {
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+  if (Number(getJakartaHour()) >= 23) {
+    const tomorrow = new Date(today + 'T00:00:00')
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    return tomorrow.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+  }
+  return today
+}
+
 export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProps) {
   const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
 
@@ -25,7 +39,7 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
   const [data, setData] = useState<ScheduleData>(initialData)
   const [loading, setLoading] = useState(false)
   const [isStudent, setIsStudent] = useState(false)
-  const [selectedDate, setSelectedDate] = useState(todayStr)
+  const [selectedDate, setSelectedDate] = useState(getDefaultDate)
   const [selection, setSelection] = useState<Selection | null>(null)
   const [bookingOpen, setBookingOpen] = useState(false)
 
@@ -44,9 +58,9 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
         setLoading(false)
       }
     }
-    setSelectedDate(todayStr)
+    setSelectedDate(getDefaultDate())
     setSelection(null)
-  }, [startDate, todayStr, initialStartDate])
+  }, [startDate, initialStartDate])
 
   const handleJumpToMonth = useCallback(
     async (year: number, month: number) => {
@@ -163,7 +177,7 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
   )
 
   return (
-    <div className="min-h-screen bg-slate-950 max-w-[960px] mx-auto">
+    <div className="min-h-screen bg-slate-950 max-w-[1200px] mx-auto">
       {/* Header */}
       <header className="bg-slate-950 border-b border-slate-800 px-4 py-2.5 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-2">
@@ -179,7 +193,7 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
           <button
             onClick={() => setIsStudent(false)}
             className={`px-4 py-[7px] rounded-3xl text-[12px] font-bold transition-colors ${
-              !isStudent ? 'bg-green-500 text-green-950' : 'text-slate-500'
+              !isStudent ? 'bg-green-500/15 text-green-400' : 'text-slate-500'
             }`}
           >
             Umum
@@ -187,7 +201,7 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
           <button
             onClick={() => setIsStudent(true)}
             className={`px-4 py-[7px] rounded-3xl text-[12px] font-bold transition-colors ${
-              isStudent ? 'bg-green-500 text-green-950' : 'text-slate-500'
+              isStudent ? 'bg-green-500/15 text-green-400' : 'text-slate-500'
             }`}
           >
             Pelajar

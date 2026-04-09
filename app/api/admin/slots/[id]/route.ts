@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { requireAdminSession } from '@/lib/supabase/server'
+import { requireRole } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
-  const authError = await requireAdminSession()
-  if (authError) return authError
+  const auth = await requireRole(['admin'])
+  if (auth.error) return auth.error
 
   let body: unknown
   try {
