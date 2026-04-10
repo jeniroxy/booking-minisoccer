@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { formatRupiah } from '@/lib/ps-pricing'
 import { Trash2 } from 'lucide-react'
+import { MonthPicker } from './MonthPicker'
 
 const EXPENSE_CATS = [
   { name: 'Mini Soccer', icon: '⚽' },
@@ -78,6 +79,12 @@ export function DailyExpenseReport() {
     setDays(generateDays(d))
   }
 
+  const handleMonthSelect = (year: number, month: number) => {
+    const newStr = `${year}-${String(month + 1).padStart(2, '0')}-01`
+    setSelectedDate(newStr)
+    setDays(generateDays(new Date(newStr + 'T00:00:00')))
+  }
+
   const getCatTotal = (catName: string) => {
     return expenses
       .filter(e => e.expense_categories?.name?.toLowerCase() === catName.toLowerCase())
@@ -94,14 +101,18 @@ export function DailyExpenseReport() {
   const totalExpenses = expenses.reduce((sum, e) => sum + e.amount, 0)
 
   const selectedDateObj = new Date(selectedDate + 'T00:00:00')
-  const monthLabel = selectedDateObj.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
 
   return (
     <div className="space-y-4">
       {/* Date navigation */}
-      <div className="bg-slate-800 rounded-2xl border border-slate-700 overflow-hidden">
+      <div className="bg-slate-800 rounded-2xl border border-slate-700">
         <div className="px-4 py-3 border-b border-slate-700 flex items-center justify-between">
-          <span className="text-[13px] font-bold text-slate-100">{monthLabel}</span>
+          <MonthPicker
+            selectedYear={selectedDateObj.getFullYear()}
+            selectedMonth={selectedDateObj.getMonth()}
+            onSelect={handleMonthSelect}
+            accent="red"
+          />
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => navigate(-1)}

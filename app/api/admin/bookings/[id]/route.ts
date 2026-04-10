@@ -52,15 +52,36 @@ export async function PATCH(
   }
 
   const supabase = createAdminClient()
+  const updates: Record<string, unknown> = { status }
+  if (status === 'confirmed') {
+    updates.confirmed_by = auth.userId
+    updates.confirmed_at = new Date().toISOString()
+  } else if (status === 'cancelled') {
+    updates.confirmed_by = null
+    updates.confirmed_at = null
+  }
+
   const { data, error } = await supabase
     .from('bookings')
-    .update({ status })
+    .update(updates)
     .eq('id', params.id)
     .select('*, time_slots(start_hour, end_hour)')
     .single()
 
   if (error) {
     return NextResponse.json({ error: 'Failed to update booking' }, { status: 500 })
+  }
+
+  // Attach confirmer name for client refresh
+  if (status === 'confirmed' && auth.userId) {
+    const { data: adminUser } = await supabase
+      .from('admin_users')
+      .select('name')
+      .eq('user_id', auth.userId)
+      .single()
+    if (adminUser) {
+      ;(data as Record<string, unknown>).confirmed_by_user = { name: adminUser.name }
+    }
   }
 
   // Sync to Google Calendar

@@ -14,20 +14,41 @@ import {
   Trash2,
   MessageCircle,
   Pencil,
+  Shield,
 } from 'lucide-react'
 
-type Filter = 'all' | 'pending' | 'confirmed' | 'cancelled'
+type Filter = 'pending' | 'confirmed' | 'selesai' | 'cancelled'
 
 const filterConfig: Record<Filter, { label: string; color: string; activeColor: string }> = {
-  all: { label: 'Semua', color: 'text-slate-400', activeColor: 'bg-slate-100/10 text-slate-200' },
   pending: { label: 'Pending', color: 'text-yellow-400', activeColor: 'bg-yellow-500/15 text-yellow-400' },
-  confirmed: { label: 'Confirmed', color: 'text-green-400', activeColor: 'bg-green-500/15 text-green-400' },
+  confirmed: { label: 'Akan Main', color: 'text-green-400', activeColor: 'bg-green-500/15 text-green-400' },
+  selesai: { label: 'Selesai', color: 'text-blue-400', activeColor: 'bg-blue-500/15 text-blue-400' },
   cancelled: { label: 'Cancelled', color: 'text-slate-400', activeColor: 'bg-slate-600/15 text-slate-300' },
 }
 
 function formatDateShort(dateStr: string): string {
   const d = new Date(dateStr + 'T00:00:00')
   return d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
+}
+
+function getJakartaToday(): string {
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+}
+
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  d.setDate(d.getDate() + days)
+  return d.toLocaleDateString('en-CA')
+}
+
+function formatDayHeader(dateStr: string, todayStr: string): string {
+  const d = new Date(dateStr + 'T00:00:00')
+  const weekday = d.toLocaleDateString('id-ID', { weekday: 'long' })
+  const rest = d.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })
+  const full = `${weekday} ${rest}`
+  if (dateStr === todayStr) return `Hari ini, ${full}`
+  if (dateStr === addDays(todayStr, 1)) return `Besok, ${full}`
+  return full
 }
 
 function isGroupDone(group: GroupedBooking): boolean {
@@ -42,6 +63,7 @@ function isGroupDone(group: GroupedBooking): boolean {
 
 function buildFollowUpUrl(group: GroupedBooking): string | null {
   if (!group.phone) return null
+  if (group.total_price < 200000) return null
   const phone = normalizePhone(group.phone)
   const lines = [
     'Terima kasih sudah main di Zains Mini Soccer.',
@@ -121,12 +143,15 @@ function EditablePhone({ bookingId, phone, onSaved }: { bookingId: string; phone
   )
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, done }: { status: string; done?: boolean }) {
   const base = 'inline-flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-bold uppercase tracking-wide'
   if (status === 'pending')
     return <span className={`${base} bg-yellow-500/15 text-yellow-400 ring-1 ring-yellow-500/25`}>Pending</span>
-  if (status === 'confirmed')
+  if (status === 'confirmed') {
+    if (done)
+      return <span className={`${base} bg-blue-500/15 text-blue-400 ring-1 ring-blue-500/25`}>Selesai</span>
     return <span className={`${base} bg-green-500/15 text-green-400 ring-1 ring-green-500/25`}>Confirmed</span>
+  }
   return <span className={`${base} bg-slate-700/50 text-slate-400 ring-1 ring-slate-600/50`}>Cancelled</span>
 }
 
@@ -256,6 +281,7 @@ interface GroupedBooking {
   total_price: number
   created_at: string
   vouchers?: { code: string; valid_until: string } | null
+  confirmed_by_name: string | null
   primary: BookingWithSlot // first booking, used for actions like WA
 }
 
@@ -301,6 +327,7 @@ function groupBookings(bookings: BookingWithSlot[]): GroupedBooking[] {
         total_price: b.total_price ?? b.time_slots?.price ?? 0,
         created_at: b.created_at,
         vouchers: b.vouchers,
+        confirmed_by_name: b.confirmed_by_user?.name ?? null,
         primary: b,
       })
     }
@@ -311,8 +338,7 @@ function groupBookings(bookings: BookingWithSlot[]): GroupedBooking[] {
 
 export function BookingTable({ initialBookings }: { initialBookings: BookingWithSlot[] }) {
   const [bookings, setBookings] = useState(initialBookings)
-  const [filter, setFilter] = useState<Filter>('all')
-  const [dateFilter, setDateFilter] = useState('')
+  const [filter, setFilter] = useState<Filter>('confirmed')
   const [search, setSearch] = useState('')
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -341,20 +367,43 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
 
   // Counts for filter badges (based on grouped)
   const counts = {
-    all: grouped.filter(g => g.status !== 'cancelled').length,
     pending: grouped.filter(g => g.status === 'pending').length,
-    confirmed: grouped.filter(g => g.status === 'confirmed').length,
+    confirmed: grouped.filter(g => g.status === 'confirmed' && !isGroupDone(g)).length,
+    selesai: grouped.filter(g => g.status === 'confirmed' && isGroupDone(g)).length,
     cancelled: grouped.filter(g => g.status === 'cancelled').length,
   }
 
-  const sortedGroups = [...grouped].sort((a, b) => b.created_at.localeCompare(a.created_at))
+  // Default sort: newest created first. For "Akan Main" tab, sort by booking_date asc + start_hour asc
+  const sortedGroups = [...grouped].sort((a, b) => {
+    if (filter === 'confirmed') {
+      const d = a.booking_date.localeCompare(b.booking_date)
+      if (d !== 0) return d
+      return a.start_hour - b.start_hour
+    }
+    return b.created_at.localeCompare(a.created_at)
+  })
   const filtered = sortedGroups.filter(g => {
-    if (filter === 'all' && g.status === 'cancelled') return false
-    if (filter !== 'all' && g.status !== filter) return false
-    if (dateFilter && g.booking_date !== dateFilter) return false
+    if (filter === 'pending' && g.status !== 'pending') return false
+    if (filter === 'confirmed' && (g.status !== 'confirmed' || isGroupDone(g))) return false
+    if (filter === 'selesai' && (g.status !== 'confirmed' || !isGroupDone(g))) return false
+    if (filter === 'cancelled' && g.status !== 'cancelled') return false
     if (search && !g.team_name.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
+
+  // Group by booking_date for "Akan Main" tab
+  const todayStr = getJakartaToday()
+  const groupedByDate: { date: string; groups: GroupedBooking[] }[] = []
+  if (filter === 'confirmed') {
+    for (const g of filtered) {
+      const last = groupedByDate[groupedByDate.length - 1]
+      if (last && last.date === g.booking_date) {
+        last.groups.push(g)
+      } else {
+        groupedByDate.push({ date: g.booking_date, groups: [g] })
+      }
+    }
+  }
 
   const updateGroupStatus = async (group: GroupedBooking, status: 'confirmed' | 'cancelled') => {
     const bookingSnapshot = status === 'confirmed' ? group.primary : undefined
@@ -372,8 +421,18 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
       )
     )
     if (results.every(r => r.ok)) {
+      // First response carries the confirmer info from the API
+      const firstData = await results[0].clone().json().catch(() => null) as
+        | { confirmed_by_user?: { name: string } | null; confirmed_by?: string | null; confirmed_at?: string | null }
+        | null
       const idSet = new Set(group.ids)
-      setBookings(prev => prev.map(b => idSet.has(b.id) ? { ...b, status } : b))
+      setBookings(prev => prev.map(b => idSet.has(b.id) ? {
+        ...b,
+        status,
+        confirmed_by: status === 'confirmed' ? (firstData?.confirmed_by ?? b.confirmed_by) : null,
+        confirmed_at: status === 'confirmed' ? (firstData?.confirmed_at ?? b.confirmed_at) : null,
+        confirmed_by_user: status === 'confirmed' ? (firstData?.confirmed_by_user ?? b.confirmed_by_user ?? null) : null,
+      } : b))
       if (waUrl) {
         const businessUrl = toWABusinessUrl(waUrl)
         if (newWindow) {
@@ -402,6 +461,180 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
     }
     setDeletingId(null)
   }
+
+  const renderTableRow = (group: GroupedBooking) => (
+    <tr key={group.ids.join('-')} className="border-b border-slate-800/30 hover:bg-slate-800/20 transition-colors">
+      <td className="px-4 py-3.5 text-sm text-slate-300">{formatDateShort(group.booking_date)}</td>
+      <td className="px-4 py-3.5 text-sm text-slate-300 whitespace-nowrap">
+        {formatHour(group.start_hour)}–{formatHour(group.end_hour)}
+        {group.ids.length > 1 && (
+          <span className="ml-1.5 text-[10px] text-slate-500">({group.end_hour - group.start_hour} jam)</span>
+        )}
+      </td>
+      <td className="px-4 py-3.5 text-sm font-semibold text-slate-100">
+        {group.team_name}
+        {group.status === 'confirmed' && group.confirmed_by_name && (
+          <div className="flex items-center gap-1 mt-0.5 text-[10px] font-normal text-slate-500">
+            <Shield size={10} className="flex-shrink-0" />
+            <span>oleh {group.confirmed_by_name}</span>
+          </div>
+        )}
+      </td>
+      <td className="px-4 py-3.5">
+        <EditablePhone
+          bookingId={group.primary.id}
+          phone={group.phone}
+          onSaved={(id, ph) => {
+            const idSet = new Set(group.ids)
+            setBookings(prev => prev.map(b => idSet.has(b.id) ? { ...b, phone: ph || null } : b))
+          }}
+        />
+      </td>
+      <td className="px-4 py-3.5 text-sm font-bold text-green-400">
+        {formatPrice(group.total_price)}
+      </td>
+      <td className="px-4 py-3.5"><StatusBadge status={group.status} done={isGroupDone(group)} /></td>
+      <td className="px-4 py-3.5">
+        <div className="flex gap-1.5 items-center">
+          {group.status !== 'cancelled' && (
+            <button
+              onClick={() => setEditingBooking(group.primary)}
+              className="p-2 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-slate-800/50 transition-colors"
+              title="Edit booking"
+            >
+              <Pencil size={14} />
+            </button>
+          )}
+          {group.status === 'pending' && (
+            <button
+              onClick={() => updateGroupStatus(group, 'confirmed')}
+              disabled={loadingId === group.ids[0]}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-green-500/15 ring-1 ring-green-500/30 text-green-400 hover:bg-green-500/25 disabled:opacity-40 transition-colors"
+            >
+              <Check size={13} /> Confirm
+            </button>
+          )}
+          {group.status !== 'cancelled' && (
+            <button
+              onClick={() => updateGroupStatus(group, 'cancelled')}
+              disabled={loadingId === group.ids[0]}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-red-500/10 ring-1 ring-red-500/25 text-red-400 hover:bg-red-500/20 disabled:opacity-40 transition-colors"
+            >
+              <Ban size={13} /> Cancel
+            </button>
+          )}
+          {group.status === 'cancelled' && (
+            <button
+              onClick={() => deleteGroup(group)}
+              disabled={deletingId === group.ids[0]}
+              className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
+              title="Hapus permanen"
+            >
+              {deletingId === group.ids[0] ? '...' : <Trash2 size={15} />}
+            </button>
+          )}
+          {isGroupDone(group) && buildFollowUpUrl(group) && (
+            <button
+              onClick={() => sendViaWABusiness(buildFollowUpUrl(group)!)}
+              className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-blue-500/15 ring-1 ring-blue-500/30 text-blue-400 hover:bg-blue-500/25 transition-colors"
+            >
+              <MessageCircle size={13} /> Follow-up
+            </button>
+          )}
+        </div>
+      </td>
+    </tr>
+  )
+
+  const renderMobileCard = (group: GroupedBooking) => (
+    <div key={group.ids.join('-')} className="px-4 py-4 space-y-3">
+      {/* Header: team name + status */}
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="text-[15px] font-bold text-slate-100 truncate">{group.team_name}</p>
+          <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-400">
+            <CalendarDays size={13} className="flex-shrink-0 text-slate-500" />
+            <span>{formatDateShort(group.booking_date)}</span>
+            <span className="text-slate-600">·</span>
+            <span>
+              {formatHour(group.start_hour)}–{formatHour(group.end_hour)}
+              {group.ids.length > 1 && ` (${group.end_hour - group.start_hour} jam)`}
+            </span>
+          </div>
+          <div className="mt-0.5">
+            <EditablePhone
+              bookingId={group.primary.id}
+              phone={group.phone}
+              onSaved={(id, ph) => {
+                const idSet = new Set(group.ids)
+                setBookings(prev => prev.map(b => idSet.has(b.id) ? { ...b, phone: ph || null } : b))
+              }}
+            />
+          </div>
+        </div>
+        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+          <StatusBadge status={group.status} done={isGroupDone(group)} />
+          <span className="text-sm font-bold text-green-400">
+            {formatPrice(group.total_price)}
+          </span>
+          {group.status === 'confirmed' && group.confirmed_by_name && (
+            <div className="flex items-center gap-1 text-[10px] text-slate-500">
+              <Shield size={10} className="flex-shrink-0" />
+              <span className="text-slate-400">{group.confirmed_by_name}</span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Action buttons */}
+      {group.status !== 'cancelled' && (
+        <div className="flex gap-2">
+          <button
+            onClick={() => setEditingBooking(group.primary)}
+            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[13px] font-bold bg-slate-800/50 ring-1 ring-slate-700/50 text-slate-300 hover:bg-slate-800 transition-colors"
+          >
+            <Pencil size={14} />
+          </button>
+          {group.status === 'pending' && (
+            <button
+              onClick={() => updateGroupStatus(group, 'confirmed')}
+              disabled={loadingId === group.ids[0]}
+              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold bg-green-500/15 ring-1 ring-green-500/30 text-green-400 hover:bg-green-500/25 active:bg-green-500/30 disabled:opacity-40 transition-colors"
+            >
+              <Check size={15} /> Confirm
+            </button>
+          )}
+          <button
+            onClick={() => updateGroupStatus(group, 'cancelled')}
+            disabled={loadingId === group.ids[0]}
+            className={`${group.status === 'pending' ? 'flex-1' : 'w-full'} flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold bg-red-500/10 ring-1 ring-red-500/25 text-red-400 hover:bg-red-500/20 active:bg-red-500/25 disabled:opacity-40 transition-colors`}
+          >
+            <Ban size={15} /> Cancel
+          </button>
+        </div>
+      )}
+
+      {group.status === 'cancelled' && (
+        <button
+          onClick={() => deleteGroup(group)}
+          disabled={deletingId === group.ids[0]}
+          className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-[13px] font-bold text-slate-400 bg-slate-800/30 ring-1 ring-slate-700/50 hover:text-red-400 hover:ring-red-500/30 disabled:opacity-40 transition-colors"
+        >
+          <Trash2 size={15} />
+          {deletingId === group.ids[0] ? 'Menghapus...' : 'Hapus Permanen'}
+        </button>
+      )}
+
+      {isGroupDone(group) && buildFollowUpUrl(group) && (
+        <button
+          onClick={() => sendViaWABusiness(buildFollowUpUrl(group)!)}
+          className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-[13px] font-bold bg-blue-500/15 ring-1 ring-blue-500/30 text-blue-400 hover:bg-blue-500/25 active:bg-blue-500/30 transition-colors"
+        >
+          <MessageCircle size={15} /> Follow-up WA
+        </button>
+      )}
+    </div>
+  )
 
   return (
     <div className="space-y-3">
@@ -447,46 +680,28 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
         )}
       </div>
 
-      {/* ── Filter pills + date ── */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-        <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mb-0.5">
-          {(['all', 'pending', 'confirmed', 'cancelled'] as Filter[]).map(f => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
-                filter === f
-                  ? filterConfig[f].activeColor + ' shadow-sm'
-                  : 'bg-slate-900/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-              }`}
-            >
-              {filterConfig[f].label}
-              {counts[f] > 0 && (
-                <span className={`text-[10px] min-w-[18px] h-[18px] flex items-center justify-center rounded-full ${
-                  filter === f ? 'bg-black/15' : 'bg-slate-800/80'
-                }`}>
-                  {counts[f]}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-2 sm:ml-auto">
-          <input
-            type="date"
-            value={dateFilter}
-            onChange={e => setDateFilter(e.target.value)}
-            className="bg-slate-900/50 border border-slate-800/80 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none focus:border-green-500/50 transition-colors [color-scheme:dark]"
-          />
-          {dateFilter && (
-            <button
-              onClick={() => setDateFilter('')}
-              className="p-1.5 rounded-lg text-slate-500 hover:text-slate-300 hover:bg-slate-800/50 transition-colors"
-            >
-              <X size={14} />
-            </button>
-          )}
-        </div>
+      {/* ── Filter pills ── */}
+      <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mb-0.5">
+        {(['pending', 'confirmed', 'selesai', 'cancelled'] as Filter[]).map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`flex-shrink-0 flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold transition-all ${
+              filter === f
+                ? filterConfig[f].activeColor + ' shadow-sm'
+                : 'bg-slate-900/50 text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            }`}
+          >
+            {filterConfig[f].label}
+            {counts[f] > 0 && (
+              <span className={`text-[10px] min-w-[18px] h-[18px] flex items-center justify-center rounded-full ${
+                filter === f ? 'bg-black/15' : 'bg-slate-800/80'
+              }`}>
+                {counts[f]}
+              </span>
+            )}
+          </button>
+        ))}
       </div>
 
       {/* ── Booking list card ── */}
@@ -512,176 +727,44 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
                   </td>
                 </tr>
               )}
-              {filtered.map(group => (
-                <tr key={group.ids.join('-')} className="border-b border-slate-800/30 hover:bg-slate-800/20 transition-colors">
-                  <td className="px-4 py-3.5 text-sm text-slate-300">{formatDateShort(group.booking_date)}</td>
-                  <td className="px-4 py-3.5 text-sm text-slate-300 whitespace-nowrap">
-                    {formatHour(group.start_hour)}–{formatHour(group.end_hour)}
-                    {group.ids.length > 1 && (
-                      <span className="ml-1.5 text-[10px] text-slate-500">({group.end_hour - group.start_hour} jam)</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3.5 text-sm font-semibold text-slate-100">{group.team_name}</td>
-                  <td className="px-4 py-3.5">
-                    <EditablePhone
-                      bookingId={group.primary.id}
-                      phone={group.phone}
-                      onSaved={(id, ph) => {
-                        const idSet = new Set(group.ids)
-                        setBookings(prev => prev.map(b => idSet.has(b.id) ? { ...b, phone: ph || null } : b))
-                      }}
-                    />
-                  </td>
-                  <td className="px-4 py-3.5 text-sm font-bold text-green-400">
-                    {formatPrice(group.total_price)}
-                  </td>
-                  <td className="px-4 py-3.5"><StatusBadge status={group.status} /></td>
-                  <td className="px-4 py-3.5">
-                    <div className="flex gap-1.5 items-center">
-                      {group.status !== 'cancelled' && (
-                        <button
-                          onClick={() => setEditingBooking(group.primary)}
-                          className="p-2 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-slate-800/50 transition-colors"
-                          title="Edit booking"
-                        >
-                          <Pencil size={14} />
-                        </button>
-                      )}
-                      {group.status === 'pending' && (
-                        <button
-                          onClick={() => updateGroupStatus(group, 'confirmed')}
-                          disabled={loadingId === group.ids[0]}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-green-500/15 ring-1 ring-green-500/30 text-green-400 hover:bg-green-500/25 disabled:opacity-40 transition-colors"
-                        >
-                          <Check size={13} /> Confirm
-                        </button>
-                      )}
-                      {group.status !== 'cancelled' && (
-                        <button
-                          onClick={() => updateGroupStatus(group, 'cancelled')}
-                          disabled={loadingId === group.ids[0]}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-red-500/10 ring-1 ring-red-500/25 text-red-400 hover:bg-red-500/20 disabled:opacity-40 transition-colors"
-                        >
-                          <Ban size={13} /> Cancel
-                        </button>
-                      )}
-                      {group.status === 'cancelled' && (
-                        <button
-                          onClick={() => deleteGroup(group)}
-                          disabled={deletingId === group.ids[0]}
-                          className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
-                          title="Hapus permanen"
-                        >
-                          {deletingId === group.ids[0] ? '...' : <Trash2 size={15} />}
-                        </button>
-                      )}
-                      {isGroupDone(group) && buildFollowUpUrl(group) && (
-                        <button
-                          onClick={() => sendViaWABusiness(buildFollowUpUrl(group)!)}
-                          className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-blue-500/15 ring-1 ring-blue-500/30 text-blue-400 hover:bg-blue-500/25 transition-colors"
-                        >
-                          <MessageCircle size={13} /> Follow-up
-                        </button>
-                      )}
-                    </div>
-                  </td>
-                </tr>
-              ))}
+              {filter === 'confirmed' && filtered.length > 0
+                ? groupedByDate.flatMap(section => [
+                    <tr key={`header-${section.date}`} className="bg-slate-900/80">
+                      <td colSpan={7} className="px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wide border-y border-slate-800/80">
+                        {formatDayHeader(section.date, todayStr)}
+                      </td>
+                    </tr>,
+                    ...section.groups.map(group => renderTableRow(group)),
+                  ])
+                : filtered.map(group => renderTableRow(group))}
             </tbody>
           </table>
         </div>
 
         {/* ── Mobile card list ── */}
-        <div className="md:hidden divide-y divide-slate-800/30">
+        <div className="md:hidden">
           {filtered.length === 0 && (
             <div className="px-4 py-16 text-center">
               <p className="text-sm text-slate-500">Tidak ada booking</p>
               <p className="text-xs text-slate-600 mt-1">Coba ubah filter atau kata kunci</p>
             </div>
           )}
-          {filtered.map(group => (
-            <div key={group.ids.join('-')} className="px-4 py-4 space-y-3">
-              {/* Header: team name + status */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <p className="text-[15px] font-bold text-slate-100 truncate">{group.team_name}</p>
-                  <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-400">
-                    <CalendarDays size={13} className="flex-shrink-0 text-slate-500" />
-                    <span>{formatDateShort(group.booking_date)}</span>
-                    <span className="text-slate-600">·</span>
-                    <span>
-                      {formatHour(group.start_hour)}–{formatHour(group.end_hour)}
-                      {group.ids.length > 1 && ` (${group.end_hour - group.start_hour} jam)`}
-                    </span>
-                  </div>
-                  <div className="mt-0.5">
-                    <EditablePhone
-                      bookingId={group.primary.id}
-                      phone={group.phone}
-                      onSaved={(id, ph) => {
-                        const idSet = new Set(group.ids)
-                        setBookings(prev => prev.map(b => idSet.has(b.id) ? { ...b, phone: ph || null } : b))
-                      }}
-                    />
-                  </div>
+          {filter === 'confirmed' && filtered.length > 0 ? (
+            groupedByDate.map(section => (
+              <div key={section.date}>
+                <div className="sticky top-0 z-10 px-4 py-2 bg-slate-900/95 backdrop-blur border-y border-slate-800/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                  {formatDayHeader(section.date, todayStr)}
                 </div>
-                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                  <StatusBadge status={group.status} />
-                  <span className="text-sm font-bold text-green-400">
-                    {formatPrice(group.total_price)}
-                  </span>
+                <div className="divide-y divide-slate-800/30">
+                  {section.groups.map(group => renderMobileCard(group))}
                 </div>
               </div>
-
-              {/* Action buttons */}
-              {group.status !== 'cancelled' && (
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setEditingBooking(group.primary)}
-                    className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[13px] font-bold bg-slate-800/50 ring-1 ring-slate-700/50 text-slate-300 hover:bg-slate-800 transition-colors"
-                  >
-                    <Pencil size={14} />
-                  </button>
-                  {group.status === 'pending' && (
-                    <button
-                      onClick={() => updateGroupStatus(group, 'confirmed')}
-                      disabled={loadingId === group.ids[0]}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold bg-green-500/15 ring-1 ring-green-500/30 text-green-400 hover:bg-green-500/25 active:bg-green-500/30 disabled:opacity-40 transition-colors"
-                    >
-                      <Check size={15} /> Confirm
-                    </button>
-                  )}
-                  <button
-                    onClick={() => updateGroupStatus(group, 'cancelled')}
-                    disabled={loadingId === group.ids[0]}
-                    className={`${group.status === 'pending' ? 'flex-1' : 'w-full'} flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold bg-red-500/10 ring-1 ring-red-500/25 text-red-400 hover:bg-red-500/20 active:bg-red-500/25 disabled:opacity-40 transition-colors`}
-                  >
-                    <Ban size={15} /> Cancel
-                  </button>
-                </div>
-              )}
-
-              {group.status === 'cancelled' && (
-                <button
-                  onClick={() => deleteGroup(group)}
-                  disabled={deletingId === group.ids[0]}
-                  className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-[13px] font-bold text-slate-400 bg-slate-800/30 ring-1 ring-slate-700/50 hover:text-red-400 hover:ring-red-500/30 disabled:opacity-40 transition-colors"
-                >
-                  <Trash2 size={15} />
-                  {deletingId === group.ids[0] ? 'Menghapus...' : 'Hapus Permanen'}
-                </button>
-              )}
-
-              {isGroupDone(group) && buildFollowUpUrl(group) && (
-                <button
-                  onClick={() => sendViaWABusiness(buildFollowUpUrl(group)!)}
-                  className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-[13px] font-bold bg-blue-500/15 ring-1 ring-blue-500/30 text-blue-400 hover:bg-blue-500/25 active:bg-blue-500/30 transition-colors"
-                >
-                  <MessageCircle size={15} /> Follow-up WA
-                </button>
-              )}
+            ))
+          ) : (
+            <div className="divide-y divide-slate-800/30">
+              {filtered.map(group => renderMobileCard(group))}
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>

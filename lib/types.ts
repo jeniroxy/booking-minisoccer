@@ -17,6 +17,8 @@ export interface Booking {
   total_price: number | null
   voucher_id: string | null
   followup_voucher_id: string | null
+  confirmed_by?: string | null
+  confirmed_at?: string | null
   created_at: string
 }
 
@@ -48,6 +50,7 @@ export interface ScheduleData {
 export type BookingWithSlot = Booking & {
   time_slots: TimeSlot
   vouchers?: { code: string; valid_until: string } | null
+  confirmed_by_user?: { name: string } | null
 }
 
 export interface Voucher {
