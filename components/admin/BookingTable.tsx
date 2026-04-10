@@ -48,6 +48,7 @@ function formatDayHeader(dateStr: string, todayStr: string): string {
   const full = `${weekday} ${rest}`
   if (dateStr === todayStr) return `Hari ini, ${full}`
   if (dateStr === addDays(todayStr, 1)) return `Besok, ${full}`
+  if (dateStr === addDays(todayStr, -1)) return `Kemarin, ${full}`
   return full
 }
 
@@ -373,12 +374,17 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
     cancelled: grouped.filter(g => g.status === 'cancelled').length,
   }
 
-  // Default sort: newest created first. For "Akan Main" tab, sort by booking_date asc + start_hour asc
+  // Default sort: newest created first. "Akan Main" → date asc + hour asc. "Selesai" → date desc + hour desc.
   const sortedGroups = [...grouped].sort((a, b) => {
     if (filter === 'confirmed') {
       const d = a.booking_date.localeCompare(b.booking_date)
       if (d !== 0) return d
       return a.start_hour - b.start_hour
+    }
+    if (filter === 'selesai') {
+      const d = b.booking_date.localeCompare(a.booking_date)
+      if (d !== 0) return d
+      return b.start_hour - a.start_hour
     }
     return b.created_at.localeCompare(a.created_at)
   })
@@ -391,10 +397,11 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
     return true
   })
 
-  // Group by booking_date for "Akan Main" tab
+  // Group by booking_date for "Akan Main" and "Selesai" tabs
   const todayStr = getJakartaToday()
   const groupedByDate: { date: string; groups: GroupedBooking[] }[] = []
-  if (filter === 'confirmed') {
+  const isDateGrouped = filter === 'confirmed' || filter === 'selesai'
+  if (isDateGrouped) {
     for (const g of filtered) {
       const last = groupedByDate[groupedByDate.length - 1]
       if (last && last.date === g.booking_date) {
@@ -704,69 +711,93 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
         ))}
       </div>
 
-      {/* ── Booking list card ── */}
-      <div className="bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-800/80 overflow-hidden">
-        {/* ── Desktop table ── */}
-        <div className="hidden md:block overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-slate-800/80">
-                {['Tanggal', 'Jam', 'Nama Tim', 'WA', 'Harga', 'Status', 'Aksi'].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length === 0 && (
-                <tr>
-                  <td colSpan={7} className="px-4 py-16 text-center">
-                    <p className="text-sm text-slate-500">Tidak ada booking</p>
-                    <p className="text-xs text-slate-600 mt-1">Coba ubah filter atau kata kunci pencarian</p>
-                  </td>
-                </tr>
-              )}
-              {filter === 'confirmed' && filtered.length > 0
-                ? groupedByDate.flatMap(section => [
-                    <tr key={`header-${section.date}`} className="bg-slate-900/80">
-                      <td colSpan={7} className="px-4 py-2.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wide border-y border-slate-800/80">
-                        {formatDayHeader(section.date, todayStr)}
-                      </td>
-                    </tr>,
-                    ...section.groups.map(group => renderTableRow(group)),
-                  ])
-                : filtered.map(group => renderTableRow(group))}
-            </tbody>
-          </table>
-        </div>
-
-        {/* ── Mobile card list ── */}
-        <div className="md:hidden">
-          {filtered.length === 0 && (
-            <div className="px-4 py-16 text-center">
-              <p className="text-sm text-slate-500">Tidak ada booking</p>
-              <p className="text-xs text-slate-600 mt-1">Coba ubah filter atau kata kunci</p>
-            </div>
-          )}
-          {filter === 'confirmed' && filtered.length > 0 ? (
-            groupedByDate.map(section => (
-              <div key={section.date}>
-                <div className="sticky top-0 z-10 px-4 py-2 bg-slate-900/95 backdrop-blur border-y border-slate-800/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+      {/* ── Booking list ── */}
+      {isDateGrouped ? (
+        filtered.length === 0 ? (
+          <div className="bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-800/80 px-4 py-16 text-center">
+            <p className="text-sm text-slate-500">Tidak ada booking</p>
+            <p className="text-xs text-slate-600 mt-1">Coba ubah filter atau kata kunci pencarian</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {groupedByDate.map(section => (
+              <div
+                key={section.date}
+                className="bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-800/80 overflow-hidden"
+              >
+                {/* Date header */}
+                <div className="px-4 py-2.5 bg-slate-900/80 border-b border-slate-800/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
                   {formatDayHeader(section.date, todayStr)}
                 </div>
-                <div className="divide-y divide-slate-800/30">
+
+                {/* Desktop table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-slate-800/80">
+                        {['Tanggal', 'Jam', 'Nama Tim', 'WA', 'Harga', 'Status', 'Aksi'].map(h => (
+                          <th key={h} className="px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                            {h}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {section.groups.map(group => renderTableRow(group))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile card list */}
+                <div className="md:hidden divide-y divide-slate-800/30">
                   {section.groups.map(group => renderMobileCard(group))}
                 </div>
               </div>
-            ))
-          ) : (
+            ))}
+          </div>
+        )
+      ) : (
+        <div className="bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-800/80 overflow-hidden">
+          {/* ── Desktop table ── */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-800/80">
+                  {['Tanggal', 'Jam', 'Nama Tim', 'WA', 'Harga', 'Status', 'Aksi'].map(h => (
+                    <th key={h} className="px-4 py-3 text-left text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-16 text-center">
+                      <p className="text-sm text-slate-500">Tidak ada booking</p>
+                      <p className="text-xs text-slate-600 mt-1">Coba ubah filter atau kata kunci pencarian</p>
+                    </td>
+                  </tr>
+                )}
+                {filtered.map(group => renderTableRow(group))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ── Mobile card list ── */}
+          <div className="md:hidden">
+            {filtered.length === 0 && (
+              <div className="px-4 py-16 text-center">
+                <p className="text-sm text-slate-500">Tidak ada booking</p>
+                <p className="text-xs text-slate-600 mt-1">Coba ubah filter atau kata kunci</p>
+              </div>
+            )}
             <div className="divide-y divide-slate-800/30">
               {filtered.map(group => renderMobileCard(group))}
             </div>
-          )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }
