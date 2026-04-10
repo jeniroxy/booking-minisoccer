@@ -126,11 +126,14 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
         const entries = Object.entries(CAT_LABELS).filter(([key]) => (cats[key] || 0) > 0)
         if (entries.length === 0) return null
         return (
-          <div className="flex gap-2">
+          <div
+            className="flex gap-3 overflow-x-auto pb-2"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          >
             {entries.map(([key, label]) => (
-              <div key={key} className="flex-1 min-w-0 bg-slate-900/50 rounded-2xl border border-slate-800/80 p-2.5">
-                <p className="text-[9px] text-slate-500 font-medium truncate">{label}</p>
-                <p className="text-[14px] font-extrabold mt-0.5 text-green-400 truncate">
+              <div key={key} className="flex-shrink-0 w-[160px] bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5">
+                <p className="text-[10px] text-slate-500 font-medium whitespace-nowrap">{label}</p>
+                <p className="text-[17px] font-extrabold mt-0.5 text-green-400 whitespace-nowrap">
                   {formatRupiah(cats[key])}
                 </p>
               </div>
