@@ -42,11 +42,14 @@ interface MonthlyData {
 }
 
 function getLast12Months() {
+  // All months from March 2025 up to current month, newest first
   const now = new Date()
-  const result = []
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-    result.push({ year: d.getFullYear(), month: d.getMonth() + 1 })
+  const result: { year: number; month: number }[] = []
+  const cursor = new Date(now.getFullYear(), now.getMonth(), 1)
+  const endCursor = new Date(2025, 2, 1) // March 2025 (month is 0-indexed)
+  while (cursor >= endCursor) {
+    result.push({ year: cursor.getFullYear(), month: cursor.getMonth() + 1 })
+    cursor.setMonth(cursor.getMonth() - 1)
   }
   return result
 }

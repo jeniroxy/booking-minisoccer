@@ -171,12 +171,15 @@ export type ExpenseEntryWithCategory = ExpenseEntry & {
   expense_categories: ExpenseCategory
 }
 
+export type CapitalExpenseSection = 'mini_soccer' | 'kantin'
+
 export interface CapitalExpense {
   id: string
   date: string
   description: string
   amount: number
   notes: string | null
+  section: CapitalExpenseSection
   created_at: string
 }
 

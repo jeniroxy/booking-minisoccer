@@ -37,8 +37,11 @@ export async function GET() {
       supabase.from('revenue_entries').select('date, amount, category'),
       supabase.from('ps_sessions').select('started_at, final_amount').eq('status', 'completed'),
       supabase.from('expense_entries').select('date, amount, expense_categories(name)'),
-      supabase.from('capital_expenses').select('date, amount'),
+      supabase.from('capital_expenses').select('date, amount, description, section'),
     ])
+
+    const isKantinCapital = (c: { section?: string | null; description?: string | null }) =>
+      c.section === 'kantin' || (!c.section && (c.description || '').toLowerCase().includes('kantin'))
 
     const calcPeriod = (from: string, to: string) => {
       let revenue = 0
@@ -71,12 +74,16 @@ export async function GET() {
     const thisWeek = calcPeriod(weekStart, weekEndStr)
     const todayData = calcPeriod(today, today)
 
-    // Last 12 months breakdown
+    // Monthly breakdown from March 2025 up to current month, newest first
+    // (excludes capital expenses — only operational income)
     const last12Months: { year: number; month: number; revenue: number; expenses: number; net: number }[] = []
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-      const mYear = d.getFullYear()
-      const mMonth = d.getMonth() + 1
+    const START_YEAR = 2025
+    const START_MONTH = 3
+    const cursor = new Date(now.getFullYear(), now.getMonth(), 1)
+    const endCursor = new Date(START_YEAR, START_MONTH - 1, 1)
+    while (cursor >= endCursor) {
+      const mYear = cursor.getFullYear()
+      const mMonth = cursor.getMonth() + 1
       const mStr = String(mMonth).padStart(2, '0')
       const mStart = `${mYear}-${mStr}-01`
       const mNextMonth = mMonth === 12
@@ -84,7 +91,14 @@ export async function GET() {
         : `${mYear}-${String(mMonth + 1).padStart(2, '0')}-01`
       const mEnd = new Date(new Date(mNextMonth).getTime() - 86400000).toISOString().split('T')[0]
       const period = calcPeriod(mStart, mEnd)
-      last12Months.push({ year: mYear, month: mMonth, revenue: period.revenue, expenses: period.expenses + period.capital, net: period.net })
+      last12Months.push({
+        year: mYear,
+        month: mMonth,
+        revenue: period.revenue,
+        expenses: period.expenses,
+        net: period.revenue - period.expenses,
+      })
+      cursor.setMonth(cursor.getMonth() - 1)
     }
 
     // Mini Soccer this month breakdown by category
@@ -143,6 +157,48 @@ export async function GET() {
       }
     }
 
+    // All-time cutoff: only include data up to end of March 2026
+    const ALL_TIME_CUTOFF = '2026-03-31'
+
+    // All-time Mini Soccer (bookings + PS + non-kantin revenue_entries - non-kantin expenses - non-kantin capital)
+    let msAllRevenue = 0
+    let msAllExpenses = 0
+    let msAllCapital = 0
+    for (const b of bookings ?? []) {
+      if (b.booking_date <= ALL_TIME_CUTOFF) msAllRevenue += b.total_price || 0
+    }
+    for (const s of psSessions ?? []) {
+      const d = new Date(s.started_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+      if (d <= ALL_TIME_CUTOFF) msAllRevenue += s.final_amount || 0
+    }
+    for (const r of revenueEntries ?? []) {
+      if (r.category !== 'kantin' && r.date <= ALL_TIME_CUTOFF) msAllRevenue += r.amount
+    }
+    for (const e of expenseEntries ?? []) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const catName = ((e as any).expense_categories?.name as string) ?? ''
+      if (!catName.toLowerCase().includes('kantin') && e.date <= ALL_TIME_CUTOFF) msAllExpenses += e.amount
+    }
+    for (const c of capitalExpenses ?? []) {
+      if (c.date <= ALL_TIME_CUTOFF && !isKantinCapital(c)) msAllCapital += c.amount
+    }
+
+    // All-time Kantin
+    let kAllRevenue = 0
+    let kAllExpenses = 0
+    let kAllCapital = 0
+    for (const r of revenueEntries ?? []) {
+      if (r.category === 'kantin' && r.date <= ALL_TIME_CUTOFF) kAllRevenue += r.amount
+    }
+    for (const e of expenseEntries ?? []) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const catName = ((e as any).expense_categories?.name as string) ?? ''
+      if (catName.toLowerCase().includes('kantin') && e.date <= ALL_TIME_CUTOFF) kAllExpenses += e.amount
+    }
+    for (const c of capitalExpenses ?? []) {
+      if (c.date <= ALL_TIME_CUTOFF && isKantinCapital(c)) kAllCapital += c.amount
+    }
+
     return NextResponse.json({
       all_time: allTime,
       this_year: thisYear,
@@ -151,6 +207,8 @@ export async function GET() {
       today: todayData,
       minisoccer_month: { revenue: msRevenue, expenses: msExpenses + msCapital, net: msRevenue - msExpenses - msCapital, categories: catBreakdown },
       kantin_month: { revenue: kantinRevenue, expenses: kantinExpenses, net: kantinRevenue - kantinExpenses },
+      minisoccer_all_time: { revenue: msAllRevenue, expenses: msAllExpenses, capital: msAllCapital, net: msAllRevenue - msAllExpenses - msAllCapital },
+      kantin_all_time: { revenue: kAllRevenue, expenses: kAllExpenses, capital: kAllCapital, net: kAllRevenue - kAllExpenses - kAllCapital },
       last_12_months: last12Months,
     })
   } catch (err) {

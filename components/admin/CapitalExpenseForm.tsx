@@ -21,11 +21,13 @@ export function CapitalExpenseForm({ onSaved }: { onSaved?: () => void } = {}) {
   const [description, setDescription] = useState('')
   const [amount, setAmount] = useState('')
   const [notes, setNotes] = useState('')
+  const [section, setSection] = useState<'mini_soccer' | 'kantin'>('mini_soccer')
 
   const resetForm = () => {
     setDescription('')
     setAmount('')
     setNotes('')
+    setSection('mini_soccer')
     setError('')
   }
 
@@ -51,6 +53,7 @@ export function CapitalExpenseForm({ onSaved }: { onSaved?: () => void } = {}) {
         description: description.trim(),
         amount: amountNum,
         notes: notes.trim() || null,
+        section,
       }),
     })
 
@@ -120,6 +123,34 @@ export function CapitalExpenseForm({ onSaved }: { onSaved?: () => void } = {}) {
         </div>
 
         <div className="flex flex-col gap-1.5">
+          <label className="text-[11px] font-medium text-slate-500">Kategori</label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setSection('mini_soccer')}
+              className={`px-3 py-2 rounded-xl text-[12px] font-bold border transition-colors ${
+                section === 'mini_soccer'
+                  ? 'bg-green-500/20 border-green-500/40 text-green-400'
+                  : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
+              }`}
+            >
+              🏟️ Mini Soccer
+            </button>
+            <button
+              type="button"
+              onClick={() => setSection('kantin')}
+              className={`px-3 py-2 rounded-xl text-[12px] font-bold border transition-colors ${
+                section === 'kantin'
+                  ? 'bg-green-500/20 border-green-500/40 text-green-400'
+                  : 'bg-slate-900 border-slate-700 text-slate-400 hover:border-slate-600'
+              }`}
+            >
+              🍔 Kantin
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
           <label className="text-[11px] font-medium text-slate-500">Deskripsi *</label>
           <input
             type="text"
@@ -165,7 +196,16 @@ export function CapitalExpenseForm({ onSaved }: { onSaved?: () => void } = {}) {
             {expenses.map(e => (
               <div key={e.id} className="px-4 py-2.5 flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <p className="text-[12px] font-medium text-slate-200">{e.description}</p>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-[12px] font-medium text-slate-200">{e.description}</p>
+                    <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
+                      e.section === 'kantin'
+                        ? 'bg-orange-500/15 text-orange-400 border border-orange-500/30'
+                        : 'bg-green-500/15 text-green-400 border border-green-500/30'
+                    }`}>
+                      {e.section === 'kantin' ? '🍔 Kantin' : '🏟️ Mini Soccer'}
+                    </span>
+                  </div>
                   <div className="flex items-center gap-2 mt-0.5">
                     <span className="text-[10px] text-slate-500">{e.date}</span>
                     {e.notes && <span className="text-[10px] text-slate-600">{e.notes}</span>}

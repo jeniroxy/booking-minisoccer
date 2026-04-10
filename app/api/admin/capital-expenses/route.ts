@@ -31,11 +31,13 @@ export async function POST(request: NextRequest) {
   if (auth.error) return auth.error
 
   const body = await request.json()
-  const { date, description, amount, notes } = body
+  const { date, description, amount, notes, section } = body
 
   if (!date || !description || !amount) {
     return NextResponse.json({ error: 'date, description, and amount required' }, { status: 400 })
   }
+
+  const sectionValue = section === 'kantin' ? 'kantin' : 'mini_soccer'
 
   const supabase = createAdminClient()
   const { data, error } = await supabase
@@ -45,6 +47,7 @@ export async function POST(request: NextRequest) {
       description: description.trim(),
       amount: parseInt(amount),
       notes: notes || null,
+      section: sectionValue,
     })
     .select()
     .single()
