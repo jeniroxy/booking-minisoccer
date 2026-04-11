@@ -1,9 +1,8 @@
 import { redirect } from 'next/navigation'
 import { getAdminProps } from '@/lib/supabase/server'
 import { AdminNav } from '@/components/admin/AdminNav'
-import { NotificationSettings } from '@/components/admin/NotificationSettings'
-import { UserManagement } from '@/components/admin/UserManagement'
-import { ChangePassword } from '@/components/admin/ChangePassword'
+import { SettingsTabs } from '@/components/admin/SettingsTabs'
+import { SignOutButton } from '@/components/admin/SignOutButton'
 
 export const dynamic = 'force-dynamic'
 
@@ -17,9 +16,8 @@ export default async function SettingsPage() {
 
       <div className="max-w-[1200px] mx-auto py-4 md:py-6 px-4">
         <h1 className="text-xl font-bold text-slate-100 mb-4">Pengaturan</h1>
-        <ChangePassword />
-        {adminProps.role === 'admin' && <UserManagement />}
-        <NotificationSettings />
+        <SettingsTabs role={adminProps.role} />
+        <SignOutButton />
       </div>
     </main>
   )

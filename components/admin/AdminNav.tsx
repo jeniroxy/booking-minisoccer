@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { usePathname } from 'next/navigation'
 import {
   CalendarCheck,
   Clock,
@@ -9,7 +9,6 @@ import {
   Gamepad2,
   Wallet,
   Settings,
-  LogOut,
 } from 'lucide-react'
 import { ROLE_PERMISSIONS, type AdminRole } from '@/lib/rbac'
 
@@ -19,23 +18,20 @@ const NAV_ITEMS = [
   { href: '/admin/vouchers', label: 'Voucher', icon: Tag },
   { href: '/admin/ps', label: 'PS', icon: Gamepad2 },
   { href: '/admin/keuangan', label: 'Keuangan', icon: Wallet },
-  { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
+
+const SETTINGS_ITEM = { href: '/admin/settings', label: 'Settings', icon: Settings }
 
 export function AdminNav({ role }: { role: AdminRole }) {
   const pathname = usePathname()
-  const router = useRouter()
-
-  const handleSignOut = async () => {
-    await fetch('/api/admin/logout', { method: 'POST' })
-    router.push('/admin/login')
-  }
 
   const allowedPaths = ROLE_PERMISSIONS[role]
   const visibleItems = NAV_ITEMS.filter(item => allowedPaths.includes(item.href))
+  const showSettings = allowedPaths.includes(SETTINGS_ITEM.href)
 
   const isActive = (href: string) =>
     href === '/admin' ? pathname === '/admin' : pathname.startsWith(href)
+  const settingsActive = isActive(SETTINGS_ITEM.href)
 
   return (
     <>
@@ -70,13 +66,20 @@ export function AdminNav({ role }: { role: AdminRole }) {
             })}
           </div>
 
-          <button
-            onClick={handleSignOut}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] text-slate-500 hover:text-red-400 hover:bg-slate-800/50 transition-colors"
-          >
-            <LogOut size={14} />
-            Keluar
-          </button>
+          {showSettings && (
+            <Link
+              href={SETTINGS_ITEM.href}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-semibold transition-colors ${
+                settingsActive
+                  ? 'bg-green-500/15 text-green-400'
+                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
+              }`}
+              aria-label="Settings"
+            >
+              <SETTINGS_ITEM.icon size={15} strokeWidth={settingsActive ? 2.5 : 2} />
+              {SETTINGS_ITEM.label}
+            </Link>
+          )}
         </div>
       </nav>
 
@@ -90,13 +93,19 @@ export function AdminNav({ role }: { role: AdminRole }) {
               <p className="text-[10px] text-slate-500 font-medium">Admin Panel</p>
             </div>
           </div>
-          <button
-            onClick={handleSignOut}
-            className="p-2.5 -mr-1 rounded-xl text-slate-500 hover:text-red-400 hover:bg-slate-800/50 transition-colors"
-            aria-label="Keluar"
-          >
-            <LogOut size={18} />
-          </button>
+          {showSettings && (
+            <Link
+              href={SETTINGS_ITEM.href}
+              className={`p-2.5 -mr-1 rounded-xl transition-colors ${
+                settingsActive
+                  ? 'text-green-400 bg-green-500/10'
+                  : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/50'
+              }`}
+              aria-label="Settings"
+            >
+              <SETTINGS_ITEM.icon size={18} strokeWidth={settingsActive ? 2.5 : 2} />
+            </Link>
+          )}
         </div>
       </div>
 

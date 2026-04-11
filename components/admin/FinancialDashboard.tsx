@@ -75,21 +75,6 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
 
   return (
     <div className="space-y-3">
-      {/* This month card */}
-      <button
-        onClick={() => onNavigate('monthly')}
-        className="w-full text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-4 hover:bg-slate-900/70 hover:border-slate-700 transition-all"
-      >
-        <p className="text-[11px] text-slate-500 font-medium">Keuntungan Bulan Ini</p>
-        <p className={`text-[20px] font-extrabold mt-0.5 ${data.this_month.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-          {formatRupiah(data.this_month.net)}
-        </p>
-        <div className="flex items-center gap-3 mt-1">
-          <span className="text-[10px] text-green-400/40">Omset {formatRupiah(data.this_month.revenue)}</span>
-          <span className="text-[10px] text-red-400/40">Pengeluaran {formatRupiah(data.this_month.expenses + data.this_month.capital)}</span>
-        </div>
-      </button>
-
       {/* Mini Soccer & Kantin side by side */}
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5">
@@ -142,20 +127,35 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
         )
       })()}
 
-      {/* This year card */}
-      <button
-        onClick={() => onNavigate('monthly')}
-        className="w-full text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-4 hover:bg-slate-900/70 hover:border-slate-700 transition-all"
-      >
-        <p className="text-[11px] text-slate-500 font-medium">Keuntungan Tahun Ini</p>
-        <p className={`text-[20px] font-extrabold mt-0.5 ${data.this_year.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-          {formatRupiah(data.this_year.net)}
-        </p>
-        <div className="flex items-center gap-3 mt-1">
-          <span className="text-[10px] text-green-400/40">Omset {formatRupiah(data.this_year.revenue)}</span>
-          <span className="text-[10px] text-red-400/40">Pengeluaran {formatRupiah(data.this_year.expenses + data.this_year.capital)}</span>
-        </div>
-      </button>
+      {/* Keuntungan Bulan Ini & Tahun Ini side by side */}
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={() => onNavigate('monthly')}
+          className="text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 hover:bg-slate-900/70 hover:border-slate-700 transition-all"
+        >
+          <p className="text-[10px] text-slate-500 font-medium">Keuntungan Bulan Ini</p>
+          <p className={`text-[17px] font-extrabold mt-0.5 ${data.this_month.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {formatRupiah(data.this_month.net)}
+          </p>
+          <div className="flex flex-col gap-0.5 mt-1">
+            <span className="text-[9px] text-green-400/40">Omset {formatRupiah(data.this_month.revenue)}</span>
+            <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(data.this_month.expenses + data.this_month.capital)}</span>
+          </div>
+        </button>
+        <button
+          onClick={() => onNavigate('monthly')}
+          className="text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 hover:bg-slate-900/70 hover:border-slate-700 transition-all"
+        >
+          <p className="text-[10px] text-slate-500 font-medium">Keuntungan Tahun Ini</p>
+          <p className={`text-[17px] font-extrabold mt-0.5 ${data.this_year.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {formatRupiah(data.this_year.net)}
+          </p>
+          <div className="flex flex-col gap-0.5 mt-1">
+            <span className="text-[9px] text-green-400/40">Omset {formatRupiah(data.this_year.revenue)}</span>
+            <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(data.this_year.expenses + data.this_year.capital)}</span>
+          </div>
+        </button>
+      </div>
 
       {/* All-time Mini Soccer net balance (s/d Maret 2026) */}
       <div className="w-full text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-4">
