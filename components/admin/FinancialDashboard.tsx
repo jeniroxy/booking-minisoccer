@@ -112,11 +112,11 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
         if (entries.length === 0) return null
         return (
           <div
-            className="flex gap-3 overflow-x-auto pb-2"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            className="flex md:grid gap-3 overflow-x-auto md:overflow-visible pb-2 md:pb-0"
+            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', gridTemplateColumns: `repeat(${entries.length}, minmax(0, 1fr))` }}
           >
             {entries.map(([key, label]) => (
-              <div key={key} className="flex-shrink-0 w-[160px] bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5">
+              <div key={key} className="flex-shrink-0 w-[160px] md:w-auto bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5">
                 <p className="text-[10px] text-slate-500 font-medium whitespace-nowrap">{label}</p>
                 <p className="text-[17px] font-extrabold mt-0.5 text-green-400 whitespace-nowrap">
                   {formatRupiah(cats[key])}

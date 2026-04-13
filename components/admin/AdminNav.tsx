@@ -11,6 +11,7 @@ import {
   Settings,
 } from 'lucide-react'
 import { ROLE_PERMISSIONS, type AdminRole } from '@/lib/rbac'
+import { ExportMenu } from './ExportMenu'
 
 const NAV_ITEMS = [
   { href: '/admin', label: 'Booking', icon: CalendarCheck },
@@ -32,6 +33,17 @@ export function AdminNav({ role }: { role: AdminRole }) {
   const isActive = (href: string) =>
     href === '/admin' ? pathname === '/admin' : pathname.startsWith(href)
   const settingsActive = isActive(SETTINGS_ITEM.href)
+
+  // Export menu context: Keuangan page → laporan keuangan; Booking page → booking confirmed
+  const canExport = role === 'admin' || role === 'finance'
+  const exportContext: { title: string; endpoint: string; fileBaseName: string } | null =
+    !canExport
+      ? null
+      : pathname.startsWith('/admin/keuangan')
+      ? { title: 'Export Laporan Keuangan', endpoint: '/api/admin/reports/export', fileBaseName: 'laporan-keuangan' }
+      : pathname === '/admin'
+      ? { title: 'Export Booking Confirmed', endpoint: '/api/admin/bookings/export', fileBaseName: 'booking-confirmed' }
+      : null
 
   return (
     <>
@@ -66,20 +78,29 @@ export function AdminNav({ role }: { role: AdminRole }) {
             })}
           </div>
 
-          {showSettings && (
-            <Link
-              href={SETTINGS_ITEM.href}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-semibold transition-colors ${
-                settingsActive
-                  ? 'bg-green-500/15 text-green-400'
-                  : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
-              }`}
-              aria-label="Settings"
-            >
-              <SETTINGS_ITEM.icon size={15} strokeWidth={settingsActive ? 2.5 : 2} />
-              {SETTINGS_ITEM.label}
-            </Link>
-          )}
+          <div className="flex items-center gap-1.5">
+            {exportContext && (
+              <ExportMenu
+                title={exportContext.title}
+                endpoint={exportContext.endpoint}
+                fileBaseName={exportContext.fileBaseName}
+              />
+            )}
+            {showSettings && (
+              <Link
+                href={SETTINGS_ITEM.href}
+                className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-[13px] font-semibold transition-colors ${
+                  settingsActive
+                    ? 'bg-green-500/15 text-green-400'
+                    : 'text-slate-400 hover:text-slate-100 hover:bg-slate-800'
+                }`}
+                aria-label="Settings"
+              >
+                <SETTINGS_ITEM.icon size={15} strokeWidth={settingsActive ? 2.5 : 2} />
+                {SETTINGS_ITEM.label}
+              </Link>
+            )}
+          </div>
         </div>
       </nav>
 
@@ -93,19 +114,28 @@ export function AdminNav({ role }: { role: AdminRole }) {
               <p className="text-[10px] text-slate-500 font-medium">Admin Panel</p>
             </div>
           </div>
-          {showSettings && (
-            <Link
-              href={SETTINGS_ITEM.href}
-              className={`p-2.5 -mr-1 rounded-xl transition-colors ${
-                settingsActive
-                  ? 'text-green-400 bg-green-500/10'
-                  : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/50'
-              }`}
-              aria-label="Settings"
-            >
-              <SETTINGS_ITEM.icon size={18} strokeWidth={settingsActive ? 2.5 : 2} />
-            </Link>
-          )}
+          <div className="flex items-center gap-1.5">
+            {exportContext && (
+              <ExportMenu
+                title={exportContext.title}
+                endpoint={exportContext.endpoint}
+                fileBaseName={exportContext.fileBaseName}
+              />
+            )}
+            {showSettings && (
+              <Link
+                href={SETTINGS_ITEM.href}
+                className={`p-2.5 -mr-1 rounded-xl transition-colors ${
+                  settingsActive
+                    ? 'text-green-400 bg-green-500/10'
+                    : 'text-slate-500 hover:text-slate-100 hover:bg-slate-800/50'
+                }`}
+                aria-label="Settings"
+              >
+                <SETTINGS_ITEM.icon size={18} strokeWidth={settingsActive ? 2.5 : 2} />
+              </Link>
+            )}
+          </div>
         </div>
       </div>
 

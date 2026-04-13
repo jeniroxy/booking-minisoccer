@@ -67,13 +67,14 @@ function buildFollowUpUrl(group: GroupedBooking): string | null {
   if (group.total_price < 200000) return null
   const phone = normalizePhone(group.phone)
   const lines = [
-    'Terima kasih sudah main di Zains Mini Soccer.',
+    'Hatur nuhun tos maen di Zains Mini Soccer.',
     '',
   ]
   if (group.vouchers) {
+    const validUntil = new Date(group.vouchers.valid_until + 'T00:00:00').toLocaleDateString('id-ID', { day: 'numeric', month: 'long' })
     lines.push(
-      `Spesial buat kamu, pakai kode *${group.vouchers.code}* untuk diskon Rp 50.000 di booking berikutnya!`,
-      `Berlaku sampai ${group.vouchers.valid_until} (2 minggu ke depan).`,
+      `Spesial buat kamu, ada voucer 50K *${group.vouchers.code}* di booking berikutnya!`,
+      `Berlaku sampai ${validUntil} (2 minggu ke depan).`,
       'Note: Voucher akan otomatis terpasang jika menggunakan nama tim yang sama saat main sekarang.',
       '',
     )
@@ -521,7 +522,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
               <Check size={13} /> Confirm
             </button>
           )}
-          {group.status !== 'cancelled' && (
+          {group.status !== 'cancelled' && !isGroupDone(group) && (
             <button
               onClick={() => updateGroupStatus(group, 'cancelled')}
               disabled={loadingId === group.ids[0]}
@@ -594,7 +595,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
       </div>
 
       {/* Action buttons */}
-      {group.status !== 'cancelled' && (
+      {group.status !== 'cancelled' && !isGroupDone(group) && (
         <div className="flex gap-2">
           <button
             onClick={() => setEditingBooking(group.primary)}

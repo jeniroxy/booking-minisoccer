@@ -7,9 +7,12 @@ export async function POST(request: NextRequest) {
   if (auth.error) return auth.error
 
   const body = await request.json()
-  const { endpoint, keys, deviceLabel } = body
+  const { endpoint, deviceLabel } = body
+  // Support both flat (p256dh, auth) and nested (keys.p256dh, keys.auth) formats
+  const p256dh = body.p256dh || body.keys?.p256dh
+  const authKey = body.auth || body.keys?.auth
 
-  if (!endpoint || !keys?.p256dh || !keys?.auth) {
+  if (!endpoint || !p256dh || !authKey) {
     return NextResponse.json({ error: 'Invalid subscription' }, { status: 400 })
   }
 
@@ -21,8 +24,8 @@ export async function POST(request: NextRequest) {
       {
         user_id: auth.userId,
         endpoint,
-        p256dh: keys.p256dh,
-        auth: keys.auth,
+        p256dh,
+        auth: authKey,
         device_label: deviceLabel || null,
       },
       { onConflict: 'endpoint' }
