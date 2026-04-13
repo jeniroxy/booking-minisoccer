@@ -16,7 +16,7 @@ export async function GET() {
       .maybeSingle(),
     supabase
       .from('push_subscriptions')
-      .select('id, device_label, created_at')
+      .select('id, endpoint, device_label, created_at')
       .eq('user_id', auth.userId)
       .order('created_at', { ascending: false }),
   ])

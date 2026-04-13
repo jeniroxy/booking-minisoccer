@@ -1,10 +1,11 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { Bell, BellOff, Smartphone, Trash2, Loader2, Info } from 'lucide-react'
+import { Bell, BellOff, Smartphone, Trash2, Loader2, Info, CheckCircle2 } from 'lucide-react'
 
 interface Subscription {
   id: string
+  endpoint: string
   device_label: string | null
   created_at: string
 }
@@ -32,7 +33,11 @@ function getDeviceLabel() {
   const ua = navigator.userAgent
   if (/iPhone/.test(ua)) return 'iPhone'
   if (/iPad/.test(ua)) return 'iPad'
-  if (/Android/.test(ua)) return 'Android'
+  if (/Android/.test(ua)) {
+    // Try to extract device model
+    const match = ua.match(/;\s*([^;)]+)\s+Build/)
+    return match ? match[1].trim() : 'Android'
+  }
   if (/Mac/.test(ua)) return 'Mac'
   if (/Windows/.test(ua)) return 'Windows'
   return 'Browser'
@@ -50,6 +55,8 @@ export function NotificationSettings() {
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [swSupported, setSwSupported] = useState(true)
   const [permissionState, setPermissionState] = useState<string>('default')
+  const [currentEndpoint, setCurrentEndpoint] = useState<string | null>(null)
+  const [error, setError] = useState('')
 
   const fetchData = useCallback(async () => {
     try {
@@ -63,31 +70,59 @@ export function NotificationSettings() {
     }
   }, [])
 
+  // Check if current browser already has an active push subscription
+  const checkCurrentSubscription = useCallback(async () => {
+    try {
+      if (!('serviceWorker' in navigator)) return
+      const registration = await navigator.serviceWorker.getRegistration('/sw.js')
+      if (!registration) return
+      const sub = await registration.pushManager.getSubscription()
+      if (sub) {
+        setCurrentEndpoint(sub.endpoint)
+      }
+    } catch {
+      // Ignore errors
+    }
+  }, [])
+
   useEffect(() => {
     setSwSupported('serviceWorker' in navigator && 'PushManager' in window)
     if ('Notification' in window) {
       setPermissionState(Notification.permission)
     }
     fetchData()
-  }, [fetchData])
+    checkCurrentSubscription()
+  }, [fetchData, checkCurrentSubscription])
+
+  // Is the current device subscribed?
+  const currentDeviceSub = currentEndpoint
+    ? subscriptions.find(s => s.endpoint === currentEndpoint)
+    : null
+  const isCurrentDeviceActive = !!currentDeviceSub
 
   const handleSubscribe = async () => {
     setSubscribing(true)
+    setError('')
     try {
       const registration = await navigator.serviceWorker.register('/sw.js')
       await navigator.serviceWorker.ready
 
       const permission = await Notification.requestPermission()
       setPermissionState(permission)
-      if (permission !== 'granted') return
+      if (permission !== 'granted') {
+        setError('Izin notifikasi ditolak. Cek pengaturan browser.')
+        return
+      }
 
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
       })
 
+      setCurrentEndpoint(subscription.endpoint)
+
       const json = subscription.toJSON()
-      await fetch('/api/admin/push/subscribe', {
+      const res = await fetch('/api/admin/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -98,9 +133,39 @@ export function NotificationSettings() {
         }),
       })
 
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}))
+        setError(body.error || 'Gagal mendaftarkan perangkat')
+        return
+      }
+
       await fetchData()
     } catch (err) {
       console.error('Subscribe failed:', err)
+      setError('Gagal mengaktifkan notifikasi. Coba lagi.')
+    } finally {
+      setSubscribing(false)
+    }
+  }
+
+  const handleUnsubscribe = async () => {
+    if (!currentDeviceSub) return
+    setSubscribing(true)
+    setError('')
+    try {
+      // Unsubscribe from browser
+      const registration = await navigator.serviceWorker.getRegistration('/sw.js')
+      if (registration) {
+        const sub = await registration.pushManager.getSubscription()
+        if (sub) await sub.unsubscribe()
+      }
+      // Delete from server
+      await fetch(`/api/admin/push/subscribe/${currentDeviceSub.id}`, { method: 'DELETE' })
+      setSubscriptions(prev => prev.filter(s => s.id !== currentDeviceSub.id))
+      setCurrentEndpoint(null)
+    } catch (err) {
+      console.error('Unsubscribe failed:', err)
+      setError('Gagal menonaktifkan notifikasi')
     } finally {
       setSubscribing(false)
     }
@@ -110,6 +175,16 @@ export function NotificationSettings() {
     setDeletingId(id)
     try {
       await fetch(`/api/admin/push/subscribe/${id}`, { method: 'DELETE' })
+      const deleted = subscriptions.find(s => s.id === id)
+      if (deleted && deleted.endpoint === currentEndpoint) {
+        // Also unsubscribe browser if it's current device
+        const registration = await navigator.serviceWorker.getRegistration('/sw.js')
+        if (registration) {
+          const sub = await registration.pushManager.getSubscription()
+          if (sub) await sub.unsubscribe()
+        }
+        setCurrentEndpoint(null)
+      }
       setSubscriptions(prev => prev.filter(s => s.id !== id))
     } finally {
       setDeletingId(null)
@@ -138,7 +213,7 @@ export function NotificationSettings() {
 
   return (
     <div className="space-y-4">
-      {/* Subscribe to push */}
+      {/* Subscribe / Unsubscribe current device */}
       <div className="bg-slate-900/50 border border-slate-800/80 rounded-2xl p-4 md:p-5">
         <h2 className="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
           <Bell size={16} className="text-green-400" />
@@ -155,6 +230,25 @@ export function NotificationSettings() {
               Izin notifikasi diblokir. Buka pengaturan browser untuk mengaktifkan kembali.
             </p>
           </div>
+        ) : isCurrentDeviceActive ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-2 px-4 py-2.5 bg-green-500/10 border border-green-500/20 rounded-xl">
+              <CheckCircle2 size={16} className="text-green-400 flex-shrink-0" />
+              <span className="text-sm font-medium text-green-400">Notifikasi aktif di perangkat ini</span>
+            </div>
+            <button
+              onClick={handleUnsubscribe}
+              disabled={subscribing}
+              className="flex items-center gap-2 px-4 py-2.5 bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
+            >
+              {subscribing ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <BellOff size={16} />
+              )}
+              Nonaktifkan di Perangkat Ini
+            </button>
+          </div>
         ) : (
           <button
             onClick={handleSubscribe}
@@ -168,6 +262,10 @@ export function NotificationSettings() {
             )}
             Aktifkan Notifikasi di Perangkat Ini
           </button>
+        )}
+
+        {error && (
+          <p className="mt-2 text-sm text-red-400">{error}</p>
         )}
 
         {/* iOS notice */}
@@ -223,37 +321,49 @@ export function NotificationSettings() {
           </div>
         ) : (
           <div className="space-y-2">
-            {subscriptions.map(sub => (
-              <div
-                key={sub.id}
-                className="flex items-center justify-between bg-slate-800/40 rounded-xl px-3.5 py-2.5"
-              >
-                <div>
-                  <p className="text-sm font-medium text-slate-200">
-                    {sub.device_label || 'Unknown Device'}
-                  </p>
-                  <p className="text-xs text-slate-500">
-                    {new Date(sub.created_at).toLocaleDateString('id-ID', {
-                      day: 'numeric',
-                      month: 'short',
-                      year: 'numeric',
-                    })}
-                  </p>
-                </div>
-                <button
-                  onClick={() => handleDelete(sub.id)}
-                  disabled={deletingId === sub.id}
-                  className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-slate-700/50 transition-colors disabled:opacity-50"
-                  aria-label="Hapus perangkat"
+            {subscriptions.map(sub => {
+              const isThis = sub.endpoint === currentEndpoint
+              return (
+                <div
+                  key={sub.id}
+                  className={`flex items-center justify-between rounded-xl px-3.5 py-2.5 ${
+                    isThis ? 'bg-green-500/10 ring-1 ring-green-500/20' : 'bg-slate-800/40'
+                  }`}
                 >
-                  {deletingId === sub.id ? (
-                    <Loader2 size={16} className="animate-spin" />
-                  ) : (
-                    <Trash2 size={16} />
-                  )}
-                </button>
-              </div>
-            ))}
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <p className="text-sm font-medium text-slate-200">
+                        {sub.device_label || 'Unknown Device'}
+                      </p>
+                      {isThis && (
+                        <span className="text-[10px] font-bold text-green-400 bg-green-500/15 px-1.5 py-0.5 rounded-md">
+                          Perangkat ini
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-500">
+                      {new Date(sub.created_at).toLocaleDateString('id-ID', {
+                        day: 'numeric',
+                        month: 'short',
+                        year: 'numeric',
+                      })}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleDelete(sub.id)}
+                    disabled={deletingId === sub.id}
+                    className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-slate-700/50 transition-colors disabled:opacity-50"
+                    aria-label="Hapus perangkat"
+                  >
+                    {deletingId === sub.id ? (
+                      <Loader2 size={16} className="animate-spin" />
+                    ) : (
+                      <Trash2 size={16} />
+                    )}
+                  </button>
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
