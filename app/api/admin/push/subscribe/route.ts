@@ -18,23 +18,51 @@ export async function POST(request: NextRequest) {
 
   const supabase = createAdminClient()
 
-  const { data, error } = await supabase
+  // Check if this endpoint already exists
+  const { data: existing } = await supabase
     .from('push_subscriptions')
-    .upsert(
-      {
+    .select('id')
+    .eq('endpoint', endpoint)
+    .maybeSingle()
+
+  let data
+  let error
+
+  if (existing) {
+    // Update existing subscription
+    const result = await supabase
+      .from('push_subscriptions')
+      .update({
+        user_id: auth.userId,
+        p256dh,
+        auth: authKey,
+        device_label: deviceLabel || null,
+      })
+      .eq('id', existing.id)
+      .select()
+      .single()
+    data = result.data
+    error = result.error
+  } else {
+    // Insert new subscription
+    const result = await supabase
+      .from('push_subscriptions')
+      .insert({
         user_id: auth.userId,
         endpoint,
         p256dh,
         auth: authKey,
         device_label: deviceLabel || null,
-      },
-      { onConflict: 'endpoint' }
-    )
-    .select()
-    .single()
+      })
+      .select()
+      .single()
+    data = result.data
+    error = result.error
+  }
 
   if (error) {
-    return NextResponse.json({ error: 'Failed to save subscription' }, { status: 500 })
+    console.error('Push subscribe error:', error)
+    return NextResponse.json({ error: `Failed to save subscription: ${error.message}` }, { status: 500 })
   }
 
   // Ensure notification_settings row exists with defaults
