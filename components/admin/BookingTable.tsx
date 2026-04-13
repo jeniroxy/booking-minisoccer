@@ -285,6 +285,7 @@ interface GroupedBooking {
   vouchers?: { code: string; valid_until: string } | null
   confirmed_by_name: string | null
   primary: BookingWithSlot // first booking, used for actions like WA
+  is_student: boolean
 }
 
 function groupBookings(bookings: BookingWithSlot[]): GroupedBooking[] {
@@ -331,6 +332,7 @@ function groupBookings(bookings: BookingWithSlot[]): GroupedBooking[] {
         vouchers: b.vouchers,
         confirmed_by_name: b.confirmed_by_user?.name ?? null,
         primary: b,
+        is_student: (b.total_price ?? 0) < (b.time_slots?.price ?? 0),
       })
     }
   }
@@ -480,7 +482,16 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
         )}
       </td>
       <td className="px-4 py-3.5 text-sm font-semibold text-slate-100">
-        {group.team_name}
+        <div className="flex items-center gap-1.5">
+          {group.team_name}
+          <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold ${
+            group.is_student
+              ? 'bg-blue-500/15 text-blue-400'
+              : 'bg-slate-700/50 text-slate-400'
+          }`}>
+            {group.is_student ? 'Pelajar' : 'Umum'}
+          </span>
+        </div>
         {group.status === 'confirmed' && group.confirmed_by_name && (
           <div className="flex items-center gap-1 mt-0.5 text-[10px] font-normal text-slate-500">
             <Shield size={10} className="flex-shrink-0" />
@@ -559,7 +570,16 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
       {/* Header: team name + status */}
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-[15px] font-bold text-slate-100 truncate">{group.team_name}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-[15px] font-bold text-slate-100 truncate">{group.team_name}</p>
+            <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-bold flex-shrink-0 ${
+              group.is_student
+                ? 'bg-blue-500/15 text-blue-400'
+                : 'bg-slate-700/50 text-slate-400'
+            }`}>
+              {group.is_student ? 'Pelajar' : 'Umum'}
+            </span>
+          </div>
           <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-400">
             <CalendarDays size={13} className="flex-shrink-0 text-slate-500" />
             <span>{formatDateShort(group.booking_date)}</span>

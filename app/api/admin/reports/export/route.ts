@@ -91,8 +91,20 @@ export async function GET(request: NextRequest) {
       return d >= from && d <= to
     })
 
+    // Only count bookings where play time has finished
+    const now = new Date()
+    const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+    const jakartaHour = parseInt(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false }))
+    const doneBookings = (bookings ?? []).filter(b => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const endHour = (b as any).time_slots?.end_hour ?? 24
+      if (b.booking_date < todayStr) return true
+      if (b.booking_date === todayStr && jakartaHour >= endHour) return true
+      return false
+    })
+
     // Aggregate totals
-    const bookingTotal = (bookings ?? []).reduce((sum, b) => sum + (b.total_price ?? 0), 0)
+    const bookingTotal = doneBookings.reduce((sum, b) => sum + (b.total_price ?? 0), 0)
     const psTotal = psInRange.reduce((sum, s) => sum + (s.final_amount ?? 0), 0)
     const revByCat: Record<string, number> = {}
     for (const r of revenueEntries ?? []) {
@@ -128,7 +140,7 @@ export async function GET(request: NextRequest) {
 
     const bookingRows: unknown[][] = [
       ['Tanggal', 'Tim', 'Jam Mulai', 'Jam Selesai', 'Harga'],
-      ...(bookings ?? []).map(b => {
+      ...doneBookings.map(b => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const slot = (b as any).time_slots
         return [

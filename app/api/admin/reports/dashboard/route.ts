@@ -33,7 +33,7 @@ export async function GET() {
       { data: expenseEntries },
       { data: capitalExpenses },
     ] = await Promise.all([
-      supabase.from('bookings').select('booking_date, total_price').eq('status', 'confirmed'),
+      supabase.from('bookings').select('booking_date, total_price, time_slots(end_hour)').eq('status', 'confirmed'),
       supabase.from('revenue_entries').select('date, amount, category'),
       supabase.from('ps_sessions').select('started_at, final_amount').eq('status', 'completed'),
       supabase.from('expense_entries').select('date, amount, expense_categories(name)'),
@@ -43,12 +43,23 @@ export async function GET() {
     const isKantinCapital = (c: { section?: string | null; description?: string | null }) =>
       c.section === 'kantin' || (!c.section && (c.description || '').toLowerCase().includes('kantin'))
 
+    // Only count bookings where play time has finished
+    const jakartaHour = parseInt(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false }))
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const isBookingDone = (b: any) => {
+      const endHour = b.time_slots?.end_hour ?? 24
+      if (b.booking_date < today) return true
+      if (b.booking_date === today && jakartaHour >= endHour) return true
+      return false
+    }
+    const doneBookings = (bookings ?? []).filter(isBookingDone)
+
     const calcPeriod = (from: string, to: string) => {
       let revenue = 0
       let expenses = 0
       let capital = 0
 
-      for (const b of bookings ?? []) {
+      for (const b of doneBookings) {
         if (b.booking_date >= from && b.booking_date <= to) revenue += b.total_price || 0
       }
       for (const s of psSessions ?? []) {
@@ -108,7 +119,7 @@ export async function GET() {
     let msCapital = 0
 
     // Bookings = mini_soccer
-    for (const b of bookings ?? []) {
+    for (const b of doneBookings) {
       if (b.booking_date >= monthStart && b.booking_date <= mEnd) {
         catBreakdown['mini_soccer'] = (catBreakdown['mini_soccer'] || 0) + (b.total_price || 0)
       }
@@ -164,7 +175,7 @@ export async function GET() {
     let msAllRevenue = 0
     let msAllExpenses = 0
     let msAllCapital = 0
-    for (const b of bookings ?? []) {
+    for (const b of doneBookings) {
       if (b.booking_date <= ALL_TIME_CUTOFF) msAllRevenue += b.total_price || 0
     }
     for (const s of psSessions ?? []) {

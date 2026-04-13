@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
   ] = await Promise.all([
     supabase
       .from('bookings')
-      .select('total_price')
+      .select('total_price, time_slots(end_hour)')
       .eq('booking_date', date)
       .eq('status', 'confirmed'),
     supabase
@@ -63,9 +63,15 @@ export async function GET(request: NextRequest) {
     photography: 0,
   }
 
-  // Mini soccer from bookings
+  // Mini soccer from bookings (only count finished ones)
+  const now = new Date()
+  const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+  const jakartaHour = parseInt(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false }))
   for (const b of bookings ?? []) {
-    categories.mini_soccer += b.total_price || 0
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const endHour = (b as any).time_slots?.end_hour ?? 24
+    const done = date < todayStr || (date === todayStr && jakartaHour >= endHour)
+    if (done) categories.mini_soccer += b.total_price || 0
   }
 
   // Manual revenue entries

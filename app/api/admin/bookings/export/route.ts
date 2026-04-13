@@ -50,21 +50,33 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch bookings' }, { status: 500 })
     }
 
-    const total = (bookings ?? []).reduce((sum, b) => sum + (b.total_price ?? 0), 0)
+    // Only include bookings where play time has finished
+    const now = new Date()
+    const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+    const jakartaHour = parseInt(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false }))
+    const doneBookings = (bookings ?? []).filter(b => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const endHour = (b as any).time_slots?.end_hour ?? 24
+      if (b.booking_date < todayStr) return true
+      if (b.booking_date === todayStr && jakartaHour >= endHour) return true
+      return false
+    })
+
+    const total = doneBookings.reduce((sum, b) => sum + (b.total_price ?? 0), 0)
 
     const headerRows: unknown[][] = [
       ['Laporan Booking Confirmed Zains Mini Soccer'],
       ['Periode', label],
       ['Dari', formatDateId(from)],
       ['Sampai', formatDateId(to)],
-      ['Total Booking', (bookings ?? []).length],
+      ['Total Booking', doneBookings.length],
       ['Total Pemasukan', total],
       ['Digenerate', new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' })],
     ]
 
     const dataRows: unknown[][] = [
       ['Tanggal', 'Hari', 'Tim', 'No HP', 'Jam Mulai', 'Jam Selesai', 'Durasi (jam)', 'Harga', 'Dikonfirmasi'],
-      ...(bookings ?? []).map(b => {
+      ...doneBookings.map(b => {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const slot = (b as any).time_slots
         const startH = slot?.start_hour ?? 0

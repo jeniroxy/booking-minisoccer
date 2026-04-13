@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     { data: psSessions },
     { data: expenseEntries },
   ] = await Promise.all([
-    supabase.from('bookings').select('booking_date, total_price')
+    supabase.from('bookings').select('booking_date, total_price, time_slots(end_hour)')
       .eq('status', 'confirmed')
       .gte('booking_date', monthStart)
       .lt('booking_date', nextMonth),
@@ -47,9 +47,15 @@ export async function GET(request: NextRequest) {
     days[dateStr] = { mini_soccer: 0, kantin: 0, ps: 0, sewa_sepatu: 0, photography: 0 }
   }
 
-  // Populate bookings
+  // Populate bookings (only count finished ones)
+  const now = new Date()
+  const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+  const jakartaHour = parseInt(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false }))
   for (const b of bookings ?? []) {
-    if (days[b.booking_date]) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const endHour = (b as any).time_slots?.end_hour ?? 24
+    const done = b.booking_date < todayStr || (b.booking_date === todayStr && jakartaHour >= endHour)
+    if (done && days[b.booking_date]) {
       days[b.booking_date].mini_soccer += b.total_price || 0
     }
   }
