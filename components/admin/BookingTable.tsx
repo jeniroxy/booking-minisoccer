@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { formatHour, formatPrice } from '@/lib/schedule'
+import { formatHour, formatPrice, getStudentPrice } from '@/lib/schedule'
 import { buildConfirmUrl, normalizePhone } from '@/lib/booking'
 import type { BookingWithSlot, TimeSlot } from '@/lib/types'
 import { CustomSelect } from '@/components/ui/custom-select'
@@ -171,8 +171,18 @@ function EditBookingModal({
 }) {
   const [date, setDate] = useState(booking.booking_date)
   const [slotId, setSlotId] = useState(booking.time_slot_id)
+  const isInitStudent = (booking.total_price ?? 0) < (booking.time_slots?.price ?? 0)
+  const [category, setCategory] = useState<'umum' | 'pelajar'>(isInitStudent ? 'pelajar' : 'umum')
   const [price, setPrice] = useState(String(booking.total_price ?? booking.time_slots?.price ?? ''))
   const [saving, setSaving] = useState(false)
+
+  // Auto-update price when category or slot changes
+  const updatePriceForCategory = (cat: 'umum' | 'pelajar', selectedSlotId: string) => {
+    const slot = slots.find(s => s.id === selectedSlotId)
+    if (!slot) return
+    const basePrice = slot.price
+    setPrice(String(cat === 'pelajar' ? getStudentPrice(basePrice) : basePrice))
+  }
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -234,12 +244,39 @@ function EditBookingModal({
             <label className="text-[11px] font-medium text-slate-500">Jam</label>
             <CustomSelect
               value={slotId}
-              onChange={setSlotId}
+              onChange={(val) => {
+                setSlotId(val)
+                updatePriceForCategory(category, val)
+              }}
               options={slots.filter(s => s.is_active).map(s => ({
                 value: s.id,
                 label: `${formatHour(s.start_hour)} – ${formatHour(s.end_hour)}`,
               }))}
             />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-medium text-slate-500">Kategori</label>
+            <div className="flex gap-2">
+              {(['umum', 'pelajar'] as const).map(cat => (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => {
+                    setCategory(cat)
+                    updatePriceForCategory(cat, slotId)
+                  }}
+                  className={`flex-1 py-2 rounded-xl text-[12px] font-bold border transition-colors ${
+                    category === cat
+                      ? cat === 'pelajar'
+                        ? 'bg-green-500/15 border-green-500/30 text-green-400'
+                        : 'bg-blue-500/15 border-blue-500/30 text-blue-400'
+                      : 'bg-slate-900 border-slate-700 text-slate-500'
+                  }`}
+                >
+                  {cat === 'umum' ? 'Umum' : 'Pelajar'}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="flex flex-col gap-1.5">
             <label className="text-[11px] font-medium text-slate-500">Harga (Rp)</label>
