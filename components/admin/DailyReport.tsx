@@ -46,7 +46,7 @@ interface DailyData {
 }
 
 export function DailyReport() {
-  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+  const [todayStr] = useState(() => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }))
   const [selectedDate, setSelectedDate] = useState(todayStr)
   const [days, setDays] = useState(() => generateDays(new Date()))
   const [data, setData] = useState<DailyData | null>(null)

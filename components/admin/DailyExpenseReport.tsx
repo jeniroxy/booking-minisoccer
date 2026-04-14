@@ -38,7 +38,7 @@ interface ExpenseEntry {
 }
 
 export function DailyExpenseReport() {
-  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+  const [todayStr] = useState(() => new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }))
   const [selectedDate, setSelectedDate] = useState(todayStr)
   const [days, setDays] = useState(() => generateDays(new Date()))
   const [expenses, setExpenses] = useState<ExpenseEntry[]>([])

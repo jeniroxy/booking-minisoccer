@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { get30Days, toDateString } from '@/lib/schedule'
 import type { TimeSlot, ScheduleData } from '@/lib/types'
 import { DateNav } from './DateNav'
@@ -33,15 +33,21 @@ function getDefaultDate(): string {
 }
 
 export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProps) {
-  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+  const [todayStr, setTodayStr] = useState(initialStartDate)
 
   const [startDate, setStartDate] = useState(initialStartDate)
   const [data, setData] = useState<ScheduleData>(initialData)
   const [loading, setLoading] = useState(false)
   const [isStudent, setIsStudent] = useState(false)
-  const [selectedDate, setSelectedDate] = useState(getDefaultDate)
+  const [selectedDate, setSelectedDate] = useState(initialStartDate)
   const [selection, setSelection] = useState<Selection | null>(null)
   const [bookingOpen, setBookingOpen] = useState(false)
+
+  // Hydration-safe: update date-dependent values on client only
+  useEffect(() => {
+    setTodayStr(new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }))
+    setSelectedDate(getDefaultDate())
+  }, [])
 
   const days = get30Days(new Date(startDate + 'T00:00:00'))
   const isPrevDisabled = selectedDate <= todayStr

@@ -33,12 +33,14 @@ export default async function AdminPage() {
       : null,
   }))
 
+  const serverDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+
   return (
     <main className="min-h-screen bg-slate-950 pb-24 md:pb-0">
       <AdminNav role={adminProps.role} />
 
       <div className="max-w-[1200px] mx-auto py-4 md:py-6 px-4">
-        <BookingTable initialBookings={bookingsWithConfirmer as BookingWithSlot[]} />
+        <BookingTable initialBookings={bookingsWithConfirmer as BookingWithSlot[]} serverDate={serverDate} />
       </div>
     </main>
   )

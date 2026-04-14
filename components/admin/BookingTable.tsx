@@ -31,10 +31,6 @@ function formatDateShort(dateStr: string): string {
   return d.toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })
 }
 
-function getJakartaToday(): string {
-  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
-}
-
 function addDays(dateStr: string, days: number): string {
   const d = new Date(dateStr + 'T00:00:00')
   d.setDate(d.getDate() + days)
@@ -52,13 +48,18 @@ function formatDayHeader(dateStr: string, todayStr: string): string {
   return full
 }
 
-function isGroupDone(group: GroupedBooking): boolean {
-  if (group.status !== 'confirmed') return false
+function getJakartaNow() {
   const now = new Date()
-  const jakartaStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
-  const jakartaHour = parseInt(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false }))
-  if (group.booking_date < jakartaStr) return true
-  if (group.booking_date === jakartaStr && jakartaHour >= group.end_hour) return true
+  return {
+    dateStr: now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' }),
+    hour: parseInt(now.toLocaleString('en-US', { timeZone: 'Asia/Jakarta', hour: 'numeric', hour12: false })),
+  }
+}
+
+function isGroupDone(group: GroupedBooking, jakartaDate: string, jakartaHour: number): boolean {
+  if (group.status !== 'confirmed') return false
+  if (group.booking_date < jakartaDate) return true
+  if (group.booking_date === jakartaDate && jakartaHour >= group.end_hour) return true
   return false
 }
 
@@ -340,7 +341,7 @@ function groupBookings(bookings: BookingWithSlot[]): GroupedBooking[] {
   return groups
 }
 
-export function BookingTable({ initialBookings }: { initialBookings: BookingWithSlot[] }) {
+export function BookingTable({ initialBookings, serverDate }: { initialBookings: BookingWithSlot[]; serverDate: string }) {
   const [bookings, setBookings] = useState(initialBookings)
   const [filter, setFilter] = useState<Filter>('confirmed')
   const [search, setSearch] = useState('')
@@ -348,6 +349,13 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [editingBooking, setEditingBooking] = useState<BookingWithSlot | null>(null)
   const [slots, setSlots] = useState<TimeSlot[]>([])
+  const [jakartaNow, setJakartaNow] = useState({ dateStr: serverDate, hour: 0 })
+
+  useEffect(() => {
+    setJakartaNow(getJakartaNow())
+    const interval = setInterval(() => setJakartaNow(getJakartaNow()), 60000)
+    return () => clearInterval(interval)
+  }, [])
 
   useEffect(() => {
     fetch('/api/admin/slots').then(r => r.ok ? r.json() : []).then(setSlots)
@@ -372,8 +380,8 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
   // Counts for filter badges (based on grouped)
   const counts = {
     pending: grouped.filter(g => g.status === 'pending').length,
-    confirmed: grouped.filter(g => g.status === 'confirmed' && !isGroupDone(g)).length,
-    selesai: grouped.filter(g => g.status === 'confirmed' && isGroupDone(g)).length,
+    confirmed: grouped.filter(g => g.status === 'confirmed' && !isGroupDone(g, jakartaNow.dateStr, jakartaNow.hour)).length,
+    selesai: grouped.filter(g => g.status === 'confirmed' && isGroupDone(g, jakartaNow.dateStr, jakartaNow.hour)).length,
     cancelled: grouped.filter(g => g.status === 'cancelled').length,
   }
 
@@ -393,15 +401,15 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
   })
   const filtered = sortedGroups.filter(g => {
     if (filter === 'pending' && g.status !== 'pending') return false
-    if (filter === 'confirmed' && (g.status !== 'confirmed' || isGroupDone(g))) return false
-    if (filter === 'selesai' && (g.status !== 'confirmed' || !isGroupDone(g))) return false
+    if (filter === 'confirmed' && (g.status !== 'confirmed' || isGroupDone(g, jakartaNow.dateStr, jakartaNow.hour))) return false
+    if (filter === 'selesai' && (g.status !== 'confirmed' || !isGroupDone(g, jakartaNow.dateStr, jakartaNow.hour))) return false
     if (filter === 'cancelled' && g.status !== 'cancelled') return false
     if (search && !g.team_name.toLowerCase().includes(search.toLowerCase())) return false
     return true
   })
 
   // Group by booking_date for "Akan Main" and "Selesai" tabs
-  const todayStr = getJakartaToday()
+  const todayStr = jakartaNow.dateStr
   const groupedByDate: { date: string; groups: GroupedBooking[] }[] = []
   const isDateGrouped = filter === 'confirmed' || filter === 'selesai'
   if (isDateGrouped) {
@@ -512,7 +520,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
       <td className="px-4 py-3.5 text-sm font-bold text-green-400">
         {formatPrice(group.total_price)}
       </td>
-      <td className="px-4 py-3.5"><StatusBadge status={group.status} done={isGroupDone(group)} /></td>
+      <td className="px-4 py-3.5"><StatusBadge status={group.status} done={isGroupDone(group, jakartaNow.dateStr, jakartaNow.hour)} /></td>
       <td className="px-4 py-3.5">
         <div className="flex gap-1.5 items-center">
           {group.status !== 'cancelled' && (
@@ -533,7 +541,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
               <Check size={13} /> Confirm
             </button>
           )}
-          {group.status !== 'cancelled' && !isGroupDone(group) && (
+          {group.status !== 'cancelled' && !isGroupDone(group, jakartaNow.dateStr, jakartaNow.hour) && (
             <button
               onClick={() => updateGroupStatus(group, 'cancelled')}
               disabled={loadingId === group.ids[0]}
@@ -552,7 +560,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
               {deletingId === group.ids[0] ? '...' : <Trash2 size={15} />}
             </button>
           )}
-          {isGroupDone(group) && buildFollowUpUrl(group) && (
+          {isGroupDone(group, jakartaNow.dateStr, jakartaNow.hour) && buildFollowUpUrl(group) && (
             <button
               onClick={() => sendViaWABusiness(buildFollowUpUrl(group)!)}
               className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-blue-500/15 ring-1 ring-blue-500/30 text-blue-400 hover:bg-blue-500/25 transition-colors"
@@ -601,7 +609,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
           </div>
         </div>
         <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-          <StatusBadge status={group.status} done={isGroupDone(group)} />
+          <StatusBadge status={group.status} done={isGroupDone(group, jakartaNow.dateStr, jakartaNow.hour)} />
           <span className="text-sm font-bold text-green-400">
             {formatPrice(group.total_price)}
           </span>
@@ -615,7 +623,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
       </div>
 
       {/* Action buttons */}
-      {group.status !== 'cancelled' && !isGroupDone(group) && (
+      {group.status !== 'cancelled' && !isGroupDone(group, jakartaNow.dateStr, jakartaNow.hour) && (
         <div className="flex gap-2">
           <button
             onClick={() => setEditingBooking(group.primary)}
@@ -653,7 +661,7 @@ export function BookingTable({ initialBookings }: { initialBookings: BookingWith
         </button>
       )}
 
-      {isGroupDone(group) && buildFollowUpUrl(group) && (
+      {isGroupDone(group, jakartaNow.dateStr, jakartaNow.hour) && buildFollowUpUrl(group) && (
         <button
           onClick={() => sendViaWABusiness(buildFollowUpUrl(group)!)}
           className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-[13px] font-bold bg-blue-500/15 ring-1 ring-blue-500/30 text-blue-400 hover:bg-blue-500/25 active:bg-blue-500/30 transition-colors"

@@ -51,6 +51,7 @@ interface FinancialDashboardProps {
 export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
   const [data, setData] = useState<DashboardData | null>(null)
   const [loading, setLoading] = useState(true)
+  const [currentYear] = useState(() => new Date().getFullYear())
 
   useEffect(() => {
     const load = async () => {
@@ -230,7 +231,7 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
                 className={`flex-shrink-0 w-[140px] bg-slate-900/50 rounded-xl border border-slate-800/80 p-3 text-left hover:bg-slate-900/70 hover:border-slate-700 transition-all ${!hasData ? 'opacity-30' : ''}`}
               >
                 <p className="text-[11px] text-slate-500 font-medium mb-1.5">
-                  {MONTH_SHORT[m.month]} {m.year !== new Date().getFullYear() ? m.year : ''}
+                  {MONTH_SHORT[m.month]} {m.year !== currentYear ? m.year : ''}
                 </p>
                 <p className={`text-[16px] font-bold ${m.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                   {hasData ? formatRupiah(m.net) : '-'}
