@@ -33,6 +33,13 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
   const [phoneError, setPhoneError] = useState('')
   const [returningPhone, setReturningPhone] = useState<string | null>(null)
 
+  // Student verification
+  const [studentVerified, setStudentVerified] = useState(false)
+  const [schoolName, setSchoolName] = useState('')
+  const [cardImage, setCardImage] = useState<File | null>(null)
+  const [cardPreview, setCardPreview] = useState<string | null>(null)
+  const studentTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   // Validasi format nomor HP Indonesia: 08xx (10-13 digit), +628xx, 628xx
   const validatePhone = (num: string): string => {
     const cleaned = num.replace(/[\s\-().]/g, '')
@@ -75,9 +82,37 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
       setVoucherError('')
       setPhoneError('')
       setReturningPhone(null)
+      setStudentVerified(false)
+      setSchoolName('')
+      setCardImage(null)
+      setCardPreview(null)
       if (sheetRef.current) sheetRef.current.style.bottom = '0px'
     }
   }, [isOpen])
+
+  // Cek student verification saat team name berubah (debounce 600ms)
+  useEffect(() => {
+    if (!isStudent || !teamName.trim()) {
+      setStudentVerified(false)
+      return
+    }
+    if (studentTimerRef.current) clearTimeout(studentTimerRef.current)
+    studentTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/bookings/student-verification?team_name=${encodeURIComponent(teamName.trim())}`)
+        const data = await res.json()
+        setStudentVerified(data.verified)
+        if (data.verified && data.school_name) {
+          setSchoolName(data.school_name)
+        }
+      } catch {
+        setStudentVerified(false)
+      }
+    }, 600)
+    return () => {
+      if (studentTimerRef.current) clearTimeout(studentTimerRef.current)
+    }
+  }, [teamName, isStudent])
 
   // Cek tim returning: simpan phone tersembunyi & voucher follow-up (debounce 600ms)
   useEffect(() => {
@@ -184,10 +219,40 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
       }
     }
 
+    // Validate student data if pelajar and not yet verified
+    if (isStudent && !studentVerified) {
+      if (!schoolName.trim()) {
+        setError('Asal sekolah wajib diisi untuk kategori Pelajar')
+        return
+      }
+      if (!cardImage) {
+        setError('Upload kartu pelajar wajib untuk kategori Pelajar')
+        return
+      }
+    }
+
     setLoading(true)
     setError('')
 
     try {
+      // Upload student verification if needed
+      if (isStudent && !studentVerified) {
+        const formData = new FormData()
+        formData.append('team_name', teamName.trim())
+        formData.append('school_name', schoolName.trim())
+        formData.append('card_image', cardImage!)
+        const verifyRes = await fetch('/api/bookings/student-verification', {
+          method: 'POST',
+          body: formData,
+        })
+        if (!verifyRes.ok) {
+          const err = await verifyRes.json().catch(() => ({}))
+          setError(err.error || 'Gagal upload data pelajar')
+          setLoading(false)
+          return
+        }
+      }
+
       // Distribute total price proportionally across slots
       const slotPrices = sorted.map(s => slotPrice(s))
       const slotTotals = slotPrices.map(p => Math.round(p / baseTotal * totalPrice))
@@ -332,6 +397,54 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
             )}
           </div>
           {voucherError && <p className="text-[10px] text-red-400">{voucherError}</p>}
+
+          {/* Student verification fields */}
+          {isStudent && !studentVerified && (
+            <div className="space-y-2 bg-slate-900/50 border border-green-500/20 rounded-xl p-3">
+              <p className="text-[11px] font-semibold text-green-400">Data Pelajar</p>
+              <input
+                type="text"
+                placeholder="Asal sekolah..."
+                value={schoolName}
+                onChange={e => setSchoolName(e.target.value)}
+                className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[12px] text-slate-100 placeholder-slate-500 outline-none focus:border-green-500"
+              />
+              <div>
+                <label className="flex items-center justify-center gap-2 w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2.5 text-[12px] text-slate-400 cursor-pointer hover:border-green-500/50 transition-colors">
+                  {cardPreview ? (
+                    <span className="text-green-400 truncate">{cardImage?.name}</span>
+                  ) : (
+                    <span>Upload kartu pelajar...</span>
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={e => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        setCardImage(file)
+                        setCardPreview(URL.createObjectURL(file))
+                      }
+                    }}
+                  />
+                </label>
+                {cardPreview && (
+                  <img src={cardPreview} alt="Preview" className="mt-2 w-full h-24 object-cover rounded-lg border border-slate-700" />
+                )}
+              </div>
+            </div>
+          )}
+          {isStudent && studentVerified && (
+            <div className="bg-green-500/10 border border-green-500/20 rounded-xl px-3 py-2 text-[11px] text-green-400">
+              Data pelajar sudah terverifikasi ({schoolName})
+            </div>
+          )}
+          {isStudent && (
+            <p className="text-[10px] text-yellow-400/80">
+              Jika saat main ditemukan ternyata bukan pelajar maka dikenakan harga normal.
+            </p>
+          )}
 
           {error && <p className="text-[11px] text-red-400">{error}</p>}
 
