@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { buildWAUrl, formatDateLabel } from '@/lib/booking'
 import { formatHour, formatPrice, getEffectivePrice, getStudentPrice } from '@/lib/schedule'
+import { compressImage } from '@/lib/compress-image'
 import type { TimeSlot, SlotPriceOverride } from '@/lib/types'
 
 interface BookingSheetProps {
@@ -420,11 +421,12 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
                     type="file"
                     accept="image/*"
                     className="hidden"
-                    onChange={e => {
+                    onChange={async e => {
                       const file = e.target.files?.[0]
                       if (file) {
-                        setCardImage(file)
-                        setCardPreview(URL.createObjectURL(file))
+                        const compressed = await compressImage(file)
+                        setCardImage(compressed)
+                        setCardPreview(URL.createObjectURL(compressed))
                       }
                     }}
                   />

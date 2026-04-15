@@ -387,6 +387,8 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
   const [editingBooking, setEditingBooking] = useState<BookingWithSlot | null>(null)
   const [slots, setSlots] = useState<TimeSlot[]>([])
   const [jakartaNow, setJakartaNow] = useState({ dateStr: serverDate, hour: 0 })
+  const [studentVerifications, setStudentVerifications] = useState<Record<string, { school_name: string; card_image_url: string }>>({})
+  const [viewingCard, setViewingCard] = useState<string | null>(null)
 
   useEffect(() => {
     setJakartaNow(getJakartaNow())
@@ -396,6 +398,11 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
 
   useEffect(() => {
     fetch('/api/admin/slots').then(r => r.ok ? r.json() : []).then(setSlots)
+    fetch('/api/admin/student-verifications').then(r => r.ok ? r.json() : []).then((data: { team_name: string; school_name: string; card_image_url: string }[]) => {
+      const map: Record<string, { school_name: string; card_image_url: string }> = {}
+      for (const d of data) map[d.team_name.toLowerCase()] = d
+      setStudentVerifications(map)
+    })
   }, [])
 
   const toWABusinessUrl = (waUrl: string): string => {
@@ -537,6 +544,17 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
             {group.is_student ? 'Pelajar' : 'Umum'}
           </span>
         </div>
+        {group.is_student && studentVerifications[group.team_name.toLowerCase()] && (
+          <div className="flex items-center gap-1 mt-0.5 text-[10px] font-normal">
+            <span className="text-blue-400">{studentVerifications[group.team_name.toLowerCase()].school_name}</span>
+            <button
+              onClick={() => setViewingCard(studentVerifications[group.team_name.toLowerCase()].card_image_url)}
+              className="text-blue-400 hover:text-blue-300 underline"
+            >
+              Lihat KTP
+            </button>
+          </div>
+        )}
         {group.status === 'confirmed' && group.confirmed_by_name && (
           <div className="flex items-center gap-1 mt-0.5 text-[10px] font-normal text-slate-500">
             <Shield size={10} className="flex-shrink-0" />
@@ -625,6 +643,17 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
               {group.is_student ? 'Pelajar' : 'Umum'}
             </span>
           </div>
+          {group.is_student && studentVerifications[group.team_name.toLowerCase()] && (
+            <div className="flex items-center gap-1.5 mt-0.5 text-[10px]">
+              <span className="text-blue-400">{studentVerifications[group.team_name.toLowerCase()].school_name}</span>
+              <button
+                onClick={() => setViewingCard(studentVerifications[group.team_name.toLowerCase()].card_image_url)}
+                className="text-blue-400 hover:text-blue-300 underline"
+              >
+                Lihat KTP
+              </button>
+            </div>
+          )}
           <div className="flex items-center gap-1.5 mt-1 text-xs text-slate-400">
             <CalendarDays size={13} className="flex-shrink-0 text-slate-500" />
             <span>{formatDateShort(group.booking_date)}</span>
@@ -718,6 +747,26 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
           onClose={() => setEditingBooking(null)}
           onSaved={(updated) => setBookings(prev => prev.map(b => b.id === updated.id ? updated : b))}
         />
+      )}
+
+      {/* Student card viewer modal */}
+      {viewingCard && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setViewingCard(null)} />
+          <div className="relative max-w-lg w-full mx-4">
+            <button
+              onClick={() => setViewingCard(null)}
+              className="absolute -top-10 right-0 text-slate-400 hover:text-white text-sm font-bold"
+            >
+              Tutup ✕
+            </button>
+            <img
+              src={viewingCard}
+              alt="Kartu Pelajar"
+              className="w-full rounded-2xl border border-slate-700 shadow-2xl"
+            />
+          </div>
+        </div>
       )}
 
       {/* ── Summary stats ── */}
