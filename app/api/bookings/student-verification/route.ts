@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 // Check if a team already has student verification
 export async function GET(request: NextRequest) {
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Ukuran file maksimal 5MB' }, { status: 400 })
   }
 
-  const supabase = createClient()
+  const supabase = createAdminClient()
 
   // Upload image to Supabase Storage
   const ext = cardImage.name.split('.').pop() || 'jpg'
