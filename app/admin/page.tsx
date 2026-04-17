@@ -14,7 +14,7 @@ export default async function AdminPage() {
   const supabase = createClient()
   const { data: bookings } = await supabase
     .from('bookings')
-    .select('*, time_slots(*), vouchers:followup_voucher_id(code, valid_until)')
+    .select('*, time_slots(*), vouchers:followup_voucher_id(code, valid_until), used_voucher:voucher_id(code, discount_type, discount_value)')
     .order('booking_date', { ascending: false })
 
   // Fetch admin_users map to attach confirmer name to each booking

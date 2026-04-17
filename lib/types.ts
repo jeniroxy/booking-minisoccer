@@ -15,6 +15,7 @@ export interface Booking {
   time_slot_id: string
   status: 'pending' | 'confirmed' | 'cancelled'
   total_price: number | null
+  customer_type: 'umum' | 'pelajar'
   voucher_id: string | null
   followup_voucher_id: string | null
   confirmed_by?: string | null
@@ -50,6 +51,7 @@ export interface ScheduleData {
 export type BookingWithSlot = Booking & {
   time_slots: TimeSlot
   vouchers?: { code: string; valid_until: string } | null
+  used_voucher?: { code: string; discount_type: 'percent' | 'nominal'; discount_value: number } | null
   confirmed_by_user?: { name: string } | null
 }
 

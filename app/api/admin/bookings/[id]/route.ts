@@ -17,30 +17,30 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { status, phone, total_price, booking_date, time_slot_id, voucher_id } = body as {
+  const { status, phone, total_price, booking_date, time_slot_id, customer_type } = body as {
     status?: string
     phone?: string
     total_price?: number
     booking_date?: string
     time_slot_id?: string
-    voucher_id?: string | null
+    customer_type?: 'umum' | 'pelajar'
   }
 
   // Field-level update (no status change)
-  if (!status && (phone !== undefined || total_price !== undefined || booking_date !== undefined || time_slot_id !== undefined || voucher_id !== undefined)) {
+  if (!status && (phone !== undefined || total_price !== undefined || booking_date !== undefined || time_slot_id !== undefined || customer_type !== undefined)) {
     const supabase = createAdminClient()
     const updates: Record<string, unknown> = {}
     if (phone !== undefined) updates.phone = phone.trim() || null
     if (total_price !== undefined) updates.total_price = total_price
     if (booking_date !== undefined) updates.booking_date = booking_date
     if (time_slot_id !== undefined) updates.time_slot_id = time_slot_id
-    if (voucher_id !== undefined) updates.voucher_id = voucher_id
+    if (customer_type !== undefined) updates.customer_type = customer_type
 
     const { data, error } = await supabase
       .from('bookings')
       .update(updates)
       .eq('id', params.id)
-      .select('*, time_slots(id, start_hour, end_hour, price)')
+      .select('*, time_slots(id, start_hour, end_hour, price), used_voucher:voucher_id(code, discount_type, discount_value)')
       .single()
     if (error) return NextResponse.json({ error: 'Failed to update booking' }, { status: 500 })
     return NextResponse.json(data)
@@ -90,6 +90,27 @@ export async function PATCH(
   if (status === 'cancelled') {
     if (data.google_event_id) {
       await deleteCalendarEvent(data.google_event_id)
+    }
+    // Delete associated follow-up voucher
+    if (data.followup_voucher_id) {
+      // Clear followup_voucher_id on all bookings referencing this voucher
+      await supabase
+        .from('bookings')
+        .update({ followup_voucher_id: null })
+        .eq('followup_voucher_id', data.followup_voucher_id)
+
+      // Delete the voucher; if FK constraint (voucher already used), deactivate instead
+      const { error: delErr } = await supabase
+        .from('vouchers')
+        .delete()
+        .eq('id', data.followup_voucher_id)
+
+      if (delErr) {
+        await supabase
+          .from('vouchers')
+          .update({ is_active: false })
+          .eq('id', data.followup_voucher_id)
+      }
     }
   } else if (status === 'confirmed' && data.time_slots) {
     // Delete old pending event, then create new confirmed event

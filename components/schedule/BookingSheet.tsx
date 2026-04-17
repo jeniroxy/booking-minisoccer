@@ -263,7 +263,7 @@ export function BookingSheet({ slots, date, priceOverrides, isStudent, isOpen, o
           fetch('/api/bookings', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ team_name: teamName.trim(), booking_date: bookingDateStr, time_slot_id: slot.id, total_price: slotTotals[i], phone: finalPhone, ...(voucherId ? { voucher_id: voucherId } : {}) }),
+            body: JSON.stringify({ team_name: teamName.trim(), booking_date: bookingDateStr, time_slot_id: slot.id, total_price: slotTotals[i], phone: finalPhone, customer_type: isStudent ? 'pelajar' : 'umum', ...(voucherId ? { voucher_id: voucherId } : {}) }),
           })
         )
       )

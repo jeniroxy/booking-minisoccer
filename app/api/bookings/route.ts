@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const { team_name, booking_date, time_slot_id, total_price, phone, voucher_id } = body as Record<string, string> & { total_price?: number; phone?: string; voucher_id?: string }
+  const { team_name, booking_date, time_slot_id, total_price, phone, voucher_id, customer_type } = body as Record<string, string> & { total_price?: number; phone?: string; voucher_id?: string; customer_type?: 'umum' | 'pelajar' }
 
   if (!team_name?.trim() || !booking_date || !time_slot_id) {
     return NextResponse.json(
@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
       time_slot_id,
       status: 'pending',
       ...(total_price != null ? { total_price } : {}),
+      ...(customer_type ? { customer_type } : {}),
       ...(phone?.trim() ? { phone: phone.trim() } : {}),
       ...(voucher_id ? { voucher_id } : {}),
     })

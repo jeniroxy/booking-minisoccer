@@ -169,6 +169,7 @@ export function ScheduleGrid({ initialData, initialStartDate }: ScheduleGridProp
             time_slot_id: slot.id,
             status: 'pending' as const,
             total_price: null,
+            customer_type: 'umum' as const,
             phone: null,
             voucher_id: null,
             followup_voucher_id: null,

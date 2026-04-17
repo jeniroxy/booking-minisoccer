@@ -15,6 +15,7 @@ import {
   MessageCircle,
   Pencil,
   Shield,
+  Ticket,
 } from 'lucide-react'
 
 type Filter = 'pending' | 'confirmed' | 'selesai' | 'cancelled'
@@ -171,16 +172,9 @@ function EditBookingModal({
 }) {
   const [date, setDate] = useState(booking.booking_date)
   const [slotId, setSlotId] = useState(booking.time_slot_id)
-  const isInitStudent = (booking.total_price ?? 0) < (booking.time_slots?.price ?? 0)
-  const [category, setCategory] = useState<'umum' | 'pelajar'>(isInitStudent ? 'pelajar' : 'umum')
+  const [category, setCategory] = useState<'umum' | 'pelajar'>(booking.customer_type ?? 'umum')
   const [price, setPrice] = useState(String(booking.total_price ?? booking.time_slots?.price ?? ''))
   const [saving, setSaving] = useState(false)
-  const [voucherCode, setVoucherCode] = useState('')
-  const [voucherId, setVoucherId] = useState<string | null>(booking.voucher_id ?? null)
-  const [voucherDiscount, setVoucherDiscount] = useState<{ type: string; value: number } | null>(null)
-  const [voucherError, setVoucherError] = useState('')
-  const [voucherLoading, setVoucherLoading] = useState(false)
-  const voucherTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Auto-update price when category or slot changes
   const updatePriceForCategory = (cat: 'umum' | 'pelajar', selectedSlotId: string) => {
@@ -189,38 +183,6 @@ function EditBookingModal({
     const basePrice = slot.price
     setPrice(String(cat === 'pelajar' ? getStudentPrice(basePrice) : basePrice))
   }
-
-  // Validate voucher code (debounce 600ms)
-  useEffect(() => {
-    if (!voucherCode.trim()) {
-      setVoucherId(booking.voucher_id ?? null)
-      setVoucherDiscount(null)
-      setVoucherError('')
-      return
-    }
-    if (voucherTimerRef.current) clearTimeout(voucherTimerRef.current)
-    voucherTimerRef.current = setTimeout(async () => {
-      setVoucherLoading(true)
-      try {
-        const params = new URLSearchParams({ code: voucherCode.trim(), base_total: price })
-        const res = await fetch(`/api/vouchers/validate?${params}`)
-        const data = await res.json()
-        if (data.valid) {
-          setVoucherId(data.voucher.id)
-          setVoucherDiscount({ type: data.voucher.discount_type, value: data.voucher.discount_value })
-          setVoucherError('')
-        } else {
-          setVoucherId(booking.voucher_id ?? null)
-          setVoucherDiscount(null)
-          setVoucherError(data.error ?? 'Voucher tidak valid')
-        }
-      } catch {
-        setVoucherError('Gagal memvalidasi voucher')
-      }
-      setVoucherLoading(false)
-    }, 600)
-    return () => { if (voucherTimerRef.current) clearTimeout(voucherTimerRef.current) }
-  }, [voucherCode])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -236,7 +198,7 @@ function EditBookingModal({
     if (slotId !== booking.time_slot_id) body.time_slot_id = slotId
     const priceNum = parseInt(price)
     if (!isNaN(priceNum) && priceNum !== booking.total_price) body.total_price = priceNum
-    if (voucherId !== (booking.voucher_id ?? null)) body.voucher_id = voucherId
+    if (category !== (booking.customer_type ?? 'umum')) body.customer_type = category
 
     if (Object.keys(body).length === 0) { onClose(); return }
 
@@ -327,27 +289,6 @@ function EditBookingModal({
               className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-[13px] text-slate-100 outline-none focus:border-green-500 transition-colors"
             />
           </div>
-          <div className="flex flex-col gap-1.5">
-            <label className="text-[11px] font-medium text-slate-500">Voucher</label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Kode voucher (opsional)"
-                value={voucherCode}
-                onChange={e => setVoucherCode(e.target.value.toUpperCase())}
-                className={`w-full bg-slate-900 border rounded-xl px-3 py-2 text-[13px] text-slate-100 placeholder-slate-600 outline-none uppercase ${
-                  voucherDiscount ? 'border-green-500' : voucherError ? 'border-red-500/50' : 'border-slate-700 focus:border-green-500'
-                } transition-colors`}
-              />
-              {voucherLoading && (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-500">...</span>
-              )}
-              {voucherDiscount && !voucherLoading && (
-                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-green-400">✓ -{voucherDiscount.type === 'nominal' ? formatPrice(voucherDiscount.value) : `${voucherDiscount.value}%`}</span>
-              )}
-            </div>
-            {voucherError && <p className="text-[10px] text-red-400">{voucherError}</p>}
-          </div>
           <div className="flex gap-2 pt-1">
             <button
               onClick={onClose}
@@ -381,6 +322,7 @@ interface GroupedBooking {
   total_price: number
   created_at: string
   vouchers?: { code: string; valid_until: string } | null
+  used_voucher?: { code: string; discount_type: 'percent' | 'nominal'; discount_value: number } | null
   confirmed_by_name: string | null
   primary: BookingWithSlot // first booking, used for actions like WA
   is_student: boolean
@@ -415,6 +357,7 @@ function groupBookings(bookings: BookingWithSlot[]): GroupedBooking[] {
       last.total_price += b.total_price ?? b.time_slots.price ?? 0
       if (!last.phone && b.phone) last.phone = b.phone
       if (!last.vouchers && b.vouchers) last.vouchers = b.vouchers
+      if (!last.used_voucher && b.used_voucher) last.used_voucher = b.used_voucher
     } else {
       groups.push({
         ids: [b.id],
@@ -428,9 +371,10 @@ function groupBookings(bookings: BookingWithSlot[]): GroupedBooking[] {
         total_price: b.total_price ?? b.time_slots?.price ?? 0,
         created_at: b.created_at,
         vouchers: b.vouchers,
+        used_voucher: b.used_voucher,
         confirmed_by_name: b.confirmed_by_user?.name ?? null,
         primary: b,
-        is_student: (b.total_price ?? 0) < (b.time_slots?.price ?? 0),
+        is_student: b.customer_type === 'pelajar',
       })
     }
   }
@@ -632,8 +576,14 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
           }}
         />
       </td>
-      <td className="px-4 py-3.5 text-sm font-bold text-green-400">
-        {formatPrice(group.total_price)}
+      <td className="px-4 py-3.5">
+        <span className="text-sm font-bold text-green-400">{formatPrice(group.total_price)}</span>
+        {group.used_voucher && (
+          <div className="flex items-center gap-1 mt-0.5 text-[10px] text-purple-400">
+            <Ticket size={10} className="flex-shrink-0" />
+            <span>{group.used_voucher.code}</span>
+          </div>
+        )}
       </td>
       <td className="px-4 py-3.5"><StatusBadge status={group.status} done={isGroupDone(group, jakartaNow.dateStr, jakartaNow.hour)} /></td>
       <td className="px-4 py-3.5">
@@ -739,6 +689,12 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
           <span className="text-sm font-bold text-green-400">
             {formatPrice(group.total_price)}
           </span>
+          {group.used_voucher && (
+            <div className="flex items-center gap-1 text-[10px] text-purple-400">
+              <Ticket size={10} className="flex-shrink-0" />
+              <span>{group.used_voucher.code}</span>
+            </div>
+          )}
           {group.status === 'confirmed' && group.confirmed_by_name && (
             <div className="flex items-center gap-1 text-[10px] text-slate-500">
               <Shield size={10} className="flex-shrink-0" />
