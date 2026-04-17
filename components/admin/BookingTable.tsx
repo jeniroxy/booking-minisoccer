@@ -581,7 +581,7 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
         {group.used_voucher && (
           <div className="flex items-center gap-1 mt-0.5 text-[10px] text-purple-400">
             <Ticket size={10} className="flex-shrink-0" />
-            <span>{group.used_voucher.code}</span>
+            <span>{group.used_voucher.code.startsWith('MAINLAGI-') ? `MAINLAGI -${formatPrice(group.used_voucher.discount_value)}` : group.used_voucher.code}</span>
           </div>
         )}
       </td>
@@ -692,7 +692,7 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
           {group.used_voucher && (
             <div className="flex items-center gap-1 text-[10px] text-purple-400">
               <Ticket size={10} className="flex-shrink-0" />
-              <span>{group.used_voucher.code}</span>
+              <span>{group.used_voucher.code.startsWith('MAINLAGI-') ? `MAINLAGI -${formatPrice(group.used_voucher.discount_value)}` : group.used_voucher.code}</span>
             </div>
           )}
           {group.status === 'confirmed' && group.confirmed_by_name && (
