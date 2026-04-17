@@ -175,6 +175,12 @@ function EditBookingModal({
   const [category, setCategory] = useState<'umum' | 'pelajar'>(isInitStudent ? 'pelajar' : 'umum')
   const [price, setPrice] = useState(String(booking.total_price ?? booking.time_slots?.price ?? ''))
   const [saving, setSaving] = useState(false)
+  const [voucherCode, setVoucherCode] = useState('')
+  const [voucherId, setVoucherId] = useState<string | null>(booking.voucher_id ?? null)
+  const [voucherDiscount, setVoucherDiscount] = useState<{ type: string; value: number } | null>(null)
+  const [voucherError, setVoucherError] = useState('')
+  const [voucherLoading, setVoucherLoading] = useState(false)
+  const voucherTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   // Auto-update price when category or slot changes
   const updatePriceForCategory = (cat: 'umum' | 'pelajar', selectedSlotId: string) => {
@@ -183,6 +189,38 @@ function EditBookingModal({
     const basePrice = slot.price
     setPrice(String(cat === 'pelajar' ? getStudentPrice(basePrice) : basePrice))
   }
+
+  // Validate voucher code (debounce 600ms)
+  useEffect(() => {
+    if (!voucherCode.trim()) {
+      setVoucherId(booking.voucher_id ?? null)
+      setVoucherDiscount(null)
+      setVoucherError('')
+      return
+    }
+    if (voucherTimerRef.current) clearTimeout(voucherTimerRef.current)
+    voucherTimerRef.current = setTimeout(async () => {
+      setVoucherLoading(true)
+      try {
+        const params = new URLSearchParams({ code: voucherCode.trim(), base_total: price })
+        const res = await fetch(`/api/vouchers/validate?${params}`)
+        const data = await res.json()
+        if (data.valid) {
+          setVoucherId(data.voucher.id)
+          setVoucherDiscount({ type: data.voucher.discount_type, value: data.voucher.discount_value })
+          setVoucherError('')
+        } else {
+          setVoucherId(booking.voucher_id ?? null)
+          setVoucherDiscount(null)
+          setVoucherError(data.error ?? 'Voucher tidak valid')
+        }
+      } catch {
+        setVoucherError('Gagal memvalidasi voucher')
+      }
+      setVoucherLoading(false)
+    }, 600)
+    return () => { if (voucherTimerRef.current) clearTimeout(voucherTimerRef.current) }
+  }, [voucherCode])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -198,6 +236,7 @@ function EditBookingModal({
     if (slotId !== booking.time_slot_id) body.time_slot_id = slotId
     const priceNum = parseInt(price)
     if (!isNaN(priceNum) && priceNum !== booking.total_price) body.total_price = priceNum
+    if (voucherId !== (booking.voucher_id ?? null)) body.voucher_id = voucherId
 
     if (Object.keys(body).length === 0) { onClose(); return }
 
@@ -287,6 +326,27 @@ function EditBookingModal({
               min={0}
               className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-[13px] text-slate-100 outline-none focus:border-green-500 transition-colors"
             />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-medium text-slate-500">Voucher</label>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Kode voucher (opsional)"
+                value={voucherCode}
+                onChange={e => setVoucherCode(e.target.value.toUpperCase())}
+                className={`w-full bg-slate-900 border rounded-xl px-3 py-2 text-[13px] text-slate-100 placeholder-slate-600 outline-none uppercase ${
+                  voucherDiscount ? 'border-green-500' : voucherError ? 'border-red-500/50' : 'border-slate-700 focus:border-green-500'
+                } transition-colors`}
+              />
+              {voucherLoading && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-slate-500">...</span>
+              )}
+              {voucherDiscount && !voucherLoading && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-green-400">✓ -{voucherDiscount.type === 'nominal' ? formatPrice(voucherDiscount.value) : `${voucherDiscount.value}%`}</span>
+              )}
+            </div>
+            {voucherError && <p className="text-[10px] text-red-400">{voucherError}</p>}
           </div>
           <div className="flex gap-2 pt-1">
             <button

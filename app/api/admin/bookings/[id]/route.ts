@@ -17,22 +17,24 @@ export async function PATCH(
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { status, phone, total_price, booking_date, time_slot_id } = body as {
+  const { status, phone, total_price, booking_date, time_slot_id, voucher_id } = body as {
     status?: string
     phone?: string
     total_price?: number
     booking_date?: string
     time_slot_id?: string
+    voucher_id?: string | null
   }
 
   // Field-level update (no status change)
-  if (!status && (phone !== undefined || total_price !== undefined || booking_date !== undefined || time_slot_id !== undefined)) {
+  if (!status && (phone !== undefined || total_price !== undefined || booking_date !== undefined || time_slot_id !== undefined || voucher_id !== undefined)) {
     const supabase = createAdminClient()
     const updates: Record<string, unknown> = {}
     if (phone !== undefined) updates.phone = phone.trim() || null
     if (total_price !== undefined) updates.total_price = total_price
     if (booking_date !== undefined) updates.booking_date = booking_date
     if (time_slot_id !== undefined) updates.time_slot_id = time_slot_id
+    if (voucher_id !== undefined) updates.voucher_id = voucher_id
 
     const { data, error } = await supabase
       .from('bookings')
