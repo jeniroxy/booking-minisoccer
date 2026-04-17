@@ -262,12 +262,19 @@ function VoucherFormModal({
   )
 }
 
+type VoucherTab = 'manual' | 'mainlagi'
+
 export function VoucherManager({ initialVouchers }: { initialVouchers: Voucher[] }) {
   const [vouchers, setVouchers] = useState(initialVouchers)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [togglingId, setTogglingId] = useState<string | null>(null)
   const [modalOpen, setModalOpen] = useState(false)
   const [editingVoucher, setEditingVoucher] = useState<Voucher | null>(null)
+  const [tab, setTab] = useState<VoucherTab>('manual')
+
+  const manualVouchers = vouchers.filter(v => !v.code.startsWith('MAINLAGI-'))
+  const mainlagiVouchers = vouchers.filter(v => v.code.startsWith('MAINLAGI-'))
+  const filteredVouchers = tab === 'manual' ? manualVouchers : mainlagiVouchers
 
   const openCreate = () => {
     setEditingVoucher(null)
@@ -331,97 +338,109 @@ export function VoucherManager({ initialVouchers }: { initialVouchers: Voucher[]
         />
       )}
 
-      <div className="bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-800/80 overflow-hidden">
-        {/* Header */}
-        <div className="px-4 py-3.5 border-b border-slate-800/80">
-          <h2 className="text-[15px] font-bold text-slate-100">Voucher</h2>
-          <p className="text-xs text-slate-500 mt-0.5">{vouchers.length} voucher total</p>
-        </div>
-
-        {/* Voucher list */}
-        {vouchers.length === 0 ? (
-          <div className="px-4 py-12 text-center">
-            <p className="text-sm text-slate-500">Belum ada voucher</p>
-            <p className="text-xs text-slate-600 mt-1">Klik tombol Tambah untuk buat voucher baru</p>
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-800/30">
-            {vouchers.map(v => {
-              const isExpired = v.valid_until < new Date().toISOString().split('T')[0]
-              return (
-                <div key={v.id} className={`px-4 py-4 transition-opacity ${!v.is_active ? 'opacity-40' : ''}`}>
-                  {/* Top row: code + discount */}
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="text-[15px] font-bold text-slate-100 font-mono tracking-wider">{v.code}</span>
-                        {isExpired && (
-                          <span className="text-[10px] font-bold text-red-400 bg-red-500/10 ring-1 ring-red-500/25 px-2 py-0.5 rounded-lg uppercase">
-                            Expired
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-xs text-slate-400 mt-0.5">{v.name}</p>
-                    </div>
-
-                    <span className="flex-shrink-0 text-sm font-bold text-green-400 bg-green-500/10 ring-1 ring-green-500/20 px-3 py-1.5 rounded-xl">
-                      {formatDiscount(v)}
-                    </span>
-                  </div>
-
-                  {/* Meta info */}
-                  <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
-                    <span>{v.valid_from} – {v.valid_until}</span>
-                    <span className="text-slate-700">|</span>
-                    <span>Maks: {v.max_usage !== null ? `${v.max_usage}x` : 'Unlimited'}</span>
-                  </div>
-
-                  {/* Action buttons */}
-                  <div className="flex items-center gap-2 mt-3">
-                    <button
-                      onClick={() => toggleActive(v)}
-                      disabled={togglingId === v.id}
-                      className="relative w-11 h-6 rounded-full transition-colors disabled:opacity-40 flex-shrink-0"
-                      style={{
-                        backgroundColor: v.is_active ? 'rgb(34 197 94 / 0.3)' : 'rgb(51 65 85 / 0.8)',
-                      }}
-                      role="switch"
-                      aria-checked={v.is_active}
-                      title={v.is_active ? 'Nonaktifkan' : 'Aktifkan'}
-                    >
-                      <span
-                        className={`absolute top-0.5 w-5 h-5 rounded-full transition-all shadow-sm ${
-                          v.is_active ? 'left-5 bg-green-400' : 'left-0.5 bg-slate-500'
-                        }`}
-                      />
-                    </button>
-                    <span className="text-[11px] text-slate-500 font-medium mr-auto">
-                      {v.is_active ? 'Aktif' : 'Nonaktif'}
-                    </span>
-
-                    <button
-                      onClick={() => openEdit(v)}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 transition-colors"
-                    >
-                      <Pencil size={13} /> Edit
-                    </button>
-                    <button
-                      onClick={() => deleteVoucher(v.id)}
-                      disabled={deletingId === v.id}
-                      className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 disabled:opacity-40 transition-colors"
-                    >
-                      <Trash2 size={13} /> {deletingId === v.id ? '...' : 'Hapus'}
-                    </button>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
+      {/* Tabs */}
+      <div className="flex bg-slate-800 rounded-2xl p-[3px] mb-4 overflow-x-auto">
+        {([
+          { key: 'manual' as VoucherTab, label: 'Manual', count: manualVouchers.length },
+          { key: 'mainlagi' as VoucherTab, label: 'Main Lagi', count: mainlagiVouchers.length },
+        ]).map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`flex-1 px-3 py-2 rounded-xl text-[12px] font-bold transition-colors whitespace-nowrap ${
+              tab === t.key
+                ? 'bg-green-500/15 text-green-400'
+                : 'text-slate-500 hover:text-slate-300'
+            }`}
+          >
+            {t.label} ({t.count})
+          </button>
+        ))}
       </div>
 
-      {/* FAB */}
-      {!modalOpen && (
+      {/* Voucher list */}
+      {filteredVouchers.length === 0 ? (
+        <div className="bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-800/80 px-4 py-12 text-center">
+          <p className="text-sm text-slate-500">Belum ada voucher</p>
+          <p className="text-xs text-slate-600 mt-1">{tab === 'manual' ? 'Klik tombol + untuk buat voucher baru' : 'Voucher Main Lagi dibuat otomatis saat booking dikonfirmasi'}</p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredVouchers.map(v => {
+            const isExpired = v.valid_until < new Date().toISOString().split('T')[0]
+            return (
+              <div key={v.id} className={`bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-800/80 px-4 py-4 transition-opacity ${!v.is_active ? 'opacity-40' : ''}`}>
+                {/* Top row: code + discount */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[15px] font-bold text-slate-100 font-mono tracking-wider">{v.code}</span>
+                      {isExpired && (
+                        <span className="text-[10px] font-bold text-red-400 bg-red-500/10 ring-1 ring-red-500/25 px-2 py-0.5 rounded-lg uppercase">
+                          Expired
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">{v.name}</p>
+                  </div>
+
+                  <span className="flex-shrink-0 text-sm font-bold text-green-400 bg-green-500/10 ring-1 ring-green-500/20 px-3 py-1.5 rounded-xl">
+                    {formatDiscount(v)}
+                  </span>
+                </div>
+
+                {/* Meta info */}
+                <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
+                  <span>{v.valid_from} – {v.valid_until}</span>
+                  <span className="text-slate-700">|</span>
+                  <span>Maks: {v.max_usage !== null ? `${v.max_usage}x` : 'Unlimited'}</span>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-2 mt-3">
+                  <button
+                    onClick={() => toggleActive(v)}
+                    disabled={togglingId === v.id}
+                    className="relative w-11 h-6 rounded-full transition-colors disabled:opacity-40 flex-shrink-0"
+                    style={{
+                      backgroundColor: v.is_active ? 'rgb(34 197 94 / 0.3)' : 'rgb(51 65 85 / 0.8)',
+                    }}
+                    role="switch"
+                    aria-checked={v.is_active}
+                    title={v.is_active ? 'Nonaktifkan' : 'Aktifkan'}
+                  >
+                    <span
+                      className={`absolute top-0.5 w-5 h-5 rounded-full transition-all shadow-sm ${
+                        v.is_active ? 'left-5 bg-green-400' : 'left-0.5 bg-slate-500'
+                      }`}
+                    />
+                  </button>
+                  <span className="text-[11px] text-slate-500 font-medium mr-auto">
+                    {v.is_active ? 'Aktif' : 'Nonaktif'}
+                  </span>
+
+                  <button
+                    onClick={() => openEdit(v)}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-amber-400 bg-amber-500/10 hover:bg-amber-500/20 transition-colors"
+                  >
+                    <Pencil size={13} /> Edit
+                  </button>
+                  <button
+                    onClick={() => deleteVoucher(v.id)}
+                    disabled={deletingId === v.id}
+                    className="flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold text-red-400 bg-red-500/10 hover:bg-red-500/20 disabled:opacity-40 transition-colors"
+                  >
+                    <Trash2 size={13} /> {deletingId === v.id ? '...' : 'Hapus'}
+                  </button>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+
+      {/* FAB - only show on manual tab */}
+      {!modalOpen && tab === 'manual' && (
         <button
           onClick={openCreate}
           className="fixed bottom-20 right-4 md:bottom-6 md:right-6 z-40 w-14 h-14 rounded-full bg-green-500 text-green-950 shadow-lg shadow-green-500/30 flex items-center justify-center hover:bg-green-400 active:scale-95 transition-all"

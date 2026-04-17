@@ -160,6 +160,7 @@ export async function PATCH(
         name: `Follow-up ${data.team_name}`,
         discount_type: 'nominal',
         discount_value: 50000,
+        max_usage: 1,
         valid_from: validFrom,
         valid_until: validUntil,
         is_active: true,
