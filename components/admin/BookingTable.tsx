@@ -707,12 +707,14 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
       {/* Action buttons */}
       {group.status !== 'cancelled' && (
         <div className="flex gap-2">
-          <button
-            onClick={() => setEditingBooking(group.primary)}
-            className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[13px] font-bold bg-slate-800/50 ring-1 ring-slate-700/50 text-slate-300 hover:bg-slate-800 transition-colors"
-          >
-            <Pencil size={14} />
-          </button>
+          {!isGroupDone(group, jakartaNow.dateStr, jakartaNow.hour) && (
+            <button
+              onClick={() => setEditingBooking(group.primary)}
+              className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[13px] font-bold bg-slate-800/50 ring-1 ring-slate-700/50 text-slate-300 hover:bg-slate-800 transition-colors"
+            >
+              <Pencil size={14} />
+            </button>
+          )}
           {group.status === 'pending' && (
             <button
               onClick={() => updateGroupStatus(group, 'confirmed')}
