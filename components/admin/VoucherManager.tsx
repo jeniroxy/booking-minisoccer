@@ -393,7 +393,7 @@ export function VoucherManager({ initialVouchers }: { initialVouchers: Voucher[]
                 <div className="flex items-center gap-3 mt-2 text-xs text-slate-500">
                   <span>{v.valid_from} – {v.valid_until}</span>
                   <span className="text-slate-700">|</span>
-                  <span>Maks: {v.max_usage !== null ? `${v.max_usage}x` : 'Unlimited'}</span>
+                  <span>Maks: {v.max_usage !== null ? `${v.max_usage}x` : (tab === 'mainlagi' ? '1x' : 'Unlimited')}</span>
                 </div>
 
                 {/* Action buttons */}
