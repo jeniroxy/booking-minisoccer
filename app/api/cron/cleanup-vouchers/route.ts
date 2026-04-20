@@ -53,8 +53,8 @@ export async function GET(request: NextRequest) {
     )
 
     // Filter bookings where play time is finished
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const finishedVoucherIds = usedMainlagi
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       .filter((b: any) => {
         if (b.booking_date < today) return true
         if (b.booking_date === today && b.time_slots?.end_hour <= jakartaHour) return true

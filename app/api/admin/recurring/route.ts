@@ -15,7 +15,7 @@ function getWindow(): { fromDate: string; toDate: string } {
   return { fromDate, toDate }
 }
 
-export async function GET(_request: NextRequest) {
+export async function GET() {
   const auth = await requireAdminSession()
   if (auth.error) return auth.error
 
