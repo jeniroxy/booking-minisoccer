@@ -34,10 +34,12 @@ export default function HomePage() {
         {/* Layer 4: Title + business menu */}
         <div className="relative z-20 h-full flex flex-col">
           <div className="flex-1 flex flex-col items-center justify-center px-4 text-center pt-16">
-            <h1 className="text-4xl sm:text-5xl font-bold text-white drop-shadow-lg">
-              Zains Mini Soccer
-            </h1>
-            <p className="text-slate-300/80 max-w-sm mt-3 text-[15px] drop-shadow">
+            <img
+              src="/logo-hero.svg"
+              alt="Zains Mini Soccer"
+              className="w-56 sm:w-72 md:w-80 drop-shadow-[0_2px_16px_rgba(0,0,0,0.6)]"
+            />
+            <p className="text-slate-300/80 max-w-sm mt-4 text-[15px] drop-shadow">
               Booking lapangan, sewa PlayStation, dan design studio — satu lokasi.
             </p>
           </div>
