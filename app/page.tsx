@@ -4,19 +4,18 @@ import { BusinessMenu } from '@/components/home/business-menu'
 import { HeroNav } from '@/components/home/hero-nav'
 import { LocationMap } from '@/components/home/location-map'
 
-const cctvMode = process.env.NEXT_PUBLIC_CCTV_MODE === 'youtube' ? 'youtube' : 'video'
-const youtubeChannelId = process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL_ID
+const youtubeVideoId = process.env.NEXT_PUBLIC_YOUTUBE_VIDEO_ID ?? 'rAlemnSpBRs'
+const youtubeChannelId = process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL_ID // Fase 2: YouTube Live CCTV
+const cctvMode = youtubeChannelId ? 'youtube' : 'video'
 
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-slate-950">
       {/* ── Hero ── */}
       <section className="relative h-screen min-h-[560px] w-full overflow-hidden">
-        {/* Layer 0: CCTV video/iframe */}
+        {/* Layer 0: background video */}
         <CctvBackground
-          mode={cctvMode}
-          videoSrc="/hero-loop.mp4"
-          poster="/hero-poster.jpg"
+          youtubeVideoId={youtubeChannelId ? undefined : youtubeVideoId}
           youtubeChannelId={youtubeChannelId}
         />
 
