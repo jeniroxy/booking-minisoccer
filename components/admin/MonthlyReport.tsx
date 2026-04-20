@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { formatRupiah } from '@/lib/ps-pricing'
-import { ChevronDown } from 'lucide-react'
+import { ChevronDown, Download } from 'lucide-react'
 
 const CATEGORY_LABELS: Record<string, string> = {
   mini_soccer: 'Mini Soccer',
@@ -54,16 +54,39 @@ function getLast12Months() {
   return result
 }
 
-export function MonthlyReport() {
+interface MonthlyReportProps {
+  initialSection?: SectionKey
+}
+
+export function MonthlyReport({ initialSection }: MonthlyReportProps = {}) {
   const now = new Date()
   const [year, setYear] = useState(now.getFullYear())
   const [month, setMonth] = useState(now.getMonth() + 1)
-  const [section, setSection] = useState<SectionKey>('minisoccer')
+  const [section, setSection] = useState<SectionKey>(initialSection ?? 'minisoccer')
   const [data, setData] = useState<MonthlyData | null>(null)
   const [loading, setLoading] = useState(true)
   const [expandedDay, setExpandedDay] = useState<string | null>(null)
   const [editValues, setEditValues] = useState<Record<string, string>>({})
   const [saving, setSaving] = useState(false)
+  const [exporting, setExporting] = useState(false)
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const res = await fetch(`/api/admin/reports/export?period=month&year=${year}&month=${month}`)
+      if (!res.ok) return
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const mm = String(month).padStart(2, '0')
+      a.download = `laporan-keuangan-${year}-${mm}.csv`
+      a.click()
+      URL.revokeObjectURL(url)
+    } finally {
+      setExporting(false)
+    }
+  }
 
   const fetchData = useCallback(async () => {
     setLoading(true)
@@ -172,21 +195,31 @@ export function MonthlyReport() {
     <div className="space-y-4">
       {/* Sticky header: section toggle + month nav */}
       <div className="sticky top-[52px] md:top-[49px] z-20 bg-slate-950/95 backdrop-blur-lg pb-4 -mx-4 px-4 pt-4 space-y-3 shadow-lg shadow-slate-950/50">
-        {/* Section toggle */}
-        <div className="flex bg-slate-800 rounded-2xl p-[3px]">
-          {SECTION_TABS.map(tab => (
-            <button
-              key={tab.key}
-              onClick={() => setSection(tab.key)}
-              className={`flex-1 px-3 py-2 rounded-xl text-[12px] font-bold transition-colors ${
-                section === tab.key
-                  ? 'bg-green-500/15 text-green-400'
-                  : 'text-slate-500 hover:text-slate-300'
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Section toggle + Export */}
+        <div className="flex gap-2">
+          <div className="flex flex-1 bg-slate-800 rounded-2xl p-[3px]">
+            {SECTION_TABS.map(tab => (
+              <button
+                key={tab.key}
+                onClick={() => setSection(tab.key)}
+                className={`flex-1 px-3 py-2 rounded-xl text-[12px] font-bold transition-colors ${
+                  section === tab.key
+                    ? 'bg-green-500/15 text-green-400'
+                    : 'text-slate-500 hover:text-slate-300'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={handleExport}
+            disabled={exporting}
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 rounded-2xl text-[12px] font-bold text-slate-400 hover:text-slate-200 transition-colors disabled:opacity-50"
+          >
+            <Download size={13} />
+            {exporting ? '...' : 'Excel'}
+          </button>
         </div>
 
         {/* Month strip — swipeable */}

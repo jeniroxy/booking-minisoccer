@@ -45,7 +45,7 @@ interface DashboardData {
 }
 
 interface FinancialDashboardProps {
-  onNavigate: (tab: string) => void
+  onNavigate: (tab: string, section?: 'minisoccer' | 'kantin') => void
 }
 
 export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
@@ -78,7 +78,10 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
     <div className="space-y-3">
       {/* Mini Soccer & Kantin side by side */}
       <div className="grid grid-cols-2 gap-3">
-        <div className="bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5">
+        <button
+          onClick={() => onNavigate('monthly', 'minisoccer')}
+          className="bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 text-left hover:border-slate-700 transition-colors"
+        >
           <p className="text-[10px] text-slate-500 font-medium">🏟️ Lapang</p>
           <p className={`text-[17px] font-extrabold mt-0.5 ${data.minisoccer_month.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             {formatRupiah(data.minisoccer_month.net)}
@@ -87,8 +90,11 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
             <span className="text-[9px] text-green-400/40">Omset {formatRupiah(data.minisoccer_month.revenue)}</span>
             <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(data.minisoccer_month.expenses)}</span>
           </div>
-        </div>
-        <div className="bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5">
+        </button>
+        <button
+          onClick={() => onNavigate('monthly', 'kantin')}
+          className="bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 text-left hover:border-slate-700 transition-colors"
+        >
           <p className="text-[10px] text-slate-500 font-medium">🍔 Kantin</p>
           <p className={`text-[17px] font-extrabold mt-0.5 ${data.kantin_month.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             {formatRupiah(data.kantin_month.net)}
@@ -97,7 +103,7 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
             <span className="text-[9px] text-green-400/40">Omset {formatRupiah(data.kantin_month.revenue)}</span>
             <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(data.kantin_month.expenses)}</span>
           </div>
-        </div>
+        </button>
       </div>
 
       {/* Category breakdown */}

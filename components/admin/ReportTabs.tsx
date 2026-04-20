@@ -17,6 +17,12 @@ type TabKey = (typeof TABS)[number]['key']
 
 export function ReportTabs() {
   const [active, setActive] = useState<TabKey>('dashboard')
+  const [monthlySection, setMonthlySection] = useState<'minisoccer' | 'kantin'>('minisoccer')
+
+  const handleNavigate = (tab: string, section?: 'minisoccer' | 'kantin') => {
+    if (section) setMonthlySection(section)
+    setActive(tab as TabKey)
+  }
 
   return (
     <>
@@ -36,10 +42,10 @@ export function ReportTabs() {
         ))}
       </div>
 
-      {active === 'dashboard' && <FinancialDashboard onNavigate={(tab) => setActive(tab as TabKey)} />}
+      {active === 'dashboard' && <FinancialDashboard onNavigate={handleNavigate} />}
       {active === 'daily' && <DailyReport />}
       {active === 'expenses' && <DailyExpenseReport />}
-      {active === 'monthly' && <MonthlyReport />}
+      {active === 'monthly' && <MonthlyReport initialSection={monthlySection} />}
     </>
   )
 }

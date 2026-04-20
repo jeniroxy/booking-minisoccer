@@ -13,18 +13,20 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 type Period = 'month' | 'year' | 'all'
 
-function resolveRange(period: Period): { from: string; to: string; label: string; fileLabel: string } {
+function resolveRange(period: Period, customYear?: number, customMonth?: number): { from: string; to: string; label: string; fileLabel: string } {
   const now = new Date()
   const jktStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
   const [y, m] = jktStr.split('-').map(Number)
 
   if (period === 'month') {
-    const mm = String(m).padStart(2, '0')
-    const from = `${y}-${mm}-01`
-    const lastDay = new Date(y, m, 0).getDate()
-    const to = `${y}-${mm}-${String(lastDay).padStart(2, '0')}`
+    const ry = customYear ?? y
+    const rm = customMonth ?? m
+    const mm = String(rm).padStart(2, '0')
+    const from = `${ry}-${mm}-01`
+    const lastDay = new Date(ry, rm, 0).getDate()
+    const to = `${ry}-${mm}-${String(lastDay).padStart(2, '0')}`
     const label = new Date(`${from}T00:00:00`).toLocaleDateString('id-ID', { month: 'long', year: 'numeric' })
-    return { from, to, label, fileLabel: `${y}-${mm}` }
+    return { from, to, label, fileLabel: `${ry}-${mm}` }
   }
   if (period === 'year') {
     return { from: `${y}-01-01`, to: `${y}-12-31`, label: `Tahun ${y}`, fileLabel: `${y}` }
@@ -42,7 +44,10 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid period' }, { status: 400 })
   }
 
-  const { from, to, label, fileLabel } = resolveRange(period)
+  const customYear = searchParams.get('year') ? parseInt(searchParams.get('year')!) : undefined
+  const customMonth = searchParams.get('month') ? parseInt(searchParams.get('month')!) : undefined
+
+  const { from, to, label, fileLabel } = resolveRange(period, customYear, customMonth)
 
   try {
     const supabase = createAdminClient()
