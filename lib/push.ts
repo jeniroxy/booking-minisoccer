@@ -15,7 +15,7 @@ interface NotificationPayload {
 
 export async function sendPushToAdmins(
   payload: NotificationPayload,
-  type: 'notify_new_booking' | 'notify_play_finished'
+  type: 'notify_new_booking' | 'notify_play_finished' | 'notify_recurring_conflict'
 ) {
   const supabase = createAdminClient()
 

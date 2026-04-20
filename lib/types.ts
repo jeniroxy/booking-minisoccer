@@ -21,6 +21,7 @@ export interface Booking {
   confirmed_by?: string | null
   confirmed_at?: string | null
   created_at: string
+  recurring_schedule_id?: string | null
 }
 
 export interface BlockedDate {
@@ -53,6 +54,19 @@ export type BookingWithSlot = Booking & {
   vouchers?: { code: string; valid_until: string } | null
   used_voucher?: { code: string; discount_type: 'percent' | 'nominal'; discount_value: number } | null
   confirmed_by_user?: { name: string } | null
+}
+
+export interface RecurringSchedule {
+  id: string
+  team_name: string
+  phone: string | null
+  customer_type: 'umum' | 'pelajar'
+  time_slot_id: string
+  day_of_week: number // 0=Minggu, 1=Senin, ..., 6=Sabtu
+  is_active: boolean
+  created_by: string | null
+  created_at: string
+  time_slots?: { start_hour: number; end_hour: number; price: number }
 }
 
 export interface Voucher {
