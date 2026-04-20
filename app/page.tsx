@@ -39,7 +39,7 @@ export default function HomePage() {
               alt="Zains Mini Soccer"
               className="w-56 sm:w-72 md:w-80 drop-shadow-[0_2px_16px_rgba(0,0,0,0.6)]"
             />
-            <p className="text-slate-300/80 max-w-sm mt-4 text-[15px] drop-shadow">
+            <p className="max-w-sm mt-4 text-[15px] text-white font-medium px-3 py-1.5 rounded-lg bg-black/40 backdrop-blur-sm">
               Booking lapangan, sewa PlayStation, dan design studio — satu lokasi.
             </p>
           </div>
