@@ -25,7 +25,7 @@ export function CctvOverlay({ mode }: { mode: 'video' | 'youtube' }) {
 
   return (
     <>
-      <div className="absolute top-16 left-4 z-20 flex items-center gap-2 font-mono text-[11px] text-white/70 select-none">
+      <div className="absolute top-4 left-4 z-20 flex items-center gap-2 font-mono text-[11px] text-white/70 select-none">
         <span className={`w-2 h-2 rounded-full shrink-0 ${isLive ? 'bg-red-500 animate-pulse' : 'bg-amber-400'}`} />
         <span>{isLive ? 'LIVE' : 'REC'}</span>
         <span className="opacity-40">|</span>

@@ -1,7 +1,6 @@
 import { CctvBackground } from '@/components/home/cctv-background'
 import { CctvOverlay } from '@/components/home/cctv-overlay'
 import { BusinessMenu } from '@/components/home/business-menu'
-import { HeroNav } from '@/components/home/hero-nav'
 import { LocationMap } from '@/components/home/location-map'
 
 const youtubeVideoId = process.env.NEXT_PUBLIC_YOUTUBE_VIDEO_ID ?? 'rAlemnSpBRs'
@@ -28,20 +27,14 @@ export default function HomePage() {
         {/* Layer 2: CCTV overlay badges */}
         <CctvOverlay mode={cctvMode} />
 
-        {/* Layer 3: Nav */}
-        <HeroNav />
-
-        {/* Layer 4: Title + business menu */}
+        {/* Layer 3: Title + business menu */}
         <div className="relative z-20 h-full flex flex-col">
-          <div className="flex-1 flex flex-col items-center justify-center px-4 text-center pt-16">
+          <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">
             <img
               src="/logo-hero.svg"
               alt="Zains Mini Soccer"
               className="w-56 sm:w-72 md:w-80 drop-shadow-[0_2px_16px_rgba(0,0,0,0.6)]"
             />
-            <p className="max-w-sm mt-4 text-[15px] text-white font-medium px-3 py-1.5 rounded-lg bg-black/40 backdrop-blur-sm">
-              Booking lapangan, sewa PlayStation, dan design studio — satu lokasi.
-            </p>
           </div>
           <div className="pb-8 sm:pb-12">
             <BusinessMenu />
