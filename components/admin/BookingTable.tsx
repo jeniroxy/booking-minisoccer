@@ -17,14 +17,16 @@ import {
   Shield,
   Ticket,
 } from 'lucide-react'
+import { RecurringScheduleTab } from '@/components/admin/RecurringScheduleTab'
 
-type Filter = 'pending' | 'confirmed' | 'selesai' | 'cancelled'
+type Filter = 'pending' | 'confirmed' | 'selesai' | 'cancelled' | 'recurring'
 
 const filterConfig: Record<Filter, { label: string; color: string; activeColor: string }> = {
   pending: { label: 'Pending', color: 'text-yellow-400', activeColor: 'bg-yellow-500/15 text-yellow-400' },
   confirmed: { label: 'Akan Main', color: 'text-green-400', activeColor: 'bg-green-500/15 text-green-400' },
   selesai: { label: 'Selesai', color: 'text-blue-400', activeColor: 'bg-blue-500/15 text-blue-400' },
   cancelled: { label: 'Cancelled', color: 'text-slate-400', activeColor: 'bg-slate-600/15 text-slate-300' },
+  recurring: { label: 'Jadwal Tetap', color: 'text-purple-400', activeColor: 'bg-purple-500/15 text-purple-400' },
 }
 
 function formatDateShort(dateStr: string): string {
@@ -431,6 +433,7 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
     confirmed: grouped.filter(g => g.status === 'confirmed' && !isGroupDone(g, jakartaNow.dateStr, jakartaNow.hour)).length,
     selesai: grouped.filter(g => g.status === 'confirmed' && isGroupDone(g, jakartaNow.dateStr, jakartaNow.hour)).length,
     cancelled: grouped.filter(g => g.status === 'cancelled').length,
+    recurring: 0,
   }
 
   // Default sort: newest created first. "Akan Main" → date asc + hour asc. "Selesai" → date desc + hour desc.
@@ -822,7 +825,7 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
 
       {/* ── Filter pills ── */}
       <div className="flex gap-1.5 overflow-x-auto pb-0.5 -mb-0.5">
-        {(['pending', 'confirmed', 'selesai', 'cancelled'] as Filter[]).map(f => (
+        {(['pending', 'confirmed', 'selesai', 'cancelled', 'recurring'] as Filter[]).map(f => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -845,7 +848,9 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
       </div>
 
       {/* ── Booking list ── */}
-      {isDateGrouped ? (
+      {filter === 'recurring' ? (
+        <RecurringScheduleTab />
+      ) : isDateGrouped ? (
         filtered.length === 0 ? (
           <div className="bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-800/80 px-4 py-16 text-center">
             <p className="text-sm text-slate-500">Tidak ada booking</p>
