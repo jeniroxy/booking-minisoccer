@@ -167,34 +167,46 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
       })()}
 
       {/* Keuntungan Bulan Ini & Tahun Ini side by side */}
-      <div className="grid grid-cols-2 gap-3">
-        <button
-          onClick={() => onNavigate('monthly')}
-          className="text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 hover:bg-slate-900/70 hover:border-slate-700 transition-all"
-        >
-          <p className="text-[10px] text-slate-500 font-medium">Keuntungan Bulan Ini</p>
-          <p className={`text-[17px] font-extrabold mt-0.5 ${data.this_month.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {formatRupiah(data.this_month.net)}
-          </p>
-          <div className="flex flex-col gap-0.5 mt-1">
-            <span className="text-[9px] text-green-400/40">Omset {formatRupiah(data.this_month.revenue)}</span>
-            <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(data.this_month.expenses + data.this_month.capital)}</span>
+      {(() => {
+        const thisMonthRev = monthlySections ? monthlySections.ms.revenue + monthlySections.kantin.revenue : data.this_month.revenue
+        const thisMonthExp = monthlySections ? monthlySections.ms.expenses + monthlySections.kantin.expenses : (data.this_month.expenses + data.this_month.capital)
+        const thisMonthNet = thisMonthRev - thisMonthExp
+        // Year: apply same-month delta so year total stays consistent with fixed monthly figures
+        const monthDelta = monthlySections ? thisMonthNet - data.this_month.net : 0
+        const thisYearNet = data.this_year.net + monthDelta
+        const thisYearRev = data.this_year.revenue + (monthlySections ? thisMonthRev - data.this_month.revenue : 0)
+        const thisYearExp = data.this_year.expenses + data.this_year.capital + (monthlySections ? thisMonthExp - (data.this_month.expenses + data.this_month.capital) : 0)
+        return (
+          <div className="grid grid-cols-2 gap-3">
+            <button
+              onClick={() => onNavigate('monthly')}
+              className="text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 hover:bg-slate-900/70 hover:border-slate-700 transition-all"
+            >
+              <p className="text-[10px] text-slate-500 font-medium">Keuntungan Bulan Ini</p>
+              <p className={`text-[17px] font-extrabold mt-0.5 ${thisMonthNet >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {formatRupiah(thisMonthNet)}
+              </p>
+              <div className="flex flex-col gap-0.5 mt-1">
+                <span className="text-[9px] text-green-400/40">Omset {formatRupiah(thisMonthRev)}</span>
+                <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(thisMonthExp)}</span>
+              </div>
+            </button>
+            <button
+              onClick={() => onNavigate('monthly')}
+              className="text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 hover:bg-slate-900/70 hover:border-slate-700 transition-all"
+            >
+              <p className="text-[10px] text-slate-500 font-medium">Keuntungan Tahun Ini</p>
+              <p className={`text-[17px] font-extrabold mt-0.5 ${thisYearNet >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {formatRupiah(thisYearNet)}
+              </p>
+              <div className="flex flex-col gap-0.5 mt-1">
+                <span className="text-[9px] text-green-400/40">Omset {formatRupiah(thisYearRev)}</span>
+                <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(thisYearExp)}</span>
+              </div>
+            </button>
           </div>
-        </button>
-        <button
-          onClick={() => onNavigate('monthly')}
-          className="text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 hover:bg-slate-900/70 hover:border-slate-700 transition-all"
-        >
-          <p className="text-[10px] text-slate-500 font-medium">Keuntungan Tahun Ini</p>
-          <p className={`text-[17px] font-extrabold mt-0.5 ${data.this_year.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {formatRupiah(data.this_year.net)}
-          </p>
-          <div className="flex flex-col gap-0.5 mt-1">
-            <span className="text-[9px] text-green-400/40">Omset {formatRupiah(data.this_year.revenue)}</span>
-            <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(data.this_year.expenses + data.this_year.capital)}</span>
-          </div>
-        </button>
-      </div>
+        )
+      })()}
 
       {/* All-time Mini Soccer net balance (s/d Maret 2026) */}
       <div className="w-full text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-4">
