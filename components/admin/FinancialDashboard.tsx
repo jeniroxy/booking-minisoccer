@@ -215,7 +215,7 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
           <ChevronDown size={14} className={`text-slate-500 transition-transform duration-200 ${showSaldoMaret ? 'rotate-180' : ''}`} />
         </button>
         {showSaldoMaret && (
-          <div className="mt-3 space-y-3">
+          <div className="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
             <div className="w-full text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-4">
               <p className="text-[11px] text-slate-500 font-medium">🏟️ Sisa Saldo Bersih Mini Soccer <span className="text-slate-600">(s/d Mar 2026)</span></p>
               <p className={`text-[20px] font-extrabold mt-0.5 ${data.minisoccer_all_time.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
