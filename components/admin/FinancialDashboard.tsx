@@ -53,6 +53,7 @@ interface FinancialDashboardProps {
 export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
   const [data, setData] = useState<DashboardData | null>(null)
   const [monthlyCategories, setMonthlyCategories] = useState<Record<string, number> | null>(null)
+  const [showSaldoMaret, setShowSaldoMaret] = useState(false)
   const [monthlySections, setMonthlySections] = useState<{ ms: { revenue: number; expenses: number; net: number }; kantin: { revenue: number; expenses: number; net: number } } | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentYear] = useState(() => new Date().getFullYear())
@@ -203,50 +204,58 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
         </button>
       </div>
 
-      {/* All-time Mini Soccer net balance (s/d Maret 2026) */}
-      <div className="w-full text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-4">
-        <p className="text-[11px] text-slate-500 font-medium">🏟️ Sisa Saldo Bersih Mini Soccer <span className="text-slate-600">(s/d Mar 2026)</span></p>
-        <p className={`text-[20px] font-extrabold mt-0.5 ${data.minisoccer_all_time.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-          {formatRupiah(data.minisoccer_all_time.net)}
-        </p>
-        <div className="flex items-center gap-3 mt-1">
-          <span className="text-[10px] text-green-400/40">Omset {formatRupiah(data.minisoccer_all_time.revenue)}</span>
-          <span className="text-[10px] text-red-400/40">Pengeluaran {formatRupiah(data.minisoccer_all_time.expenses + data.minisoccer_all_time.capital)}</span>
-        </div>
-      </div>
-
-      {/* All-time Kantin net balance (s/d Maret 2026) */}
-      <div className="w-full text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-4">
-        <p className="text-[11px] text-slate-500 font-medium">🍔 Sisa Saldo Bersih Kantin <span className="text-slate-600">(s/d Mar 2026)</span></p>
-        <p className={`text-[20px] font-extrabold mt-0.5 ${data.kantin_all_time.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-          {formatRupiah(data.kantin_all_time.net)}
-        </p>
-        <div className="flex items-center gap-3 mt-1">
-          <span className="text-[10px] text-green-400/40">Omset {formatRupiah(data.kantin_all_time.revenue)}</span>
-          <span className="text-[10px] text-red-400/40">Pengeluaran {formatRupiah(data.kantin_all_time.expenses + data.kantin_all_time.capital)}</span>
-        </div>
-      </div>
-
-      {/* Combined Mini Soccer + Kantin all-time balance (s/d Maret 2026) */}
-      {(() => {
-        const ms = data.minisoccer_all_time
-        const k = data.kantin_all_time
-        const totalRev = ms.revenue + k.revenue
-        const totalExp = ms.expenses + ms.capital + k.expenses + k.capital
-        const totalNet = totalRev - totalExp
-        return (
-          <div className="w-full text-left bg-gradient-to-br from-green-500/8 to-transparent rounded-2xl border border-green-500/10 p-4">
-            <p className="text-[11px] text-green-400/60 font-medium">💰 Saldo Total Bersih <span className="text-green-400/40">(s/d Mar 2026)</span></p>
-            <p className={`text-[22px] font-extrabold ${totalNet >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-              {formatRupiah(totalNet)}
-            </p>
-            <div className="flex items-center gap-3 mt-1">
-              <span className="text-[10px] text-green-400/40">Omset {formatRupiah(totalRev)}</span>
-              <span className="text-[10px] text-red-400/40">Pengeluaran {formatRupiah(totalExp)}</span>
+      {/* Saldo Per Maret 2026 — collapsible */}
+      <div>
+        <button
+          onClick={() => setShowSaldoMaret(v => !v)}
+          className="text-[12px] text-slate-500 hover:text-slate-300 underline underline-offset-2 transition-colors"
+        >
+          {showSaldoMaret ? '▲' : '▼'} Saldo Per Maret 2026
+        </button>
+        {showSaldoMaret && (
+          <div className="mt-3 space-y-3">
+            <div className="w-full text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-4">
+              <p className="text-[11px] text-slate-500 font-medium">🏟️ Sisa Saldo Bersih Mini Soccer <span className="text-slate-600">(s/d Mar 2026)</span></p>
+              <p className={`text-[20px] font-extrabold mt-0.5 ${data.minisoccer_all_time.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {formatRupiah(data.minisoccer_all_time.net)}
+              </p>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-[10px] text-green-400/40">Omset {formatRupiah(data.minisoccer_all_time.revenue)}</span>
+                <span className="text-[10px] text-red-400/40">Pengeluaran {formatRupiah(data.minisoccer_all_time.expenses + data.minisoccer_all_time.capital)}</span>
+              </div>
             </div>
+            <div className="w-full text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-4">
+              <p className="text-[11px] text-slate-500 font-medium">🍔 Sisa Saldo Bersih Kantin <span className="text-slate-600">(s/d Mar 2026)</span></p>
+              <p className={`text-[20px] font-extrabold mt-0.5 ${data.kantin_all_time.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {formatRupiah(data.kantin_all_time.net)}
+              </p>
+              <div className="flex items-center gap-3 mt-1">
+                <span className="text-[10px] text-green-400/40">Omset {formatRupiah(data.kantin_all_time.revenue)}</span>
+                <span className="text-[10px] text-red-400/40">Pengeluaran {formatRupiah(data.kantin_all_time.expenses + data.kantin_all_time.capital)}</span>
+              </div>
+            </div>
+            {(() => {
+              const ms = data.minisoccer_all_time
+              const k = data.kantin_all_time
+              const totalRev = ms.revenue + k.revenue
+              const totalExp = ms.expenses + ms.capital + k.expenses + k.capital
+              const totalNet = totalRev - totalExp
+              return (
+                <div className="w-full text-left bg-gradient-to-br from-green-500/8 to-transparent rounded-2xl border border-green-500/10 p-4">
+                  <p className="text-[11px] text-green-400/60 font-medium">💰 Saldo Total Bersih <span className="text-green-400/40">(s/d Mar 2026)</span></p>
+                  <p className={`text-[22px] font-extrabold ${totalNet >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                    {formatRupiah(totalNet)}
+                  </p>
+                  <div className="flex items-center gap-3 mt-1">
+                    <span className="text-[10px] text-green-400/40">Omset {formatRupiah(totalRev)}</span>
+                    <span className="text-[10px] text-red-400/40">Pengeluaran {formatRupiah(totalExp)}</span>
+                  </div>
+                </div>
+              )
+            })()}
           </div>
-        )
-      })()}
+        )}
+      </div>
 
       {/* All-time balance */}
       <div className="w-full text-left bg-gradient-to-br from-green-500/8 to-transparent rounded-2xl border border-green-500/10 p-4">
