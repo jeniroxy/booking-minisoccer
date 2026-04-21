@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { formatRupiah } from '@/lib/ps-pricing'
 
 const MONTH_SHORT: Record<number, string> = {
@@ -208,9 +209,10 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
       <div>
         <button
           onClick={() => setShowSaldoMaret(v => !v)}
-          className="text-[12px] text-slate-500 hover:text-slate-300 underline underline-offset-2 transition-colors"
+          className="w-full flex items-center justify-between px-3.5 py-2.5 bg-slate-900/50 rounded-2xl border border-slate-800/80 hover:border-slate-700 transition-colors"
         >
-          {showSaldoMaret ? '▲' : '▼'} Saldo Per Maret 2026
+          <span className="text-[12px] font-semibold text-slate-400">Saldo Per Maret 2026</span>
+          <ChevronDown size={14} className={`text-slate-500 transition-transform duration-200 ${showSaldoMaret ? 'rotate-180' : ''}`} />
         </button>
         {showSaldoMaret && (
           <div className="mt-3 space-y-3">
