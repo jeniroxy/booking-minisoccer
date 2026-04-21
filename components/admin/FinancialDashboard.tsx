@@ -53,6 +53,7 @@ interface FinancialDashboardProps {
 export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
   const [data, setData] = useState<DashboardData | null>(null)
   const [monthlyCategories, setMonthlyCategories] = useState<Record<string, number> | null>(null)
+  const [monthlySections, setMonthlySections] = useState<{ ms: { revenue: number; expenses: number; net: number }; kantin: { revenue: number; expenses: number; net: number } } | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentYear] = useState(() => new Date().getFullYear())
 
@@ -69,13 +70,25 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
         if (dashRes.ok) setData(await dashRes.json())
         if (monthlyRes.ok) {
           const mData = await monthlyRes.json()
+          const days = mData.days as Record<string, Record<string, number>>
+          const expByDay = mData.expenses_by_day as Record<string, { mini_soccer: number; kantin: number }>
           const cats: Record<string, number> = {}
-          for (const day of Object.values(mData.days as Record<string, Record<string, number>>)) {
+          let msRev = 0, msExp = 0, kantinRev = 0, kantinExp = 0
+          for (const [dateStr, day] of Object.entries(days)) {
             for (const cat of MINISOCCER_CATS) {
-              cats[cat] = (cats[cat] || 0) + (day[cat] || 0)
+              const v = day[cat] || 0
+              cats[cat] = (cats[cat] || 0) + v
+              msRev += v
             }
+            kantinRev += day['kantin'] || 0
+            msExp += expByDay[dateStr]?.mini_soccer || 0
+            kantinExp += expByDay[dateStr]?.kantin || 0
           }
           setMonthlyCategories(cats)
+          setMonthlySections({
+            ms: { revenue: msRev, expenses: msExp, net: msRev - msExp },
+            kantin: { revenue: kantinRev, expenses: kantinExp, net: kantinRev - kantinExp },
+          })
         }
       } catch (err) {
         console.error('Dashboard fetch failed:', err)
@@ -102,12 +115,12 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
           className="bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 text-left hover:border-slate-700 transition-colors"
         >
           <p className="text-[10px] text-slate-500 font-medium">🏟️ Lapang</p>
-          <p className={`text-[17px] font-extrabold mt-0.5 ${data.minisoccer_month.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {formatRupiah(data.minisoccer_month.net)}
+          <p className={`text-[17px] font-extrabold mt-0.5 ${(monthlySections?.ms.net ?? data.minisoccer_month.net) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {formatRupiah(monthlySections?.ms.net ?? data.minisoccer_month.net)}
           </p>
           <div className="flex flex-col gap-0.5 mt-1">
-            <span className="text-[9px] text-green-400/40">Omset {formatRupiah(data.minisoccer_month.revenue)}</span>
-            <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(data.minisoccer_month.expenses)}</span>
+            <span className="text-[9px] text-green-400/40">Omset {formatRupiah(monthlySections?.ms.revenue ?? data.minisoccer_month.revenue)}</span>
+            <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(monthlySections?.ms.expenses ?? data.minisoccer_month.expenses)}</span>
           </div>
         </button>
         <button
@@ -115,12 +128,12 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
           className="bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 text-left hover:border-slate-700 transition-colors"
         >
           <p className="text-[10px] text-slate-500 font-medium">🍔 Kantin</p>
-          <p className={`text-[17px] font-extrabold mt-0.5 ${data.kantin_month.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {formatRupiah(data.kantin_month.net)}
+          <p className={`text-[17px] font-extrabold mt-0.5 ${(monthlySections?.kantin.net ?? data.kantin_month.net) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {formatRupiah(monthlySections?.kantin.net ?? data.kantin_month.net)}
           </p>
           <div className="flex flex-col gap-0.5 mt-1">
-            <span className="text-[9px] text-green-400/40">Omset {formatRupiah(data.kantin_month.revenue)}</span>
-            <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(data.kantin_month.expenses)}</span>
+            <span className="text-[9px] text-green-400/40">Omset {formatRupiah(monthlySections?.kantin.revenue ?? data.kantin_month.revenue)}</span>
+            <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(monthlySections?.kantin.expenses ?? data.kantin_month.expenses)}</span>
           </div>
         </button>
       </div>
