@@ -8,6 +8,8 @@ const MONTH_SHORT: Record<number, string> = {
   7: 'Jul', 8: 'Agu', 9: 'Sep', 10: 'Okt', 11: 'Nov', 12: 'Des',
 }
 
+const MINISOCCER_CATS = ['mini_soccer', 'ps', 'sewa_sepatu', 'photography']
+
 interface PeriodData {
   revenue: number
   expenses: number
@@ -50,14 +52,31 @@ interface FinancialDashboardProps {
 
 export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
   const [data, setData] = useState<DashboardData | null>(null)
+  const [monthlyCategories, setMonthlyCategories] = useState<Record<string, number> | null>(null)
   const [loading, setLoading] = useState(true)
   const [currentYear] = useState(() => new Date().getFullYear())
 
   useEffect(() => {
+    const now = new Date()
+    const year = now.getFullYear()
+    const month = now.getMonth() + 1
     const load = async () => {
       try {
-        const res = await fetch('/api/admin/reports/dashboard')
-        if (res.ok) setData(await res.json())
+        const [dashRes, monthlyRes] = await Promise.all([
+          fetch('/api/admin/reports/dashboard'),
+          fetch(`/api/admin/reports/monthly?year=${year}&month=${month}`),
+        ])
+        if (dashRes.ok) setData(await dashRes.json())
+        if (monthlyRes.ok) {
+          const mData = await monthlyRes.json()
+          const cats: Record<string, number> = {}
+          for (const day of Object.values(mData.days as Record<string, Record<string, number>>)) {
+            for (const cat of MINISOCCER_CATS) {
+              cats[cat] = (cats[cat] || 0) + (day[cat] || 0)
+            }
+          }
+          setMonthlyCategories(cats)
+        }
       } catch (err) {
         console.error('Dashboard fetch failed:', err)
       }
@@ -107,14 +126,14 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
       </div>
 
       {/* Category breakdown */}
-      {data.minisoccer_month.categories && (() => {
+      {monthlyCategories && (() => {
         const CAT_LABELS: Record<string, string> = {
           mini_soccer: '⚽ Mini Soccer',
           ps: '🎮 PS Rental',
           sewa_sepatu: '👟 Sewa Sepatu',
           photography: '📸 Photography',
         }
-        const cats = data.minisoccer_month.categories!
+        const cats = monthlyCategories
         const entries = Object.entries(CAT_LABELS).filter(([key]) => (cats[key] || 0) > 0)
         if (entries.length === 0) return null
         return (
