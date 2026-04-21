@@ -106,6 +106,13 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
     return <div className="bg-slate-900/50 rounded-2xl border border-slate-800 p-8 text-center text-[13px] text-slate-500">Gagal memuat data dashboard</div>
   }
 
+  // Derived values from monthly API (authoritative for current month)
+  const thisMonthRev = monthlySections ? monthlySections.ms.revenue + monthlySections.kantin.revenue : data.this_month.revenue
+  const thisMonthExp = monthlySections ? monthlySections.ms.expenses + monthlySections.kantin.expenses : (data.this_month.expenses + data.this_month.capital)
+  const thisMonthNet = thisMonthRev - thisMonthExp
+  const revDelta = monthlySections ? thisMonthRev - data.this_month.revenue : 0
+  const expDelta = monthlySections ? thisMonthExp - (data.this_month.expenses + data.this_month.capital) : 0
+
   return (
     <div className="space-y-3">
       {/* Mini Soccer & Kantin side by side */}
@@ -167,46 +174,34 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
       })()}
 
       {/* Keuntungan Bulan Ini & Tahun Ini side by side */}
-      {(() => {
-        const thisMonthRev = monthlySections ? monthlySections.ms.revenue + monthlySections.kantin.revenue : data.this_month.revenue
-        const thisMonthExp = monthlySections ? monthlySections.ms.expenses + monthlySections.kantin.expenses : (data.this_month.expenses + data.this_month.capital)
-        const thisMonthNet = thisMonthRev - thisMonthExp
-        // Year: apply same-month delta so year total stays consistent with fixed monthly figures
-        const monthDelta = monthlySections ? thisMonthNet - data.this_month.net : 0
-        const thisYearNet = data.this_year.net + monthDelta
-        const thisYearRev = data.this_year.revenue + (monthlySections ? thisMonthRev - data.this_month.revenue : 0)
-        const thisYearExp = data.this_year.expenses + data.this_year.capital + (monthlySections ? thisMonthExp - (data.this_month.expenses + data.this_month.capital) : 0)
-        return (
-          <div className="grid grid-cols-2 gap-3">
-            <button
-              onClick={() => onNavigate('monthly')}
-              className="text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 hover:bg-slate-900/70 hover:border-slate-700 transition-all"
-            >
-              <p className="text-[10px] text-slate-500 font-medium">Keuntungan Bulan Ini</p>
-              <p className={`text-[17px] font-extrabold mt-0.5 ${thisMonthNet >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {formatRupiah(thisMonthNet)}
-              </p>
-              <div className="flex flex-col gap-0.5 mt-1">
-                <span className="text-[9px] text-green-400/40">Omset {formatRupiah(thisMonthRev)}</span>
-                <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(thisMonthExp)}</span>
-              </div>
-            </button>
-            <button
-              onClick={() => onNavigate('monthly')}
-              className="text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 hover:bg-slate-900/70 hover:border-slate-700 transition-all"
-            >
-              <p className="text-[10px] text-slate-500 font-medium">Keuntungan Tahun Ini</p>
-              <p className={`text-[17px] font-extrabold mt-0.5 ${thisYearNet >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {formatRupiah(thisYearNet)}
-              </p>
-              <div className="flex flex-col gap-0.5 mt-1">
-                <span className="text-[9px] text-green-400/40">Omset {formatRupiah(thisYearRev)}</span>
-                <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(thisYearExp)}</span>
-              </div>
-            </button>
+      <div className="grid grid-cols-2 gap-3">
+        <button
+          onClick={() => onNavigate('monthly')}
+          className="text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 hover:bg-slate-900/70 hover:border-slate-700 transition-all"
+        >
+          <p className="text-[10px] text-slate-500 font-medium">Keuntungan Bulan Ini</p>
+          <p className={`text-[17px] font-extrabold mt-0.5 ${thisMonthNet >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {formatRupiah(thisMonthNet)}
+          </p>
+          <div className="flex flex-col gap-0.5 mt-1">
+            <span className="text-[9px] text-green-400/40">Omset {formatRupiah(thisMonthRev)}</span>
+            <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(thisMonthExp)}</span>
           </div>
-        )
-      })()}
+        </button>
+        <button
+          onClick={() => onNavigate('monthly')}
+          className="text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 hover:bg-slate-900/70 hover:border-slate-700 transition-all"
+        >
+          <p className="text-[10px] text-slate-500 font-medium">Keuntungan Tahun Ini</p>
+          <p className={`text-[17px] font-extrabold mt-0.5 ${(data.this_year.net + revDelta - expDelta) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {formatRupiah(data.this_year.net + revDelta - expDelta)}
+          </p>
+          <div className="flex flex-col gap-0.5 mt-1">
+            <span className="text-[9px] text-green-400/40">Omset {formatRupiah(data.this_year.revenue + revDelta)}</span>
+            <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(data.this_year.expenses + data.this_year.capital + expDelta)}</span>
+          </div>
+        </button>
+      </div>
 
       {/* All-time Mini Soccer net balance (s/d Maret 2026) */}
       <div className="w-full text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-4">
@@ -256,12 +251,12 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
       {/* All-time balance */}
       <div className="w-full text-left bg-gradient-to-br from-green-500/8 to-transparent rounded-2xl border border-green-500/10 p-4">
         <p className="text-[11px] text-green-400/60 font-medium">Saldo Total</p>
-        <p className={`text-[22px] font-extrabold ${data.all_time.net >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-          {formatRupiah(data.all_time.net)}
+        <p className={`text-[22px] font-extrabold ${(data.all_time.net + revDelta - expDelta) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+          {formatRupiah(data.all_time.net + revDelta - expDelta)}
         </p>
         <div className="flex items-center gap-3 mt-1">
-          <span className="text-[10px] text-green-400/40">Masuk {formatRupiah(data.all_time.revenue)}</span>
-          <span className="text-[10px] text-red-400/40">Keluar {formatRupiah(data.all_time.expenses + data.all_time.capital)}</span>
+          <span className="text-[10px] text-green-400/40">Masuk {formatRupiah(data.all_time.revenue + revDelta)}</span>
+          <span className="text-[10px] text-red-400/40">Keluar {formatRupiah(data.all_time.expenses + data.all_time.capital + expDelta)}</span>
         </div>
       </div>
 
