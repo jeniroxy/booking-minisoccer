@@ -1,0 +1,5 @@
+{"type":"server-started","port":49565,"host":"127.0.0.1","url_host":"localhost","url":"http://localhost:49565","screen_dir":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/42976-1776673577/content","state_dir":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/42976-1776673577/state"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/42976-1776673577/content/admin-placement.html"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/42976-1776673577/content/design-overview.html"}
+{"type":"screen-added","file":"/Users/zains/Projects/Booking-minisoccer/.superpowers/brainstorm/42976-1776673577/content/ui-mockup.html"}
+{"type":"server-stopped","reason":"idle timeout"}

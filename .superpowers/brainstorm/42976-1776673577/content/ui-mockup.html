@@ -1,0 +1,108 @@
+<h2>Desain UI — Tab Jadwal Tetap</h2>
+<p class="subtitle">Bagian 2 — Tampilan admin. Review lalu balas di terminal.</p>
+
+<div class="section">
+  <h3>Tab Bar (tambah "Jadwal Tetap" di ujung)</h3>
+  <div class="mockup">
+    <div class="mockup-header">Admin Booking — Tab Bar</div>
+    <div class="mockup-body" style="padding:12px">
+      <div style="display:flex;gap:4px;background:rgba(15,23,42,0.6);border-radius:14px;padding:3px;width:fit-content">
+        <span style="padding:6px 12px;border-radius:10px;font-size:11px;font-weight:700;color:#64748b">Pending <span style="color:#eab308">2</span></span>
+        <span style="padding:6px 12px;border-radius:10px;font-size:11px;font-weight:700;color:#64748b">Akan Main <span style="color:#22c55e">5</span></span>
+        <span style="padding:6px 12px;border-radius:10px;font-size:11px;font-weight:700;color:#64748b">Selesai</span>
+        <span style="padding:6px 12px;border-radius:10px;font-size:11px;font-weight:700;color:#64748b">Cancelled</span>
+        <span style="padding:6px 12px;border-radius:10px;font-size:11px;font-weight:700;background:rgba(168,85,247,0.15);color:#c084fc">Jadwal Tetap <span style="opacity:0.7">3</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>List Jadwal Tetap (tiap kartu)</h3>
+  <div class="mockup">
+    <div class="mockup-header">Tab: Jadwal Tetap</div>
+    <div class="mockup-body" style="padding:12px;display:flex;flex-direction:column;gap:8px">
+
+      <!-- Card 1 -->
+      <div style="background:rgba(168,85,247,0.08);border:1px solid rgba(168,85,247,0.2);border-radius:12px;padding:12px;display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:14px;font-weight:700;color:#e2e8f0">SSB Bantang Jr</span>
+            <span style="font-size:10px;font-weight:700;background:rgba(59,130,246,0.15);color:#60a5fa;padding:2px 7px;border-radius:6px">Pelajar</span>
+            <span style="font-size:10px;font-weight:700;background:rgba(168,85,247,0.15);color:#c084fc;padding:2px 7px;border-radius:6px">Tetap</span>
+          </div>
+          <div style="font-size:12px;color:#94a3b8;margin-top:3px">📅 Rabu &amp; Sabtu · 15:00–16:00</div>
+          <div style="font-size:11px;color:#64748b;margin-top:2px">0812-3456-7890</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <!-- Toggle ON -->
+          <div style="width:36px;height:20px;background:rgba(168,85,247,0.4);border-radius:10px;position:relative;cursor:pointer">
+            <div style="width:16px;height:16px;background:#c084fc;border-radius:8px;position:absolute;right:2px;top:2px"></div>
+          </div>
+          <!-- Delete -->
+          <span style="font-size:18px;color:#475569;cursor:pointer">🗑</span>
+        </div>
+      </div>
+
+      <!-- Card 2 (paused) -->
+      <div style="background:rgba(30,41,59,0.5);border:1px solid rgba(71,85,105,0.3);border-radius:12px;padding:12px;display:flex;align-items:center;justify-content:space-between;opacity:0.6">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-size:14px;font-weight:700;color:#94a3b8">FC Mujuara</span>
+            <span style="font-size:10px;font-weight:700;background:rgba(100,116,139,0.2);color:#64748b;padding:2px 7px;border-radius:6px">Umum</span>
+            <span style="font-size:10px;font-weight:700;background:rgba(100,116,139,0.15);color:#64748b;padding:2px 7px;border-radius:6px">Paused</span>
+          </div>
+          <div style="font-size:12px;color:#64748b;margin-top:3px">📅 Minggu · 09:00–10:00</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <!-- Toggle OFF -->
+          <div style="width:36px;height:20px;background:rgba(51,65,85,0.8);border-radius:10px;position:relative;cursor:pointer">
+            <div style="width:16px;height:16px;background:#475569;border-radius:8px;position:absolute;left:2px;top:2px"></div>
+          </div>
+          <span style="font-size:18px;color:#475569;cursor:pointer">🗑</span>
+        </div>
+      </div>
+
+      <!-- Add button -->
+      <button style="background:rgba(168,85,247,0.15);border:1px dashed rgba(168,85,247,0.4);color:#c084fc;border-radius:12px;padding:10px;font-size:13px;font-weight:700;cursor:pointer;width:100%">+ Tambah Jadwal Tetap</button>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>Form Tambah Jadwal Tetap (modal/inline)</h3>
+  <div class="mockup">
+    <div class="mockup-header">Form: Jadwal Tetap Baru</div>
+    <div class="mockup-body" style="padding:14px;display:flex;flex-direction:column;gap:10px;font-size:13px">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="color:#64748b;font-size:11px;font-weight:700">Nama Tim</label>
+        <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(71,85,105,0.5);border-radius:8px;padding:8px 12px;color:#94a3b8">SSB Bantang Jr</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="color:#64748b;font-size:11px;font-weight:700">No. WhatsApp</label>
+        <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(71,85,105,0.5);border-radius:8px;padding:8px 12px;color:#94a3b8">0812-xxxx-xxxx</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="color:#64748b;font-size:11px;font-weight:700">Hari</label>
+          <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(71,85,105,0.5);border-radius:8px;padding:8px 12px;color:#94a3b8">Rabu ▾</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <label style="color:#64atabletop;font-size:11px;font-weight:700;color:#64748b">Slot Jam</label>
+          <div style="background:rgba(15,23,42,0.6);border:1px solid rgba(71,85,105,0.5);border-radius:8px;padding:8px 12px;color:#94a3b8">15:00–16:00 ▾</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <label style="color:#64748b;font-size:11px;font-weight:700">Kategori</label>
+        <div style="display:flex;gap:8px">
+          <span style="background:rgba(100,116,139,0.2);color:#94a3b8;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid rgba(100,116,139,0.3)">Umum</span>
+          <span style="background:rgba(59,130,246,0.15);color:#60a5fa;padding:6px 14px;border-radius:8px;font-size:12px;font-weight:700;border:1px solid rgba(59,130,246,0.3)">Pelajar ✓</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button style="flex:1;background:rgba(168,85,247,0.2);border:1px solid rgba(168,85,247,0.4);color:#c084fc;border-radius:10px;padding:10px;font-weight:700;cursor:pointer">Simpan &amp; Generate 4 Minggu</button>
+        <button style="background:rgba(30,41,59,0.8);border:1px solid rgba(71,85,105,0.4);color:#64748b;border-radius:10px;padding:10px 16px;font-weight:700;cursor:pointer">Batal</button>
+      </div>
+    </div>
+  </div>
+</div>

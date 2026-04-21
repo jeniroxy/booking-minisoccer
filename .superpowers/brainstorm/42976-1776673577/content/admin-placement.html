@@ -1,0 +1,62 @@
+<h2>Di mana UI "Jadwal Tetap" ditempatkan?</h2>
+<p class="subtitle">Pilih salah satu pendekatan layout di admin</p>
+
+<div class="options">
+  <div class="option" data-choice="a" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Tab baru di halaman Booking</h3>
+      <p>Tambah tab "Jadwal Tetap" sejajar dengan Pending / Akan Main / Selesai / Cancelled. Semua booking management di satu halaman.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Admin — Booking</div>
+        <div class="mockup-body" style="padding:12px">
+          <div style="display:flex;gap:6px;margin-bottom:12px">
+            <span style="background:#eab308/20;color:#eab308;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;background:rgba(234,179,8,0.2)">Pending</span>
+            <span style="background:rgba(34,197,94,0.2);color:#22c55e;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700">Akan Main</span>
+            <span style="background:rgba(59,130,246,0.2);color:#60a5fa;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700">Selesai</span>
+            <span style="background:rgba(100,116,139,0.2);color:#94a3b8;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700">Cancelled</span>
+            <span style="background:rgba(168,85,247,0.3);color:#c084fc;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700;border:1px solid rgba(168,85,247,0.4)">✦ Jadwal Tetap</span>
+          </div>
+          <div style="background:rgba(168,85,247,0.08);border:1px dashed rgba(168,85,247,0.3);border-radius:10px;padding:10px;font-size:12px;color:#c084fc">
+            Daftar jadwal tetap + tombol + Add
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="b" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Section terpisah di bawah tabel booking</h3>
+      <p>Scroll ke bawah di halaman admin untuk lihat section Jadwal Tetap. Sederhana tapi panjang.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Admin — Booking</div>
+        <div class="mockup-body" style="padding:12px">
+          <div style="background:rgba(30,41,59,0.8);border-radius:8px;padding:8px;font-size:11px;color:#94a3b8;margin-bottom:8px">📋 Tabel booking (Pending / Akan Main / ...)</div>
+          <div style="border-top:1px solid rgba(100,116,139,0.3);padding-top:8px;font-size:12px;color:#c084fc;font-weight:700">⬇ Jadwal Tetap</div>
+          <div style="background:rgba(168,85,247,0.08);border:1px dashed rgba(168,85,247,0.3);border-radius:8px;padding:8px;font-size:11px;color:#c084fc;margin-top:6px">Daftar jadwal + Add</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="c" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Halaman admin terpisah</h3>
+      <p>Route <code>/admin/jadwal-tetap</code> sendiri. Navigasi via sidebar/link. Paling rapi untuk skala besar tapi butuh effort lebih.</p>
+      <div class="mockup" style="margin-top:12px">
+        <div class="mockup-header">Admin — Jadwal Tetap</div>
+        <div class="mockup-body" style="padding:12px">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:10px">
+            <span style="font-size:11px;color:#64748b">← Booking</span>
+            <span style="font-size:11px;color:#94a3b8">|</span>
+            <span style="font-size:12px;font-weight:700;color:#c084fc">Jadwal Tetap</span>
+          </div>
+          <div style="background:rgba(168,85,247,0.08);border:1px dashed rgba(168,85,247,0.3);border-radius:8px;padding:10px;font-size:11px;color:#c084fc">Halaman full untuk manage recurring schedules</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
