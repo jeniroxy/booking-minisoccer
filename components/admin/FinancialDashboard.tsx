@@ -123,7 +123,7 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
           onClick={() => onNavigate('monthly', 'minisoccer')}
           className="bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 text-left hover:border-slate-700 transition-colors"
         >
-          <p className="text-[10px] text-slate-500 font-medium">🏟️ Lapang</p>
+          <p className="text-[10px] text-slate-500 font-medium">🏟️ Keuntungan Lapang</p>
           <p className={`text-[17px] font-extrabold mt-0.5 ${(monthlySections?.ms.net ?? data.minisoccer_month.net) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             {formatRupiah(monthlySections?.ms.net ?? data.minisoccer_month.net)}
           </p>
@@ -136,7 +136,7 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
           onClick={() => onNavigate('monthly', 'kantin')}
           className="bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 text-left hover:border-slate-700 transition-colors"
         >
-          <p className="text-[10px] text-slate-500 font-medium">🍔 Kantin</p>
+          <p className="text-[10px] text-slate-500 font-medium">🍔 Keuntungan Kantin</p>
           <p className={`text-[17px] font-extrabold mt-0.5 ${(monthlySections?.kantin.net ?? data.kantin_month.net) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             {formatRupiah(monthlySections?.kantin.net ?? data.kantin_month.net)}
           </p>
