@@ -16,6 +16,7 @@ import {
   Pencil,
   Shield,
   Ticket,
+  RotateCcw,
 } from 'lucide-react'
 import { RecurringScheduleTab } from '@/components/admin/RecurringScheduleTab'
 
@@ -474,7 +475,7 @@ export function BookingTable({ initialBookings, serverDate, role }: { initialBoo
     }
   }
 
-  const updateGroupStatus = async (group: GroupedBooking, status: 'confirmed' | 'cancelled') => {
+  const updateGroupStatus = async (group: GroupedBooking, status: 'confirmed' | 'cancelled' | 'pending') => {
     const bookingSnapshot = status === 'confirmed' ? group.primary : undefined
     const waUrl = bookingSnapshot ? buildConfirmUrl(bookingSnapshot) : null
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
@@ -619,14 +620,24 @@ export function BookingTable({ initialBookings, serverDate, role }: { initialBoo
             </button>
           )}
           {role === 'admin' && group.status === 'cancelled' && (
-            <button
-              onClick={() => deleteGroup(group)}
-              disabled={deletingId === group.ids[0]}
-              className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
-              title="Hapus permanen"
-            >
-              {deletingId === group.ids[0] ? '...' : <Trash2 size={15} />}
-            </button>
+            <>
+              <button
+                onClick={() => updateGroupStatus(group, 'pending')}
+                disabled={loadingId === group.ids[0]}
+                className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-[12px] font-bold bg-amber-500/10 ring-1 ring-amber-500/25 text-amber-400 hover:bg-amber-500/20 disabled:opacity-40 transition-colors"
+                title="Uncancel booking"
+              >
+                <RotateCcw size={13} /> Uncancel
+              </button>
+              <button
+                onClick={() => deleteGroup(group)}
+                disabled={deletingId === group.ids[0]}
+                className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 disabled:opacity-40 transition-colors"
+                title="Hapus permanen"
+              >
+                {deletingId === group.ids[0] ? '...' : <Trash2 size={15} />}
+              </button>
+            </>
           )}
           {isGroupDone(group, jakartaNow.dateStr, jakartaNow.hour) && buildFollowUpUrl(group) && (
             <button
@@ -740,14 +751,23 @@ export function BookingTable({ initialBookings, serverDate, role }: { initialBoo
       )}
 
       {role === 'admin' && group.status === 'cancelled' && (
-        <button
-          onClick={() => deleteGroup(group)}
-          disabled={deletingId === group.ids[0]}
-          className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-[13px] font-bold text-slate-400 bg-slate-800/30 ring-1 ring-slate-700/50 hover:text-red-400 hover:ring-red-500/30 disabled:opacity-40 transition-colors"
-        >
-          <Trash2 size={15} />
-          {deletingId === group.ids[0] ? 'Menghapus...' : 'Hapus Permanen'}
-        </button>
+        <div className="flex flex-col gap-2">
+          <button
+            onClick={() => updateGroupStatus(group, 'pending')}
+            disabled={loadingId === group.ids[0]}
+            className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-[13px] font-bold bg-amber-500/10 ring-1 ring-amber-500/25 text-amber-400 hover:bg-amber-500/20 disabled:opacity-40 transition-colors"
+          >
+            <RotateCcw size={15} /> Uncancel
+          </button>
+          <button
+            onClick={() => deleteGroup(group)}
+            disabled={deletingId === group.ids[0]}
+            className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-[13px] font-bold text-slate-400 bg-slate-800/30 ring-1 ring-slate-700/50 hover:text-red-400 hover:ring-red-500/30 disabled:opacity-40 transition-colors"
+          >
+            <Trash2 size={15} />
+            {deletingId === group.ids[0] ? 'Menghapus...' : 'Hapus Permanen'}
+          </button>
+        </div>
       )}
 
       {isGroupDone(group, jakartaNow.dateStr, jakartaNow.hour) && buildFollowUpUrl(group) && (

@@ -47,15 +47,15 @@ export async function PATCH(
     return NextResponse.json(data)
   }
 
-  if (!status || !['confirmed', 'cancelled'].includes(status)) {
+  if (!status || !['confirmed', 'cancelled', 'pending'].includes(status)) {
     return NextResponse.json(
-      { error: 'status must be confirmed or cancelled' },
+      { error: 'status must be confirmed, cancelled, or pending' },
       { status: 400 }
     )
   }
 
-  // Cancel requires admin role
-  if (status === 'cancelled' && auth.role !== 'admin') {
+  // Cancel and uncancel (pending) require admin role
+  if ((status === 'cancelled' || status === 'pending') && auth.role !== 'admin') {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -64,7 +64,7 @@ export async function PATCH(
   if (status === 'confirmed') {
     updates.confirmed_by = auth.userId
     updates.confirmed_at = new Date().toISOString()
-  } else if (status === 'cancelled') {
+  } else if (status === 'cancelled' || status === 'pending') {
     updates.confirmed_by = null
     updates.confirmed_at = null
   }
