@@ -384,7 +384,7 @@ function groupBookings(bookings: BookingWithSlot[]): GroupedBooking[] {
   return groups
 }
 
-export function BookingTable({ initialBookings, serverDate }: { initialBookings: BookingWithSlot[]; serverDate: string }) {
+export function BookingTable({ initialBookings, serverDate, role }: { initialBookings: BookingWithSlot[]; serverDate: string; role: string }) {
   const [bookings, setBookings] = useState(initialBookings)
   const [filter, setFilter] = useState<Filter>('confirmed')
   const [search, setSearch] = useState('')
@@ -591,7 +591,7 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
       <td className="px-4 py-3.5"><StatusBadge status={group.status} done={isGroupDone(group, jakartaNow.dateStr, jakartaNow.hour)} /></td>
       <td className="px-4 py-3.5">
         <div className="flex gap-1.5 items-center">
-          {group.status !== 'cancelled' && (
+          {role === 'admin' && group.status !== 'cancelled' && (
             <button
               onClick={() => setEditingBooking(group.primary)}
               className="p-2 rounded-lg text-slate-500 hover:text-slate-200 hover:bg-slate-800/50 transition-colors"
@@ -609,7 +609,7 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
               <Check size={13} /> Confirm
             </button>
           )}
-          {group.status !== 'cancelled' && (
+          {role === 'admin' && group.status !== 'cancelled' && (
             <button
               onClick={() => updateGroupStatus(group, 'cancelled')}
               disabled={loadingId === group.ids[0]}
@@ -618,7 +618,7 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
               <Ban size={13} /> Cancel
             </button>
           )}
-          {group.status === 'cancelled' && (
+          {role === 'admin' && group.status === 'cancelled' && (
             <button
               onClick={() => deleteGroup(group)}
               disabled={deletingId === group.ids[0]}
@@ -710,7 +710,7 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
       {/* Action buttons */}
       {group.status !== 'cancelled' && (
         <div className="flex gap-2">
-          {!isGroupDone(group, jakartaNow.dateStr, jakartaNow.hour) && (
+          {role === 'admin' && !isGroupDone(group, jakartaNow.dateStr, jakartaNow.hour) && (
             <button
               onClick={() => setEditingBooking(group.primary)}
               className="flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-xl text-[13px] font-bold bg-slate-800/50 ring-1 ring-slate-700/50 text-slate-300 hover:bg-slate-800 transition-colors"
@@ -727,17 +727,19 @@ export function BookingTable({ initialBookings, serverDate }: { initialBookings:
               <Check size={15} /> Confirm
             </button>
           )}
-          <button
-            onClick={() => updateGroupStatus(group, 'cancelled')}
-            disabled={loadingId === group.ids[0]}
-            className={`${group.status === 'pending' ? 'flex-1' : 'w-full'} flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold bg-red-500/10 ring-1 ring-red-500/25 text-red-400 hover:bg-red-500/20 active:bg-red-500/25 disabled:opacity-40 transition-colors`}
-          >
-            <Ban size={15} /> Cancel
-          </button>
+          {role === 'admin' && (
+            <button
+              onClick={() => updateGroupStatus(group, 'cancelled')}
+              disabled={loadingId === group.ids[0]}
+              className={`${group.status === 'pending' ? 'flex-1' : 'w-full'} flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-[13px] font-bold bg-red-500/10 ring-1 ring-red-500/25 text-red-400 hover:bg-red-500/20 active:bg-red-500/25 disabled:opacity-40 transition-colors`}
+            >
+              <Ban size={15} /> Cancel
+            </button>
+          )}
         </div>
       )}
 
-      {group.status === 'cancelled' && (
+      {role === 'admin' && group.status === 'cancelled' && (
         <button
           onClick={() => deleteGroup(group)}
           disabled={deletingId === group.ids[0]}

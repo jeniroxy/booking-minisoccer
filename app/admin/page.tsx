@@ -40,7 +40,7 @@ export default async function AdminPage() {
       <AdminNav role={adminProps.role} />
 
       <div className="max-w-[1200px] mx-auto py-4 md:py-6 px-4">
-        <BookingTable initialBookings={bookingsWithConfirmer as BookingWithSlot[]} serverDate={serverDate} />
+        <BookingTable initialBookings={bookingsWithConfirmer as BookingWithSlot[]} serverDate={serverDate} role={adminProps.role} />
       </div>
     </main>
   )

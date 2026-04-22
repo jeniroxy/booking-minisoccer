@@ -26,8 +26,9 @@ export async function PATCH(
     customer_type?: 'umum' | 'pelajar'
   }
 
-  // Field-level update (no status change)
+  // Field-level update (no status change) — admin only
   if (!status && (phone !== undefined || total_price !== undefined || booking_date !== undefined || time_slot_id !== undefined || customer_type !== undefined)) {
+    if (auth.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     const supabase = createAdminClient()
     const updates: Record<string, unknown> = {}
     if (phone !== undefined) updates.phone = phone.trim() || null
@@ -51,6 +52,11 @@ export async function PATCH(
       { error: 'status must be confirmed or cancelled' },
       { status: 400 }
     )
+  }
+
+  // Cancel requires admin role
+  if (status === 'cancelled' && auth.role !== 'admin') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   const supabase = createAdminClient()
@@ -187,6 +193,7 @@ export async function DELETE(
 ) {
   const auth = await requireAdminSession()
   if (auth.error) return auth.error
+  if (auth.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const supabase = createAdminClient()
 
