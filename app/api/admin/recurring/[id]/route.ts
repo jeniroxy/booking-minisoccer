@@ -4,6 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { generateBookingsForSchedule } from '@/lib/recurring'
 import { sendPushToAdmins } from '@/lib/push'
 import { formatHour } from '@/lib/schedule'
+import { deleteCalendarEvent } from '@/lib/google-calendar'
 
 const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
 
@@ -80,9 +81,38 @@ export async function PATCH(
     schedule = data
   }
 
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+
+  // If hari or slot changed: delete future bookings (+ their calendar events) and regenerate
+  if (body.day_of_week !== undefined || body.time_slot_id !== undefined) {
+    const { data: futureBookings } = await supabase
+      .from('bookings')
+      .select('id, google_event_id')
+      .eq('recurring_schedule_id', params.id)
+      .eq('status', 'confirmed')
+      .gte('booking_date', today)
+
+    if (futureBookings?.length) {
+      for (const b of futureBookings) {
+        if (b.google_event_id) await deleteCalendarEvent(b.google_event_id)
+      }
+      await supabase
+        .from('bookings')
+        .delete()
+        .eq('recurring_schedule_id', params.id)
+        .eq('status', 'confirmed')
+        .gte('booking_date', today)
+    }
+
+    // Regenerate with new schedule (createCalendarEvent included in generateBookingsForSchedule)
+    const to = new Date(today + 'T00:00:00+07:00')
+    to.setDate(to.getDate() + 27)
+    const toDate = to.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
+    await generateBookingsForSchedule(supabase, schedule, today, toDate)
+  }
+
   // Update price on all future confirmed bookings for this schedule
   if (body.custom_price !== undefined) {
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
     await supabase
       .from('bookings')
       .update({ total_price: body.custom_price })

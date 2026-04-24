@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getStudentPrice } from '@/lib/schedule'
+import { createCalendarEvent } from '@/lib/google-calendar'
 
 type SupabaseClient = ReturnType<typeof createAdminClient>
 
@@ -74,7 +75,7 @@ export async function generateBookingsForSchedule(
         ? getStudentPrice(schedule.time_slots.price)
         : schedule.time_slots.price
 
-    await supabase.from('bookings').insert({
+    const { data: newBooking } = await supabase.from('bookings').insert({
       team_name: schedule.team_name,
       phone: schedule.phone,
       booking_date: date,
@@ -83,7 +84,21 @@ export async function generateBookingsForSchedule(
       customer_type: schedule.customer_type,
       total_price: price,
       recurring_schedule_id: schedule.id,
-    })
+    }).select('id').single()
+
+    if (newBooking) {
+      const eventId = await createCalendarEvent({
+        bookingId: newBooking.id,
+        teamName: schedule.team_name,
+        date,
+        startHour: schedule.time_slots.start_hour,
+        endHour: schedule.time_slots.end_hour,
+        status: 'confirmed',
+      })
+      if (eventId) {
+        await supabase.from('bookings').update({ google_event_id: eventId }).eq('id', newBooking.id)
+      }
+    }
   }
 
   return conflicts
