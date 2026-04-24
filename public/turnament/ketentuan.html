@@ -174,66 +174,15 @@ footer{background:var(--card2);border-top:1px solid var(--line);padding:32px 24p
 /* ── Divider ── */
 .divider{border:none;border-top:1px solid var(--line);margin:0;}
 
-/* ── Table mobile responsive ── */
+/* ── Table mobile: horizontal scroll ── */
 @media(max-width:600px){
-  .tbl-wrap{border:none;background:transparent;overflow:visible;border-radius:0;}
-  table{display:block;}
-  thead{display:none;}
-  tbody{display:flex;flex-direction:column;gap:8px;}
-
-  tbody tr{
-    display:grid;
-    grid-template-columns:auto 1fr;
-    grid-template-rows:auto auto auto auto;
-    column-gap:10px;
-    border:1px solid var(--line);
-    border-radius:10px;
-    background:var(--card);
-    padding:10px 12px;
-  }
-  tbody td{display:none;padding:0;border:none;}
-
-  /* Waktu — full width top */
-  tbody tr td:nth-child(2){
-    display:block;
-    grid-column:1/3;grid-row:1;
-    font-size:11px;font-weight:600;color:var(--muted);
-    padding-bottom:7px;
-    border-bottom:1px solid rgba(255,255,255,.06);
-    margin-bottom:4px;
-  }
-  /* Grup tag — left, spans 3 rows */
-  tbody tr td:nth-child(3){
-    display:flex;
-    grid-column:1;grid-row:2/5;
-    align-items:center;
-  }
-  /* Tim 1 */
-  tbody tr td:nth-child(4){
-    display:block;
-    grid-column:2;grid-row:2;
-    font-weight:700;color:#fff;font-size:12px;
-    padding-top:2px;
-  }
-  /* vs */
-  tbody tr td:nth-child(5){
-    display:block;
-    grid-column:2;grid-row:3;
-    font-size:10px;color:var(--muted);
-    padding:2px 0;
-  }
-  /* Tim 2 */
-  tbody tr td:nth-child(6){
-    display:block;
-    grid-column:2;grid-row:4;
-    font-weight:700;color:#fff;font-size:12px;
-    padding-bottom:2px;
-  }
-  /* Header rows */
-  tbody tr.ko-hdr,tbody tr.sub-hdr{display:block;padding:8px 12px;}
-  tbody tr.ko-hdr td,tbody tr.sub-hdr td{display:block;}
-  /* Final row */
-  tr.final-row{border-color:rgba(0,255,98,.35);}
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{font-size:11px;min-width:320px;}
+  thead th{padding:8px 8px;font-size:10px;}
+  tbody td{padding:8px 8px;}
+  td.time{font-size:10px;}
+  /* Sembunyikan kolom Grup */
+  thead th:nth-child(3),tbody td:nth-child(3){display:none;}
 }
 </style>
 </head>
