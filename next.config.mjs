@@ -1,5 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: '/turnamen',
+        destination: '/turnament/ketentuan.html',
+      },
+    ];
+  },
   headers: async () => [
     {
       source: '/sw.js',
