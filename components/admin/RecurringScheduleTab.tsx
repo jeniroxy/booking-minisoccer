@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { formatHour } from '@/lib/schedule'
+import { formatHour, getStudentPrice, formatPrice } from '@/lib/schedule'
 import { CustomSelect } from '@/components/ui/custom-select'
 import type { RecurringSchedule, TimeSlot } from '@/lib/types'
 import { Plus, Trash2, Pencil, X } from 'lucide-react'
@@ -88,14 +88,18 @@ export function RecurringScheduleTab() {
     setDeletingId(null)
   }
 
+  const getEffectivePrice = (s: RecurringSchedule) => {
+    if (!s.time_slots) return 0
+    return s.customer_type === 'pelajar'
+      ? getStudentPrice(s.time_slots.price)
+      : s.time_slots.price
+  }
+
   const openEdit = (s: RecurringSchedule) => {
     setEditingId(s.id)
     setEditDay(String(s.day_of_week))
     setEditSlotId(s.time_slot_id)
-    const effectivePrice = s.time_slots
-      ? (s.customer_type === 'pelajar' ? Math.round(s.time_slots.price * 0.5) : s.time_slots.price)
-      : 0
-    setEditPrice(String(effectivePrice))
+    setEditPrice(String(getEffectivePrice(s)))
   }
 
   const saveEdit = async (s: RecurringSchedule) => {
@@ -160,10 +164,13 @@ export function RecurringScheduleTab() {
                   </span>
                 )}
               </div>
-              <div className="text-xs text-slate-400 mt-1">
-                📅 {HARI[s.day_of_week]} · {s.time_slots
+              <div className="text-xs text-slate-400 mt-1 flex items-center gap-2 flex-wrap">
+                <span>📅 {HARI[s.day_of_week]} · {s.time_slots
                   ? `${formatHour(s.time_slots.start_hour)}–${formatHour(s.time_slots.end_hour)}`
-                  : '–'}
+                  : '–'}</span>
+                {s.time_slots && (
+                  <span className="text-green-400 font-semibold">{formatPrice(getEffectivePrice(s))}</span>
+                )}
               </div>
               {s.phone && (
                 <div className="text-[11px] text-slate-500 mt-0.5">{s.phone}</div>
