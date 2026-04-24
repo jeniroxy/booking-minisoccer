@@ -60,14 +60,25 @@ export async function PATCH(
   if (body.day_of_week !== undefined) updates.day_of_week = body.day_of_week
   if (body.time_slot_id !== undefined) updates.time_slot_id = body.time_slot_id
 
-  const { data: schedule, error } = await supabase
-    .from('recurring_schedules')
-    .update(updates)
-    .eq('id', params.id)
-    .select('*, time_slots(start_hour, end_hour, price)')
-    .single()
-
-  if (error || !schedule) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  let schedule
+  if (Object.keys(updates).length > 0) {
+    const { data, error } = await supabase
+      .from('recurring_schedules')
+      .update(updates)
+      .eq('id', params.id)
+      .select('*, time_slots(start_hour, end_hour, price)')
+      .single()
+    if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    schedule = data
+  } else {
+    const { data, error } = await supabase
+      .from('recurring_schedules')
+      .select('*, time_slots(start_hour, end_hour, price)')
+      .eq('id', params.id)
+      .single()
+    if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    schedule = data
+  }
 
   // Update price on all future confirmed bookings for this schedule
   if (body.custom_price !== undefined) {

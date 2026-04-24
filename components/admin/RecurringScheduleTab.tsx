@@ -21,6 +21,7 @@ export function RecurringScheduleTab() {
   const [editSlotId, setEditSlotId] = useState('')
   const [editPrice, setEditPrice] = useState('')
   const [editSaving, setEditSaving] = useState(false)
+  const [customPrices, setCustomPrices] = useState<Record<string, number>>({})
 
   // Form state
   const [teamName, setTeamName] = useState('')
@@ -99,7 +100,7 @@ export function RecurringScheduleTab() {
     setEditingId(s.id)
     setEditDay(String(s.day_of_week))
     setEditSlotId(s.time_slot_id)
-    setEditPrice(String(getEffectivePrice(s)))
+    setEditPrice(String(customPrices[s.id] ?? getEffectivePrice(s)))
   }
 
   const saveEdit = async (s: RecurringSchedule) => {
@@ -119,6 +120,9 @@ export function RecurringScheduleTab() {
       if (res.ok) {
         const updated = await res.json()
         setSchedules(prev => prev.map(x => x.id === updated.id ? updated : x))
+        if (body.custom_price !== undefined) {
+          setCustomPrices(prev => ({ ...prev, [s.id]: body.custom_price as number }))
+        }
       }
     }
     setEditingId(null)
@@ -169,7 +173,9 @@ export function RecurringScheduleTab() {
                   ? `${formatHour(s.time_slots.start_hour)}–${formatHour(s.time_slots.end_hour)}`
                   : '–'}</span>
                 {s.time_slots && (
-                  <span className="text-green-400 font-semibold">{formatPrice(getEffectivePrice(s))}</span>
+                  <span className="text-green-400 font-semibold">
+                    {formatPrice(customPrices[s.id] ?? getEffectivePrice(s))}
+                  </span>
                 )}
               </div>
               {s.phone && (
