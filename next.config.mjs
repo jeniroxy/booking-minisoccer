@@ -6,6 +6,10 @@ const nextConfig = {
         source: '/turnamen',
         destination: '/turnament/ketentuan.html',
       },
+      {
+        source: '/turnamen/skor',
+        destination: '/turnament/skor.html',
+      },
     ];
   },
   headers: async () => [
