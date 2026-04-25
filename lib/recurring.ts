@@ -56,15 +56,30 @@ export async function generateBookingsForSchedule(
   for (const date of dates) {
     const { data: existing } = await supabase
       .from('bookings')
-      .select('team_name, recurring_schedule_id')
+      .select('id, team_name, recurring_schedule_id, google_event_id')
       .eq('booking_date', date)
       .eq('time_slot_id', schedule.time_slot_id)
       .neq('status', 'cancelled')
       .maybeSingle()
 
     if (existing) {
-      // Already booked by this same schedule — skip silently
-      if (existing.recurring_schedule_id === schedule.id) continue
+      // Already booked by this same schedule — retry calendar event if missing
+      if (existing.recurring_schedule_id === schedule.id) {
+        if (!existing.google_event_id) {
+          const eventId = await createCalendarEvent({
+            bookingId: existing.id,
+            teamName: schedule.team_name,
+            date,
+            startHour: schedule.time_slots.start_hour,
+            endHour: schedule.time_slots.end_hour,
+            status: 'confirmed',
+          })
+          if (eventId) {
+            await supabase.from('bookings').update({ google_event_id: eventId }).eq('id', existing.id)
+          }
+        }
+        continue
+      }
       // Conflict with another booking
       conflicts.push({ date, existingTeam: existing.team_name })
       continue
