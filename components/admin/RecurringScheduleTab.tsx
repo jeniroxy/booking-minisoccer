@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { formatHour, getStudentPrice, formatPrice } from '@/lib/schedule'
 import { CustomSelect } from '@/components/ui/custom-select'
 import type { RecurringSchedule, TimeSlot } from '@/lib/types'
-import { Plus, Trash2, Pencil, X } from 'lucide-react'
+import { Plus, Trash2, Pencil, X, RefreshCw } from 'lucide-react'
 
 const HARI = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu']
 
@@ -22,6 +22,7 @@ export function RecurringScheduleTab() {
   const [editPrice, setEditPrice] = useState('')
   const [editSaving, setEditSaving] = useState(false)
   const [customPrices, setCustomPrices] = useState<Record<string, number>>({})
+  const [syncing, setSyncing] = useState(false)
 
   // Form state
   const [teamName, setTeamName] = useState('')
@@ -79,6 +80,12 @@ export function RecurringScheduleTab() {
       setSchedules(prev => prev.map(s => s.id === updated.id ? updated : s))
     }
     setTogglingId(null)
+  }
+
+  const syncCalendar = async () => {
+    setSyncing(true)
+    await fetch('/api/admin/recurring/sync-calendar', { method: 'POST' })
+    setSyncing(false)
   }
 
   const deleteSchedule = async (schedule: RecurringSchedule) => {
@@ -360,12 +367,22 @@ export function RecurringScheduleTab() {
       )}
 
       {!showForm && (
-        <button
-          onClick={() => setShowForm(true)}
-          className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-purple-500 text-white shadow-lg hover:bg-purple-400 transition-colors flex items-center justify-center z-50 md:bottom-8 md:right-8"
-        >
-          <Plus size={24} />
-        </button>
+        <div className="fixed bottom-6 right-6 flex flex-col items-center gap-2 z-50 md:bottom-8 md:right-8">
+          <button
+            onClick={syncCalendar}
+            disabled={syncing}
+            title="Sync ke Google Kalender"
+            className="w-11 h-11 rounded-full bg-slate-700 text-white shadow-lg hover:bg-slate-600 transition-colors flex items-center justify-center disabled:opacity-50"
+          >
+            <RefreshCw size={18} className={syncing ? 'animate-spin' : ''} />
+          </button>
+          <button
+            onClick={() => setShowForm(true)}
+            className="w-14 h-14 rounded-full bg-purple-500 text-white shadow-lg hover:bg-purple-400 transition-colors flex items-center justify-center"
+          >
+            <Plus size={24} />
+          </button>
+        </div>
       )}
     </div>
   )
