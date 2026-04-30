@@ -254,16 +254,6 @@ export async function GET() {
       capital_expenses_list: [...capitalExpenses]
         .sort((a, b) => b.date.localeCompare(a.date))
         .map(c => ({ date: c.date, description: c.description, amount: c.amount, section: c.section })),
-      _debug: {
-        v: 2,
-        counts: {
-          bookings: bookings.length,
-          revenue_entries: revenueEntries.length,
-          ps_sessions: psSessions.length,
-          expense_entries: expenseEntries.length,
-          capital_expenses: capitalExpenses.length,
-        },
-      },
     }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (err) {
     console.error('Dashboard API error:', err)
