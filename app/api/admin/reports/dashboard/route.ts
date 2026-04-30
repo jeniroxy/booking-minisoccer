@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { requireRole } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
+export const dynamic = 'force-dynamic'
+
 function getMonday(d: Date): string {
   const date = new Date(d)
   const day = date.getDay()
