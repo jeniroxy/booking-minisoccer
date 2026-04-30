@@ -33,6 +33,13 @@ interface SectionData {
   categories?: Record<string, number>
 }
 
+interface CapitalExpenseItem {
+  date: string
+  description: string
+  amount: number
+  section: string | null
+}
+
 interface DashboardData {
   all_time: PeriodData
   this_year: PeriodData
@@ -45,6 +52,7 @@ interface DashboardData {
   kantin_all_time: PeriodData
   all_time_cutoff?: string
   last_12_months: MonthData[]
+  capital_expenses_list: CapitalExpenseItem[]
 }
 
 interface FinancialDashboardProps {
@@ -305,6 +313,46 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
           })}
         </div>
       </div>
+
+      {/* Belanja Besar */}
+      {data.capital_expenses_list.length > 0 && (() => {
+        const totalBelanjaBesar = data.capital_expenses_list.reduce((s, c) => s + c.amount, 0)
+        return (
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-[13px] font-bold text-slate-300">Belanja Besar</h2>
+              <span className="text-[12px] font-bold text-red-400">{formatRupiah(totalBelanjaBesar)}</span>
+            </div>
+            <div
+              className="flex gap-2 overflow-x-auto pb-2"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {data.capital_expenses_list.map((c, i) => {
+                const d = new Date(c.date)
+                const label = `${d.getDate()} ${MONTH_SHORT[d.getMonth() + 1]} ${d.getFullYear()}`
+                const isKantin = c.section === 'kantin'
+                return (
+                  <div
+                    key={i}
+                    className="flex-shrink-0 w-[140px] bg-slate-900/50 rounded-xl border border-slate-800/80 p-3"
+                  >
+                    <p className="text-[10px] text-slate-500 font-medium mb-1">{label}</p>
+                    <p className="text-[13px] font-bold text-red-400 leading-tight">
+                      {formatRupiah(c.amount)}
+                    </p>
+                    <p className="text-[10px] text-slate-400 mt-1 leading-tight line-clamp-2">
+                      {c.description}
+                    </p>
+                    <p className="text-[9px] mt-1.5 text-slate-600">
+                      {isKantin ? '🍔 Kantin' : '⚽ Mini Soccer'}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

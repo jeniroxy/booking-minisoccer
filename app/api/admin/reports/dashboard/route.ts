@@ -251,6 +251,9 @@ export async function GET() {
       minisoccer_all_time: { revenue: msAllRevenue, expenses: msAllExpenses, capital: msAllCapital, net: msAllRevenue - msAllExpenses - msAllCapital },
       kantin_all_time: { revenue: kAllRevenue, expenses: kAllExpenses, capital: kAllCapital, net: kAllRevenue - kAllExpenses - kAllCapital },
       last_12_months: last12Months,
+      capital_expenses_list: [...capitalExpenses]
+        .sort((a, b) => b.date.localeCompare(a.date))
+        .map(c => ({ date: c.date, description: c.description, amount: c.amount, section: c.section })),
     }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (err) {
     console.error('Dashboard API error:', err)
