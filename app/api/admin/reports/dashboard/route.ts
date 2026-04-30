@@ -35,8 +35,8 @@ export async function GET() {
     const supabase = createAdminClient()
     const now = new Date()
     const today = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
-    const year = now.getFullYear()
-    const month = String(now.getMonth() + 1).padStart(2, '0')
+    const year = parseInt(today.substring(0, 4))
+    const month = today.substring(5, 7)
     const yearStart = `${year}-01-01`
     const monthStart = `${year}-${month}-01`
     const weekStart = getMonday(now)
@@ -120,7 +120,7 @@ export async function GET() {
     const last12Months: { year: number; month: number; revenue: number; expenses: number; net: number }[] = []
     const START_YEAR = 2025
     const START_MONTH = 3
-    const cursor = new Date(now.getFullYear(), now.getMonth(), 1)
+    const cursor = new Date(year, parseInt(month) - 1, 1)
     const endCursor = new Date(START_YEAR, START_MONTH - 1, 1)
     while (cursor >= endCursor) {
       const mYear = cursor.getFullYear()
