@@ -3,6 +3,7 @@ import { requireRole } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 function getMonday(d: Date): string {
   const date = new Date(d)
