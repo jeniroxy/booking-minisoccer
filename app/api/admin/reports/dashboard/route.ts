@@ -250,7 +250,7 @@ export async function GET() {
       minisoccer_all_time: { revenue: msAllRevenue, expenses: msAllExpenses, capital: msAllCapital, net: msAllRevenue - msAllExpenses - msAllCapital },
       kantin_all_time: { revenue: kAllRevenue, expenses: kAllExpenses, capital: kAllCapital, net: kAllRevenue - kAllExpenses - kAllCapital },
       last_12_months: last12Months,
-    })
+    }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (err) {
     console.error('Dashboard API error:', err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
