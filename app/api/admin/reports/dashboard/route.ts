@@ -9,6 +9,21 @@ function getMonday(d: Date): string {
   return date.toISOString().split('T')[0]
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function fetchAll(query: any): Promise<any[]> {
+  const PAGE = 1000
+  let page = 0
+  const results: unknown[] = []
+  while (true) {
+    const { data, error } = await query.range(page * PAGE, (page + 1) * PAGE - 1)
+    if (error) throw error
+    results.push(...(data ?? []))
+    if (!data || data.length < PAGE) break
+    page++
+  }
+  return results
+}
+
 export async function GET() {
   const auth = await requireRole(['admin', 'finance'])
   if (auth.error) return auth.error
@@ -27,17 +42,17 @@ export async function GET() {
     const weekEndStr = weekEndDate.toISOString().split('T')[0]
 
     const [
-      { data: bookings },
-      { data: revenueEntries },
-      { data: psSessions },
-      { data: expenseEntries },
-      { data: capitalExpenses },
+      bookings,
+      revenueEntries,
+      psSessions,
+      expenseEntries,
+      capitalExpenses,
     ] = await Promise.all([
-      supabase.from('bookings').select('booking_date, total_price, time_slots(end_hour)').eq('status', 'confirmed'),
-      supabase.from('revenue_entries').select('date, amount, category'),
-      supabase.from('ps_sessions').select('started_at, final_amount').eq('status', 'completed'),
-      supabase.from('expense_entries').select('date, amount, expense_categories(name)'),
-      supabase.from('capital_expenses').select('date, amount, description, section'),
+      fetchAll(supabase.from('bookings').select('booking_date, total_price, time_slots(end_hour)').eq('status', 'confirmed')),
+      fetchAll(supabase.from('revenue_entries').select('date, amount, category').gte('date', '2025-01-01')),
+      fetchAll(supabase.from('ps_sessions').select('started_at, final_amount').eq('status', 'completed')),
+      fetchAll(supabase.from('expense_entries').select('date, amount, expense_categories(name)').gte('date', '2025-01-01')),
+      fetchAll(supabase.from('capital_expenses').select('date, amount, description, section').gte('date', '2025-01-01')),
     ])
 
     const isKantinCapital = (c: { section?: string | null; description?: string | null }) =>
@@ -79,8 +94,20 @@ export async function GET() {
       return { revenue, expenses, capital, net: revenue - expenses - capital }
     }
 
-    const allTime = calcPeriod('0000-01-01', '9999-12-31')
-    const thisYear = calcPeriod(yearStart, `${year}-12-31`)
+    // All-time uses all confirmed bookings (not just done), since money is collected upfront
+    const calcAllTime = () => {
+      let revenue = 0
+      let expenses = 0
+      let capital = 0
+      for (const b of bookings ?? []) revenue += b.total_price || 0
+      for (const s of psSessions ?? []) revenue += s.final_amount || 0
+      for (const r of revenueEntries ?? []) revenue += r.amount
+      for (const e of expenseEntries ?? []) expenses += e.amount
+      for (const c of capitalExpenses ?? []) capital += c.amount
+      return { revenue, expenses, capital, net: revenue - expenses - capital }
+    }
+    const allTime = calcAllTime()
+    const thisYear = calcPeriod(yearStart, today)
     const thisMonth = calcPeriod(monthStart, `${year}-${month}-31`)
     const thisWeek = calcPeriod(weekStart, weekEndStr)
     const todayData = calcPeriod(today, today)
