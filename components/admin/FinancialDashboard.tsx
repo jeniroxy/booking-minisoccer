@@ -118,10 +118,12 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
 
   // Derived values from monthly API (authoritative for current month)
   const thisMonthRev = monthlySections ? monthlySections.ms.revenue + monthlySections.kantin.revenue : data.this_month.revenue
-  const thisMonthExp = monthlySections ? monthlySections.ms.expenses + monthlySections.kantin.expenses : (data.this_month.expenses + data.this_month.capital)
+  // Capital expenses are not counted in monthly profit — only operational expenses
+  const thisMonthExp = monthlySections ? monthlySections.ms.expenses + monthlySections.kantin.expenses : data.this_month.expenses
   const thisMonthNet = thisMonthRev - thisMonthExp
   const revDelta = monthlySections ? thisMonthRev - data.this_month.revenue : 0
-  const expDelta = monthlySections ? thisMonthExp - (data.this_month.expenses + data.this_month.capital) : 0
+  // expDelta only adjusts operational discrepancy — capital is already in all_time.net
+  const expDelta = monthlySections ? thisMonthExp - data.this_month.expenses : 0
 
   return (
     <div className="space-y-3">
@@ -203,12 +205,12 @@ export function FinancialDashboard({ onNavigate }: FinancialDashboardProps) {
           className="text-left bg-slate-900/50 rounded-2xl border border-slate-800/80 p-3.5 hover:bg-slate-900/70 hover:border-slate-700 transition-all"
         >
           <p className="text-[10px] text-slate-500 font-medium">Keuntungan Tahun Ini</p>
-          <p className={`text-[17px] font-extrabold mt-0.5 ${(data.this_year.net + revDelta - expDelta) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {formatRupiah(data.this_year.net + revDelta - expDelta)}
+          <p className={`text-[17px] font-extrabold mt-0.5 ${(data.this_year.revenue - data.this_year.expenses + revDelta - expDelta) >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {formatRupiah(data.this_year.revenue - data.this_year.expenses + revDelta - expDelta)}
           </p>
           <div className="flex flex-col gap-0.5 mt-1">
             <span className="text-[9px] text-green-400/40">Omset {formatRupiah(data.this_year.revenue + revDelta)}</span>
-            <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(data.this_year.expenses + data.this_year.capital + expDelta)}</span>
+            <span className="text-[9px] text-red-400/40">Keluar {formatRupiah(data.this_year.expenses + expDelta)}</span>
           </div>
         </button>
       </div>
