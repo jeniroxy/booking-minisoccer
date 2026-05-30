@@ -142,6 +142,74 @@ footer{background:var(--card2);border-top:1px solid var(--line);padding:32px 24p
 .foot-copy{font-size:11px;color:rgba(255,255,255,.2);}
 
 .divider{border:none;border-top:1px solid var(--line);margin:0;}
+
+/* ── Mobile responsive tables ── */
+@media(max-width:620px){
+  /* Fallback scroll for bracket table */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+
+  /* Jadwal tables: card layout per match */
+  .jadwal-tbl thead{display:none;}
+
+  /* Section headers (sub-hdr, ko-hdr) span full width */
+  .jadwal-tbl tbody tr.sub-hdr,
+  .jadwal-tbl tbody tr.ko-hdr{display:block;}
+  .jadwal-tbl tbody tr.sub-hdr td,
+  .jadwal-tbl tbody tr.ko-hdr td{display:block;padding:6px 0;}
+
+  /* Regular match rows → 2-line grid */
+  .jadwal-tbl tbody tr:not(.sub-hdr):not(.ko-hdr){
+    display:grid;
+    grid-template-columns:1fr 24px 1fr;
+    grid-template-rows:auto auto;
+    row-gap:5px;
+    padding:10px 0;
+    border-bottom:1px solid rgba(255,255,255,.05);
+  }
+  /* Reset all td inside jadwal-tbl on mobile */
+  .jadwal-tbl tbody td{border:none !important;padding:0 !important;}
+
+  /* # column → hidden */
+  .jadwal-tbl td.num{display:none;}
+
+  /* Waktu → row 1, full width */
+  .jadwal-tbl td.time{
+    grid-column:1/-1;grid-row:1;
+    font-size:11px;font-weight:700;color:#fff;
+  }
+  /* Grup/Babak badge → hidden on mobile */
+  .jadwal-tbl td:nth-child(3){display:none;}
+  /* Tim 1 → row 2 left, right-aligned */
+  .jadwal-tbl td:nth-child(4){
+    grid-column:1;grid-row:2;
+    font-size:12px;font-weight:700;color:#fff;
+    text-align:right;word-break:break-word;
+  }
+  /* vs → row 2 center */
+  .jadwal-tbl td:nth-child(5){
+    grid-column:2;grid-row:2;
+    font-size:10px;color:rgba(255,255,255,.35);
+    text-align:center;align-self:center;
+  }
+  /* Tim 2 → row 2 left-aligned */
+  .jadwal-tbl td:nth-child(6){
+    grid-column:3;grid-row:2;
+    font-size:12px;font-weight:700;color:#fff;
+    text-align:left;word-break:break-word;
+  }
+  /* Final row: green tint on tr, transparent on tds */
+  .jadwal-tbl tbody tr.final-row{
+    background:rgba(0,255,98,.07);
+    border-radius:8px;
+    padding:10px 8px;
+    margin:2px 0;
+  }
+  .jadwal-tbl tbody tr.final-row td{
+    background:transparent !important;
+    color:var(--green) !important;
+    font-size:12px !important;
+  }
+}
 `
 
 const BODY_HTML = `
@@ -206,7 +274,7 @@ const BODY_HTML = `
       <div class="fg-grup">Grup B</div>
       <div class="fg-teams">
         <div class="fg-team">WARKAS FC</div><div class="fg-team">STAR LEN YHS</div>
-        <div class="fg-team">SENANTA FC</div><div class="fg-team">CIKIWUL</div>
+        <div class="fg-team">SENTANA FC</div><div class="fg-team">CIKIWUL</div>
       </div>
     </div>
     <div class="fg-col">
@@ -412,7 +480,7 @@ const BODY_HTML = `
 
   <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:10px;">Kloter 1 &mdash; Grup A &amp; B</p>
   <div class="tbl-wrap" style="margin-bottom:12px;">
-    <table>
+    <table class="jadwal-tbl">
       <thead>
         <tr><th class="c">#</th><th>Waktu</th><th>Grup</th><th>Tim 1</th><th class="c">vs</th><th>Tim 2</th></tr>
       </thead>
@@ -420,14 +488,14 @@ const BODY_HTML = `
         <tr><td class="num">1</td><td class="time">09:00 &ndash; 09:15</td><td><span class="gtag ab">Grup A</span></td><td>BARUDAK WELL</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>PELANGI FC</td></tr>
         <tr><td class="num">2</td><td class="time">09:15 &ndash; 09:30</td><td><span class="gtag ab">Grup A</span></td><td>X-BER FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>MT FC</td></tr>
         <tr><td class="num">3</td><td class="time">09:30 &ndash; 09:45</td><td><span class="gtag ab">Grup B</span></td><td>WARKAS FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>STAR LEN YHS</td></tr>
-        <tr><td class="num">4</td><td class="time">09:45 &ndash; 10:00</td><td><span class="gtag ab">Grup B</span></td><td>SENANTA FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>CIKIWUL</td></tr>
+        <tr><td class="num">4</td><td class="time">09:45 &ndash; 10:00</td><td><span class="gtag ab">Grup B</span></td><td>SENTANA FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>CIKIWUL</td></tr>
         <tr><td class="num">5</td><td class="time">10:00 &ndash; 10:15</td><td><span class="gtag ab">Grup A</span></td><td>BARUDAK WELL</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>X-BER FC</td></tr>
         <tr><td class="num">6</td><td class="time">10:15 &ndash; 10:30</td><td><span class="gtag ab">Grup A</span></td><td>PELANGI FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>MT FC</td></tr>
-        <tr><td class="num">7</td><td class="time">10:30 &ndash; 10:45</td><td><span class="gtag ab">Grup B</span></td><td>WARKAS FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>SENANTA FC</td></tr>
+        <tr><td class="num">7</td><td class="time">10:30 &ndash; 10:45</td><td><span class="gtag ab">Grup B</span></td><td>WARKAS FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>SENTANA FC</td></tr>
         <tr><td class="num">8</td><td class="time">10:45 &ndash; 11:00</td><td><span class="gtag ab">Grup B</span></td><td>STAR LEN YHS</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>CIKIWUL</td></tr>
         <tr><td class="num">9</td><td class="time">11:00 &ndash; 11:15</td><td><span class="gtag ab">Grup A</span></td><td>PELANGI FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>X-BER FC</td></tr>
         <tr><td class="num">10</td><td class="time">11:15 &ndash; 11:30</td><td><span class="gtag ab">Grup A</span></td><td>BARUDAK WELL</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>MT FC</td></tr>
-        <tr><td class="num">11</td><td class="time">11:30 &ndash; 11:45</td><td><span class="gtag ab">Grup B</span></td><td>STAR LEN YHS</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>SENANTA FC</td></tr>
+        <tr><td class="num">11</td><td class="time">11:30 &ndash; 11:45</td><td><span class="gtag ab">Grup B</span></td><td>STAR LEN YHS</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>SENTANA FC</td></tr>
         <tr><td class="num">12</td><td class="time">11:45 &ndash; 12:00</td><td><span class="gtag ab">Grup B</span></td><td>WARKAS FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>CIKIWUL</td></tr>
       </tbody>
     </table>
@@ -441,7 +509,7 @@ const BODY_HTML = `
 
   <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin:12px 0 10px;">Kloter 2 &mdash; Grup C &amp; D</p>
   <div class="tbl-wrap" style="margin-bottom:12px;">
-    <table>
+    <table class="jadwal-tbl">
       <thead>
         <tr><th class="c">#</th><th>Waktu</th><th>Grup</th><th>Tim 1</th><th class="c">vs</th><th>Tim 2</th></tr>
       </thead>
@@ -470,7 +538,7 @@ const BODY_HTML = `
 
   <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin:12px 0 10px;">Fase Gugur</p>
   <div class="tbl-wrap">
-    <table>
+    <table class="jadwal-tbl">
       <thead>
         <tr><th class="c">#</th><th>Waktu</th><th>Babak</th><th>Tim 1</th><th class="c">vs</th><th>Tim 2</th></tr>
       </thead>

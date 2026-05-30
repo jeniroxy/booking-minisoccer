@@ -307,7 +307,7 @@ export default function SkorPage() {
 
     const TEAMS: Record<string, string[]> = {
       A: ['BARUDAK WELL', 'PELANGI FC', 'X-BER FC', 'MT FC'],
-      B: ['WARKAS FC', 'STAR LEN YHS', 'SENANTA FC', 'CIKIWUL'],
+      B: ['WARKAS FC', 'STAR LEN YHS', 'SENTANA FC', 'CIKIWUL'],
       C: ['BAS FC', 'TIM AAA', 'RSUD PALABUHANRATU FC', 'CTY ORI'],
       D: ['SOBAT IYAN FC', 'PAKIDULAN FC', 'JMJ', 'NYALSE FC']
     }
