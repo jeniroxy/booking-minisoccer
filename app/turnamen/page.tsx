@@ -145,69 +145,79 @@ footer{background:var(--card2);border-top:1px solid var(--line);padding:32px 24p
 
 /* ── Mobile responsive tables ── */
 @media(max-width:620px){
-  /* Fallback scroll for bracket table */
   .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
 
-  /* Jadwal tables: card layout per match */
   .jadwal-tbl thead{display:none;}
 
-  /* Section headers (sub-hdr, ko-hdr) span full width */
+  /* Section & stage header rows */
   .jadwal-tbl tbody tr.sub-hdr,
   .jadwal-tbl tbody tr.ko-hdr{display:block;}
   .jadwal-tbl tbody tr.sub-hdr td,
   .jadwal-tbl tbody tr.ko-hdr td{display:block;padding:6px 0;}
 
-  /* Regular match rows → 2-line grid */
+  /* Each match = card */
   .jadwal-tbl tbody tr:not(.sub-hdr):not(.ko-hdr){
     display:grid;
-    grid-template-columns:1fr 24px 1fr;
+    grid-template-columns:1fr 28px 1fr;
     grid-template-rows:auto auto;
-    row-gap:5px;
-    padding:10px 0;
-    border-bottom:1px solid rgba(255,255,255,.05);
+    row-gap:0;
+    margin-bottom:6px;
+    background:var(--card);
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,.08);
+    overflow:hidden;
   }
-  /* Reset all td inside jadwal-tbl on mobile */
-  .jadwal-tbl tbody td{border:none !important;padding:0 !important;}
 
-  /* # column → hidden */
+  .jadwal-tbl tbody td{border:none;padding:0;}
   .jadwal-tbl td.num{display:none;}
+  .jadwal-tbl td:nth-child(3){display:none;}
 
-  /* Waktu → row 1, full width */
+  /* Waktu → header strip */
   .jadwal-tbl td.time{
     grid-column:1/-1;grid-row:1;
-    font-size:11px;font-weight:700;color:#fff;
+    padding:7px 14px;
+    font-size:10px;font-weight:700;
+    color:var(--green);letter-spacing:.5px;
+    text-align:center;
+    background:rgba(0,255,98,.05);
+    border-bottom:1px solid rgba(255,255,255,.07);
   }
-  /* Grup/Babak badge → hidden on mobile */
-  .jadwal-tbl td:nth-child(3){display:none;}
-  /* Tim 1 → row 2 left, right-aligned */
+
+  /* Tim 1 */
   .jadwal-tbl td:nth-child(4){
     grid-column:1;grid-row:2;
+    padding:11px 8px 11px 14px;
     font-size:12px;font-weight:700;color:#fff;
-    text-align:right;word-break:break-word;
+    text-align:right;align-self:center;
+    word-break:break-word;line-height:1.3;
   }
-  /* vs → row 2 center */
+  /* vs */
   .jadwal-tbl td:nth-child(5){
     grid-column:2;grid-row:2;
-    font-size:10px;color:rgba(255,255,255,.35);
+    font-size:9px;font-weight:700;
+    color:rgba(255,255,255,.2);
     text-align:center;align-self:center;
+    text-transform:uppercase;letter-spacing:1px;
   }
-  /* Tim 2 → row 2 left-aligned */
+  /* Tim 2 */
   .jadwal-tbl td:nth-child(6){
     grid-column:3;grid-row:2;
+    padding:11px 14px 11px 8px;
     font-size:12px;font-weight:700;color:#fff;
-    text-align:left;word-break:break-word;
+    text-align:left;align-self:center;
+    word-break:break-word;line-height:1.3;
   }
-  /* Final row: green tint on tr, transparent on tds */
+
+  /* Grand Final card */
   .jadwal-tbl tbody tr.final-row{
     background:rgba(0,255,98,.07);
-    border-radius:8px;
-    padding:10px 8px;
-    margin:2px 0;
+    border-color:rgba(0,255,98,.2);
   }
-  .jadwal-tbl tbody tr.final-row td{
-    background:transparent !important;
-    color:var(--green) !important;
-    font-size:12px !important;
+  .jadwal-tbl tbody tr.final-row td{color:var(--green);}
+  .jadwal-tbl tbody tr.final-row td.time{
+    background:rgba(0,255,98,.08);
+    border-bottom-color:rgba(0,255,98,.15);
+    font-size:11px;
   }
 }
 `
