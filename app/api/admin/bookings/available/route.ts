@@ -17,12 +17,17 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = createAdminClient()
-  const [{ data: slots }, { data: bookings }, { data: blocked }, { data: overrides }] = await Promise.all([
+  const [{ data: slots, error: slotsErr }, { data: bookings }, { data: blocked }, { data: overrides }] = await Promise.all([
     supabase.from('time_slots').select('*').eq('is_active', true).order('start_hour'),
     supabase.from('bookings').select('*').eq('booking_date', date),
     supabase.from('blocked_dates').select('*').eq('date', date),
     supabase.from('slot_price_overrides').select('*').eq('date', date),
   ])
+
+  if (slotsErr) {
+    console.error('[available] time_slots query failed', slotsErr)
+    return NextResponse.json({ error: 'Failed to fetch slots' }, { status: 500 })
+  }
 
   const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
   const available = (slots ?? [])
