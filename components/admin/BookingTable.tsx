@@ -880,14 +880,22 @@ export function BookingTable({ initialBookings, serverDate, role }: { initialBoo
           </div>
         ) : (
           <div className="space-y-3">
-            {groupedByDate.map(section => (
+            {groupedByDate.map(section => {
+              const sectionTotal = section.groups.reduce((sum, g) => sum + (g.total_price || 0), 0)
+              return (
               <div
                 key={section.date}
                 className="bg-slate-900/50 backdrop-blur rounded-2xl border border-slate-800/80 overflow-hidden"
               >
                 {/* Date header */}
-                <div className="px-4 py-2.5 bg-slate-900/80 border-b border-slate-800/80 text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
-                  {formatDayHeader(section.date, todayStr)}
+                <div className="px-4 py-2.5 bg-slate-900/80 border-b border-slate-800/80 flex items-center justify-between gap-3">
+                  <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wide">
+                    {formatDayHeader(section.date, todayStr)}
+                  </span>
+                  <span className="flex items-baseline gap-1.5 flex-shrink-0">
+                    <span className="text-[10px] font-medium text-slate-500 normal-case">Total booking</span>
+                    <span className="text-[13px] font-bold text-green-400">{formatPrice(sectionTotal)}</span>
+                  </span>
                 </div>
 
                 {/* Desktop table */}
@@ -913,7 +921,8 @@ export function BookingTable({ initialBookings, serverDate, role }: { initialBoo
                   {section.groups.map(group => renderMobileCard(group))}
                 </div>
               </div>
-            ))}
+              )
+            })}
           </div>
         )
       ) : (
