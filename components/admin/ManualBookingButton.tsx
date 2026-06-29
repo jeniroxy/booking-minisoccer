@@ -1,7 +1,7 @@
 // components/admin/ManualBookingButton.tsx
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Plus, X } from 'lucide-react'
 import { getStudentPrice, formatHour } from '@/lib/schedule'
@@ -25,10 +25,28 @@ function ManualBookingModal({ onClose, onCreated }: { onClose: () => void; onCre
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
 
+  // Voucher
+  const [voucherCode, setVoucherCode] = useState('')
+  const [voucherId, setVoucherId] = useState<string | null>(null)
+  const [voucherDiscount, setVoucherDiscount] = useState<{ type: 'percent' | 'nominal'; value: number } | null>(null)
+  const [voucherError, setVoucherError] = useState('')
+  const [voucherLoading, setVoucherLoading] = useState(false)
+  const voucherTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const teamTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const priceFor = useCallback(
     (s: AvailableSlot) => (customerType === 'pelajar' ? getStudentPrice(s.price) : s.price),
     [customerType]
   )
+
+  // Subtotal (sebelum voucher) + diskon voucher + total final
+  const baseTotal = slots.filter(s => selected.includes(s.id)).reduce((acc, s) => acc + priceFor(s), 0)
+  const voucherAmount = voucherDiscount
+    ? voucherDiscount.type === 'nominal'
+      ? voucherDiscount.value
+      : Math.round(baseTotal * voucherDiscount.value / 100)
+    : 0
+  const finalTotal = Math.max(0, baseTotal - voucherAmount)
 
   // Fetch slot kosong saat tanggal berubah
   useEffect(() => {
@@ -43,12 +61,62 @@ function ManualBookingModal({ onClose, onCreated }: { onClose: () => void; onCre
     return () => { active = false }
   }, [date])
 
-  // Auto-hitung total dari slot terpilih (kecuali user sudah edit manual)
+  // Auto-hitung total dari slot terpilih − voucher (kecuali user sudah edit manual)
   useEffect(() => {
     if (totalEdited) return
-    const sum = slots.filter(s => selected.includes(s.id)).reduce((acc, s) => acc + priceFor(s), 0)
-    setTotalPrice(selected.length ? String(sum) : '')
-  }, [selected, slots, priceFor, totalEdited])
+    setTotalPrice(selected.length ? String(finalTotal) : '')
+  }, [finalTotal, selected.length, totalEdited])
+
+  // Validasi voucher (debounce 600ms), sama seperti /jadwal
+  useEffect(() => {
+    if (!voucherCode.trim()) {
+      setVoucherId(null)
+      setVoucherDiscount(null)
+      setVoucherError('')
+      return
+    }
+    if (voucherTimerRef.current) clearTimeout(voucherTimerRef.current)
+    voucherTimerRef.current = setTimeout(async () => {
+      setVoucherLoading(true)
+      try {
+        const params = new URLSearchParams({ code: voucherCode.trim(), base_total: String(baseTotal) })
+        if (teamName.trim()) params.set('team_name', teamName.trim())
+        if (phone.trim()) params.set('phone', phone.trim())
+        const res = await fetch(`/api/vouchers/validate?${params}`)
+        const data = await res.json()
+        if (data.valid) {
+          setVoucherId(data.voucher.id)
+          setVoucherDiscount({ type: data.voucher.discount_type, value: data.voucher.discount_value })
+          setVoucherError('')
+        } else {
+          setVoucherId(null)
+          setVoucherDiscount(null)
+          setVoucherError(data.error ?? 'Voucher tidak valid')
+        }
+      } catch {
+        setVoucherId(null)
+        setVoucherDiscount(null)
+        setVoucherError('Gagal memvalidasi voucher')
+      }
+      setVoucherLoading(false)
+    }, 600)
+  }, [voucherCode, teamName, phone, baseTotal])
+
+  // Auto-saran voucher follow-up + prefill HP dari nama tim (debounce 600ms)
+  useEffect(() => {
+    if (!teamName.trim()) return
+    if (teamTimerRef.current) clearTimeout(teamTimerRef.current)
+    teamTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/bookings/loyalty?team_name=${encodeURIComponent(teamName.trim())}`)
+        const { lastPhone, voucherCode: availableVoucher } = await res.json()
+        if (lastPhone && !phone.trim()) setPhone(lastPhone)
+        if (availableVoucher && !voucherCode && baseTotal >= 200000) setVoucherCode(availableVoucher)
+      } catch {
+        // abaikan
+      }
+    }, 600)
+  }, [teamName])  // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -79,7 +147,8 @@ function ManualBookingModal({ onClose, onCreated }: { onClose: () => void; onCre
           time_slot_ids: selected,
           customer_type: customerType,
           phone: phone.trim() || undefined,
-          total_price: totalEdited && totalPrice ? parseInt(totalPrice) : undefined,
+          total_price: (totalEdited || voucherAmount > 0) && totalPrice ? parseInt(totalPrice) : undefined,
+          voucher_id: voucherId ?? undefined,
         }),
       })
       if (res.ok) {
@@ -170,7 +239,47 @@ function ManualBookingModal({ onClose, onCreated }: { onClose: () => void; onCre
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-medium text-slate-400">Total Harga</label>
+            <label className="text-xs font-medium text-slate-400">Voucher (opsional)</label>
+            <div className="relative">
+              <input
+                type="text" value={voucherCode}
+                onChange={e => setVoucherCode(e.target.value.toUpperCase())}
+                placeholder="Kode voucher"
+                className={`w-full bg-slate-900/80 border rounded-xl px-3 py-2.5 text-sm text-slate-100 placeholder-slate-600 outline-none uppercase transition-all ${
+                  voucherDiscount ? 'border-green-500' : voucherError ? 'border-red-500/50' : 'border-slate-800/80 focus:border-green-500/50'
+                }`}
+              />
+              {voucherLoading && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500">…</span>
+              )}
+              {voucherDiscount && !voucherLoading && (
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-green-400">✓</span>
+              )}
+            </div>
+            {voucherError && <p className="text-[11px] text-red-400">{voucherError}</p>}
+          </div>
+
+          {selected.length > 0 && (
+            <div className="space-y-1 rounded-xl bg-slate-900/60 border border-slate-800/80 px-3 py-2.5">
+              <div className="flex justify-between text-xs text-slate-400">
+                <span>Subtotal</span>
+                <span>Rp {baseTotal.toLocaleString('id-ID')}</span>
+              </div>
+              {voucherAmount > 0 && (
+                <div className="flex justify-between text-xs">
+                  <span className="text-purple-400 font-medium">🎟️ Voucher ({voucherCode.toUpperCase()})</span>
+                  <span className="text-purple-400 font-semibold">−Rp {voucherAmount.toLocaleString('id-ID')}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm font-bold text-slate-100 pt-1 border-t border-slate-800/80">
+                <span>Total</span>
+                <span className="text-green-400">Rp {finalTotal.toLocaleString('id-ID')}</span>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-medium text-slate-400">Total Harga {!totalEdited && <span className="text-slate-600 normal-case font-normal">(otomatis — edit untuk override)</span>}</label>
             <input
               type="number" value={totalPrice}
               onChange={e => { setTotalEdited(true); setTotalPrice(e.target.value) }}

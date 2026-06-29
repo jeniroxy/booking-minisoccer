@@ -20,13 +20,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { team_name, booking_date, time_slot_ids, customer_type, phone, total_price } = body as {
+  const { team_name, booking_date, time_slot_ids, customer_type, phone, total_price, voucher_id } = body as {
     team_name?: string
     booking_date?: string
     time_slot_ids?: string[]
     customer_type?: 'umum' | 'pelajar'
     phone?: string
     total_price?: number
+    voucher_id?: string
   }
 
   if (!team_name?.trim() || !booking_date || !Array.isArray(time_slot_ids) || time_slot_ids.length === 0) {
@@ -79,6 +80,7 @@ export async function POST(request: NextRequest) {
     confirmed_at: nowIso,
     total_price: prices[i],
     ...(phone?.trim() ? { phone: phone.trim() } : {}),
+    ...(voucher_id ? { voucher_id } : {}),
   }))
 
   const { data: inserted, error } = await supabase
