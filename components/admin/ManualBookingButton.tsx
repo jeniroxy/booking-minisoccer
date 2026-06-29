@@ -69,23 +69,28 @@ function ManualBookingModal({ onClose, onCreated }: { onClose: () => void; onCre
     if (selected.length === 0) { setError('Pilih minimal satu jam'); return }
     setSaving(true)
     setError('')
-    const res = await fetch('/api/admin/bookings/create', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        team_name: teamName.trim(),
-        booking_date: date,
-        time_slot_ids: selected,
-        customer_type: customerType,
-        phone: phone.trim() || undefined,
-        total_price: totalEdited && totalPrice ? parseInt(totalPrice) : undefined,
-      }),
-    })
-    if (res.ok) {
-      onCreated()
-    } else {
-      const b = await res.json().catch(() => ({}))
-      setError(b.error ?? 'Gagal menyimpan booking')
+    try {
+      const res = await fetch('/api/admin/bookings/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          team_name: teamName.trim(),
+          booking_date: date,
+          time_slot_ids: selected,
+          customer_type: customerType,
+          phone: phone.trim() || undefined,
+          total_price: totalEdited && totalPrice ? parseInt(totalPrice) : undefined,
+        }),
+      })
+      if (res.ok) {
+        onCreated()
+      } else {
+        const b = await res.json().catch(() => ({}))
+        setError(b.error ?? 'Gagal menyimpan booking')
+        setSaving(false)
+      }
+    } catch {
+      setError('Gagal terhubung ke server')
       setSaving(false)
     }
   }
@@ -207,6 +212,8 @@ export function ManualBookingButton() {
   const router = useRouter()
   const [open, setOpen] = useState(false)
 
+  const handleClose = useCallback(() => setOpen(false), [])
+
   const handleCreated = () => {
     setOpen(false)
     router.refresh()
@@ -214,7 +221,7 @@ export function ManualBookingButton() {
 
   return (
     <>
-      {open && <ManualBookingModal onClose={() => setOpen(false)} onCreated={handleCreated} />}
+      {open && <ManualBookingModal onClose={handleClose} onCreated={handleCreated} />}
       {!open && (
         <button
           onClick={() => setOpen(true)}
