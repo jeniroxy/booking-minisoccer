@@ -105,16 +105,5 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Tempel nama confirmer untuk klien
-  const { data: adminUser } = await supabase
-    .from('admin_users')
-    .select('name')
-    .eq('user_id', auth.userId)
-    .single()
-  const withConfirmer = inserted.map(b => ({
-    ...b,
-    confirmed_by_user: adminUser ? { name: adminUser.name } : null,
-  }))
-
-  return NextResponse.json({ bookings: withConfirmer }, { status: 201 })
+  return NextResponse.json({ bookings: inserted }, { status: 201 })
 }

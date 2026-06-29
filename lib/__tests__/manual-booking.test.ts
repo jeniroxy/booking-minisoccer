@@ -37,4 +37,8 @@ describe('allocateSlotPrices', () => {
   it('ignores total override equal to sum', () => {
     expect(allocateSlotPrices(slots, '2026-07-01', [], 'umum', 220000)).toEqual([100000, 120000])
   })
+
+  it('ignores non-positive total override (0) and returns computed prices', () => {
+    expect(allocateSlotPrices(slots, '2026-07-01', [], 'umum', 0)).toEqual([100000, 120000])
+  })
 })
