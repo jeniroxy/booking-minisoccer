@@ -3,6 +3,7 @@ import { createClient, getAdminProps } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { AdminNav } from '@/components/admin/AdminNav'
 import { BookingTable } from '@/components/admin/BookingTable'
+import { ManualBookingButton } from '@/components/admin/ManualBookingButton'
 import type { BookingWithSlot } from '@/lib/types'
 
 export const dynamic = 'force-dynamic'
@@ -42,6 +43,8 @@ export default async function AdminPage() {
       <div className="max-w-[1200px] mx-auto py-4 md:py-6 px-4">
         <BookingTable initialBookings={bookingsWithConfirmer as BookingWithSlot[]} serverDate={serverDate} role={adminProps.role} />
       </div>
+
+      <ManualBookingButton />
     </main>
   )
 }
