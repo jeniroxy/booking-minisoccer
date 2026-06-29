@@ -34,6 +34,8 @@ interface MonthlyData {
   year: number
   month: number
   days: Record<string, Record<string, number>>
+  days_auto: Record<string, Record<string, number>>
+  days_manual: Record<string, Record<string, number>>
   expenses_by_day: Record<string, { mini_soccer: number; kantin: number }>
   expenses_by_category: Record<string, number>
   total_revenue: number
@@ -99,17 +101,19 @@ export function MonthlyReport({ initialSection }: MonthlyReportProps = {}) {
     fetchData()
   }, [fetchData])
 
-  const toggleDay = (dateStr: string, cats: Record<string, number>, expense: number) => {
+  const toggleDay = (dateStr: string, expense: number) => {
     if (expandedDay === dateStr) {
       setExpandedDay(null)
       return
     }
     setExpandedDay(dateStr)
+    const manual = data?.days_manual?.[dateStr] ?? {}
     const vals: Record<string, string> = {}
     for (const cat of MINISOCCER_CATS) {
-      vals[cat] = String(cats[cat] || 0)
+      // Edit only the manual portion; booking/session-derived revenue stays separate
+      vals[cat] = manual[cat] ? String(manual[cat]) : ''
     }
-    vals['expense'] = String(expense)
+    vals['expense'] = expense ? String(expense) : ''
     setEditValues(vals)
   }
 
@@ -307,7 +311,7 @@ export function MonthlyReport({ initialSection }: MonthlyReportProps = {}) {
                   } ${!hasData && !isExpanded ? 'opacity-40' : ''}`}
                 >
                   <button
-                    onClick={() => toggleDay(dateStr, cats, dayExpense)}
+                    onClick={() => toggleDay(dateStr, dayExpense)}
                     className="w-full px-3.5 py-2.5 flex items-center justify-between"
                   >
                     <div className="flex items-center gap-2.5">
@@ -344,18 +348,56 @@ export function MonthlyReport({ initialSection }: MonthlyReportProps = {}) {
                   {isExpanded && (
                     <div className="px-3.5 pb-3.5 space-y-2.5 border-t border-slate-700/50 pt-3">
                       <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Pemasukan</p>
-                      {MINISOCCER_CATS.map(cat => (
-                        <div key={cat} className="flex items-center gap-2">
-                          <span className="text-[11px] text-slate-400 w-24 shrink-0">{CATEGORY_SHORT[cat]} {CATEGORY_LABELS[cat]}</span>
-                          <input
-                            type="number"
-                            value={editValues[cat] || '0'}
-                            onChange={e => setEditValues(prev => ({ ...prev, [cat]: e.target.value }))}
-                            min={0}
-                            className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[12px] text-slate-100 outline-none focus:border-green-500 transition-colors"
-                          />
-                        </div>
-                      ))}
+                      {MINISOCCER_CATS.map(cat => {
+                        const autoAmt = data.days_auto?.[dateStr]?.[cat] || 0
+                        const manualAmt = parseInt(editValues[cat] || '0') || 0
+
+                        // Categories without auto revenue: simple single input
+                        if (autoAmt === 0) {
+                          return (
+                            <div key={cat} className="flex items-center gap-2">
+                              <span className="text-[11px] text-slate-400 w-24 shrink-0">{CATEGORY_SHORT[cat]} {CATEGORY_LABELS[cat]}</span>
+                              <input
+                                type="number"
+                                value={editValues[cat] ?? ''}
+                                onChange={e => setEditValues(prev => ({ ...prev, [cat]: e.target.value }))}
+                                min={0}
+                                placeholder="0"
+                                className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[12px] text-slate-100 placeholder-slate-600 outline-none focus:border-green-500 transition-colors"
+                              />
+                            </div>
+                          )
+                        }
+
+                        // Categories with booking/session revenue: show as an equation
+                        return (
+                          <div key={cat} className="rounded-xl border border-slate-700/60 bg-slate-900/40 p-2.5 space-y-1.5">
+                            <span className="text-[11px] font-semibold text-slate-200">{CATEGORY_SHORT[cat]} {CATEGORY_LABELS[cat]}</span>
+                            {/* Auto (locked) */}
+                            <div className="flex items-center justify-between rounded-lg bg-slate-800/60 border border-slate-700/50 px-2.5 py-1.5">
+                              <span className="text-[10px] text-slate-400">Dari booking <span className="text-slate-600">(otomatis)</span></span>
+                              <span className="text-[11px] font-semibold text-blue-400">{formatRupiah(autoAmt)}</span>
+                            </div>
+                            {/* Manual (editable) */}
+                            <div className="flex items-center gap-2">
+                              <span className="text-[10px] text-slate-400 w-[88px] shrink-0">+ Tambahan manual</span>
+                              <input
+                                type="number"
+                                value={editValues[cat] ?? ''}
+                                onChange={e => setEditValues(prev => ({ ...prev, [cat]: e.target.value }))}
+                                min={0}
+                                placeholder="0"
+                                className="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[12px] text-slate-100 placeholder-slate-600 outline-none focus:border-green-500 transition-colors"
+                              />
+                            </div>
+                            {/* Total (computed) */}
+                            <div className="flex items-center justify-between rounded-lg bg-green-500/5 border border-green-500/20 px-2.5 py-1.5">
+                              <span className="text-[10px] font-medium text-slate-300">= Total tercatat</span>
+                              <span className="text-[12px] font-bold text-green-400">{formatRupiah(autoAmt + manualAmt)}</span>
+                            </div>
+                          </div>
+                        )
+                      })}
                       <p className="text-[10px] font-bold text-slate-500 uppercase tracking-wider pt-1">Pengeluaran</p>
                       <div className="flex items-center gap-2">
                         <span className="text-[11px] text-slate-400 w-24 shrink-0">Pengeluaran</span>

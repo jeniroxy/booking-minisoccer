@@ -41,10 +41,15 @@ export async function GET(request: NextRequest) {
   const lastDay = new Date(new Date(nextMonth).getTime() - 86400000)
   const daysInMonth = lastDay.getDate()
   const days: Record<string, Record<string, number>> = {}
+  // Booking/session-derived (auto) and manual portions, kept separate
+  const daysAuto: Record<string, Record<string, number>> = {}
+  const daysManual: Record<string, Record<string, number>> = {}
 
   for (let d = 1; d <= daysInMonth; d++) {
     const dateStr = `${year}-${String(month).padStart(2, '0')}-${String(d).padStart(2, '0')}`
     days[dateStr] = { mini_soccer: 0, kantin: 0, ps: 0, sewa_sepatu: 0, photography: 0 }
+    daysAuto[dateStr] = { mini_soccer: 0, kantin: 0, ps: 0, sewa_sepatu: 0, photography: 0 }
+    daysManual[dateStr] = { mini_soccer: 0, kantin: 0, ps: 0, sewa_sepatu: 0, photography: 0 }
   }
 
   // Populate bookings (only count finished ones)
@@ -57,6 +62,7 @@ export async function GET(request: NextRequest) {
     const done = b.booking_date < todayStr || (b.booking_date === todayStr && jakartaHour >= endHour)
     if (done && days[b.booking_date]) {
       days[b.booking_date].mini_soccer += b.total_price || 0
+      daysAuto[b.booking_date].mini_soccer += b.total_price || 0
     }
   }
 
@@ -65,6 +71,7 @@ export async function GET(request: NextRequest) {
     const dateStr = new Date(s.started_at).toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
     if (days[dateStr]) {
       days[dateStr].ps += s.final_amount || 0
+      daysAuto[dateStr].ps += s.final_amount || 0
     }
   }
 
@@ -72,6 +79,7 @@ export async function GET(request: NextRequest) {
   for (const r of revenueEntries ?? []) {
     if (days[r.date] && days[r.date][r.category] !== undefined) {
       days[r.date][r.category] += r.amount
+      daysManual[r.date][r.category] += r.amount
     }
   }
 
@@ -103,6 +111,8 @@ export async function GET(request: NextRequest) {
     year,
     month,
     days,
+    days_auto: daysAuto,
+    days_manual: daysManual,
     expenses_by_day: expensesByDay,
     expenses_by_category: expensesByCategory,
     total_revenue: totalRevenue,

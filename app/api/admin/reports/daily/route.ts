@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       .eq('status', 'confirmed'),
     supabase
       .from('revenue_entries')
-      .select('category, amount')
+      .select('category, amount, notes')
       .eq('date', date),
     supabase
       .from('expense_entries')
@@ -63,6 +63,23 @@ export async function GET(request: NextRequest) {
     photography: 0,
   }
 
+  // Booking-derived (auto) revenue, kept separate from manual input
+  const auto: Record<string, number> = {
+    mini_soccer: 0,
+    kantin: 0,
+    ps: 0,
+    sewa_sepatu: 0,
+    photography: 0,
+  }
+  // Manual revenue entries, kept separate from auto
+  const manual: Record<string, number> = {
+    mini_soccer: 0,
+    kantin: 0,
+    ps: 0,
+    sewa_sepatu: 0,
+    photography: 0,
+  }
+
   // Mini soccer from bookings (only count finished ones)
   const now = new Date()
   const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
@@ -71,13 +88,26 @@ export async function GET(request: NextRequest) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const endHour = (b as any).time_slots?.end_hour ?? 24
     const done = date < todayStr || (date === todayStr && jakartaHour >= endHour)
-    if (done) categories.mini_soccer += b.total_price || 0
+    if (done) auto.mini_soccer += b.total_price || 0
+  }
+  categories.mini_soccer += auto.mini_soccer
+
+  const notes: Record<string, string | null> = {
+    mini_soccer: null,
+    kantin: null,
+    ps: null,
+    sewa_sepatu: null,
+    photography: null,
   }
 
   // Manual revenue entries
   for (const r of revenueEntries ?? []) {
     if (categories[r.category] !== undefined) {
       categories[r.category] += r.amount
+      manual[r.category] += r.amount
+    }
+    if (notes[r.category] !== undefined && r.notes) {
+      notes[r.category] = r.notes
     }
   }
 
@@ -112,6 +142,9 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     date,
     categories,
+    auto,
+    manual,
+    notes,
     total_revenue: totalRevenue,
     total_expenses: totalExpenses,
     kantin_expenses: kantinExpenses,

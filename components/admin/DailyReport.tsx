@@ -34,6 +34,9 @@ function toDateStr(d: Date): string {
 interface DailyData {
   date: string
   categories: Record<string, number>
+  auto: Record<string, number>
+  manual: Record<string, number>
+  notes: Record<string, string | null>
   total_revenue: number
   total_expenses: number
   kantin_expenses: number
@@ -53,6 +56,7 @@ export function DailyReport() {
   const [loading, setLoading] = useState(true)
   const [editingCat, setEditingCat] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
+  const [editNote, setEditNote] = useState('')
   const [saving, setSaving] = useState(false)
   const stripRef = useRef<HTMLDivElement>(null)
   const editInputRef = useRef<HTMLInputElement>(null)
@@ -87,14 +91,17 @@ export function DailyReport() {
     if (editingCat && editInputRef.current) editInputRef.current.focus()
   }, [editingCat])
 
-  const startEdit = (catKey: string, currentAmount: number) => {
+  const startEdit = (catKey: string) => {
+    const manualAmount = data?.manual?.[catKey] ?? 0
     setEditingCat(catKey)
-    setEditValue(currentAmount > 0 ? String(currentAmount) : '')
+    setEditValue(manualAmount > 0 ? String(manualAmount) : '')
+    setEditNote(data?.notes?.[catKey] ?? '')
   }
 
   const cancelEdit = () => {
     setEditingCat(null)
     setEditValue('')
+    setEditNote('')
   }
 
   const saveEdit = async () => {
@@ -104,7 +111,7 @@ export function DailyReport() {
     const res = await fetch('/api/admin/revenue', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ date: selectedDate, category: editingCat, amount }),
+      body: JSON.stringify({ date: selectedDate, category: editingCat, amount, notes: editNote.trim() || null }),
     })
     if (res.ok) {
       // Refetch daily data
@@ -114,6 +121,7 @@ export function DailyReport() {
     setSaving(false)
     setEditingCat(null)
     setEditValue('')
+    setEditNote('')
   }
 
   const navigate = (dir: number) => {
@@ -232,6 +240,8 @@ export function DailyReport() {
           <div className="grid grid-cols-2 gap-2">
             {CATEGORY_CONFIG.map(cat => {
               const amount = data.categories[cat.key] || 0
+              const autoAmount = data.auto?.[cat.key] || 0
+              const manualAmount = data.manual?.[cat.key] || 0
               const isEditing = editingCat === cat.key
 
               if (isEditing) {
@@ -241,15 +251,32 @@ export function DailyReport() {
                       <span className="text-[16px]">{cat.icon}</span>
                       <span className="text-[11px] font-medium text-slate-400">{cat.label}</span>
                     </div>
+                    {autoAmount > 0 && (
+                      <div className="flex items-center justify-between bg-slate-900/60 border border-slate-700 rounded-lg px-2.5 py-1.5 mb-2">
+                        <span className="text-[10px] text-slate-400">Dari booking (otomatis)</span>
+                        <span className="text-[11px] font-semibold text-blue-400">{formatRupiah(autoAmount)}</span>
+                      </div>
+                    )}
+                    <label className="block text-[10px] font-medium text-slate-500 mb-1">
+                      {autoAmount > 0 ? 'Tambahan manual' : 'Jumlah'}
+                    </label>
                     <input
                       ref={editInputRef}
                       type="number"
                       value={editValue}
                       onChange={e => setEditValue(e.target.value)}
                       onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit() }}
-                      placeholder="0"
+                      placeholder={autoAmount > 0 ? 'Tambahan manual (opsional)' : '0'}
                       min={0}
                       className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[14px] text-slate-100 outline-none focus:border-green-500 mb-2"
+                    />
+                    <input
+                      type="text"
+                      value={editNote}
+                      onChange={e => setEditNote(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') saveEdit(); if (e.key === 'Escape') cancelEdit() }}
+                      placeholder="Catatan (opsional)"
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-2.5 py-1.5 text-[12px] text-slate-100 placeholder-slate-600 outline-none focus:border-green-500 mb-2"
                     />
                     <div className="flex items-center gap-1.5">
                       <button
@@ -273,8 +300,8 @@ export function DailyReport() {
               return (
                 <div
                   key={cat.key}
-                  onClick={cat.editable ? () => startEdit(cat.key, amount) : undefined}
-                  className={`bg-slate-800 rounded-2xl border border-slate-700 p-3.5 ${cat.editable ? 'cursor-pointer hover:border-slate-600 transition-colors' : ''} ${amount === 0 ? 'opacity-40' : ''}`}
+                  onClick={cat.editable ? () => startEdit(cat.key) : undefined}
+                  className={`bg-slate-800 rounded-2xl border border-slate-700 p-3.5 ${cat.editable ? 'cursor-pointer hover:border-slate-600 transition-colors' : ''} ${amount === 0 && !data.notes?.[cat.key] ? 'opacity-40' : ''}`}
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
@@ -288,6 +315,23 @@ export function DailyReport() {
                   <p className={`text-[18px] font-bold ${amount > 0 ? 'text-green-400' : 'text-slate-600'}`}>
                     {amount > 0 ? formatRupiah(amount) : 'Rp 0'}
                   </p>
+                  {autoAmount > 0 && (
+                    <div className="mt-1.5 space-y-0.5">
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-slate-500">⚽ Booking</span>
+                        <span className="text-blue-400 font-medium">{formatRupiah(autoAmount)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[10px]">
+                        <span className="text-slate-500">Manual</span>
+                        <span className="text-slate-300 font-medium">{formatRupiah(manualAmount)}</span>
+                      </div>
+                    </div>
+                  )}
+                  {data.notes?.[cat.key] && (
+                    <p className="text-[10px] text-slate-500 mt-1 line-clamp-2 break-words">
+                      {data.notes[cat.key]}
+                    </p>
+                  )}
                 </div>
               )
             })}
