@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdminSession } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createCalendarEvent, deleteCalendarEvent } from '@/lib/google-calendar'
+import { deleteCalendarEvent } from '@/lib/google-calendar'
+import { applyConfirmSideEffects } from '@/lib/booking-confirm'
 
 export async function PATCH(
   request: NextRequest,
@@ -119,67 +120,15 @@ export async function PATCH(
       }
     }
   } else if (status === 'confirmed' && data.time_slots) {
-    // Delete old pending event, then create new confirmed event
-    if (data.google_event_id) {
-      await deleteCalendarEvent(data.google_event_id)
-    }
-    const eventId = await createCalendarEvent({
-      bookingId: data.id,
-      teamName: data.team_name,
-      date: data.booking_date,
-      startHour: data.time_slots.start_hour,
-      endHour: data.time_slots.end_hour,
-      status: 'confirmed',
+    const voucher = await applyConfirmSideEffects(supabase, {
+      id: data.id,
+      team_name: data.team_name,
+      booking_date: data.booking_date,
+      google_event_id: data.google_event_id,
+      time_slots: data.time_slots,
     })
-    if (eventId) {
-      await supabase
-        .from('bookings')
-        .update({ google_event_id: eventId })
-        .eq('id', data.id)
-    }
-
-    // Auto-generate follow-up voucher (skip if already generated for this booking session)
-    const { data: existingVoucher } = await supabase
-      .from('bookings')
-      .select('followup_voucher_id')
-      .ilike('team_name', data.team_name)
-      .eq('booking_date', data.booking_date)
-      .neq('status', 'cancelled')
-      .not('followup_voucher_id', 'is', null)
-      .limit(1)
-
-    if (existingVoucher && existingVoucher.length > 0) {
-      return NextResponse.json(data)
-    }
-
-    const voucherCode = `MAINLAGI-${data.team_name.replace(/\s+/g, '').toUpperCase().slice(0, 10)}-${Date.now().toString(36).toUpperCase()}`
-    const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
-    const validFrom = today
-    const validUntilDate = new Date(today + 'T00:00:00+07:00')
-    validUntilDate.setDate(validUntilDate.getDate() + 14)
-    const validUntil = validUntilDate.toLocaleDateString('en-CA', { timeZone: 'Asia/Jakarta' })
-
-    const { data: voucher } = await supabase
-      .from('vouchers')
-      .insert({
-        code: voucherCode,
-        name: `Follow-up ${data.team_name}`,
-        discount_type: 'nominal',
-        discount_value: 50000,
-        max_usage: 1,
-        valid_from: validFrom,
-        valid_until: validUntil,
-        is_active: true,
-      })
-      .select('id, code, valid_until')
-      .single()
-
     if (voucher) {
-      await supabase
-        .from('bookings')
-        .update({ followup_voucher_id: voucher.id })
-        .eq('id', data.id)
-      data.followup_voucher_id = voucher.id
+      // followup_voucher_id & google_event_id sudah di-set oleh helper di DB; tempelkan info voucher untuk klien
       data._followup_voucher = { code: voucher.code, valid_until: voucher.valid_until }
     }
   }
