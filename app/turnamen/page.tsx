@@ -1,626 +1,110 @@
 const CSS = `
-:root {
-  --navy:      #0d1b2e;
-  --card:      #1b2c42;
-  --card2:     #162338;
-  --line:      rgba(255,255,255,.08);
-  --green:     #00ff62;
-  --white:     #ffffff;
-  --muted:     rgba(255,255,255,.55);
-  --gold:      linear-gradient(-20deg,#9f7521 11%,#f9e060 46%,#ffe87c 55%,#9f7521 82%);
-  --hero-grad: linear-gradient(-44deg,#00ffc3 0%,#00b8ff 35%,#1a00ff 70%);
-}
+:root{--navy:#0d1b2e;--card:#1b2c42;--card2:#162338;--green:#00ff62;--text:#e8edf4;}
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html{scroll-behavior:smooth;}
-body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--white);font-size:15px;line-height:1.6;}
-
-.navbar{position:sticky;top:0;z-index:100;background:rgba(13,27,46,.96);backdrop-filter:blur(12px);border-bottom:1px solid var(--line);}
-.nav-inner{max-width:960px;margin:0 auto;padding:0 24px;height:58px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
-.nav-brand{display:flex;align-items:center;gap:10px;}
-.nav-brand img{height:36px;}
-.brand-name{font-size:16px;font-weight:900;}
-.brand-sub{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
-.nav-links{display:flex;gap:2px;flex-wrap:wrap;justify-content:flex-end;}
-.nav-links a{font-size:12px;font-weight:600;color:var(--muted);padding:6px 10px;border-radius:8px;text-decoration:none;transition:all .15s;white-space:nowrap;}
-.nav-links a:hover{background:var(--card);color:#fff;}
-@media(max-width:580px){.nav-links{display:none;}}
-
-.hero{background:var(--hero-grad);position:relative;overflow:hidden;padding:52px 24px 56px;text-align:center;}
-.hero-field{position:absolute;inset:0;background:url('/turnament/logo.png') center/cover;opacity:.06;pointer-events:none;}
-.hero-inner{position:relative;z-index:1;max-width:720px;margin:0 auto;}
-.hero-inner img{width:min(75%,320px);height:auto;margin-bottom:8px;filter:drop-shadow(0 6px 24px rgba(0,0,0,.4));}
-.hero-cup{font-size:clamp(40px,10vw,80px);font-weight:900;text-transform:uppercase;letter-spacing:-1px;line-height:1;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:6px;}
-.hero-sub{font-size:clamp(11px,2vw,14px);color:rgba(255,255,255,.85);text-transform:uppercase;letter-spacing:5px;margin-bottom:18px;}
-.hero-badge{display:inline-block;background:var(--green);color:var(--card);font-size:clamp(12px,2.5vw,14px);font-weight:800;text-transform:uppercase;letter-spacing:2px;padding:8px 24px;border-radius:6px;margin-bottom:20px;}
-.hero-date{font-size:clamp(14px,3vw,18px);font-weight:700;color:#fff;}
-
-.wrap{max-width:960px;margin:0 auto;padding:0 24px 72px;}
-
-.sec{padding:52px 0 0;}
-.sec-title{display:flex;align-items:center;gap:14px;margin-bottom:28px;padding-bottom:14px;border-bottom:2px solid rgba(0,255,98,.2);}
-.sec-num{width:38px;height:38px;border-radius:50%;flex-shrink:0;background:var(--green);color:var(--card);display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;}
-.sec-title h2{font-size:clamp(18px,3vw,24px);font-weight:800;text-transform:uppercase;letter-spacing:.5px;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-
-.card{background:var(--card);border-radius:14px;padding:24px;border:1px solid var(--line);}
-.card-sm{padding:16px 20px;}
-
-.info-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;}
-.info-item{background:var(--card);border-radius:10px;padding:14px 16px;border:1px solid var(--line);display:flex;flex-direction:column;gap:3px;}
-.info-item .lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--green);}
-.info-item .val{font-size:14px;font-weight:600;color:#fff;}
-
-.format-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:2px;border-radius:12px;overflow:hidden;border:1px solid var(--line);}
-.fg-col{display:flex;flex-direction:column;}
-.fg-kloter{background:var(--green);color:var(--card);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1px;text-align:center;padding:9px 4px;}
-.fg-grup{background:var(--card2);color:var(--green);font-size:12px;font-weight:700;text-transform:uppercase;text-align:center;padding:7px 4px;}
-.fg-teams{background:var(--card);flex:1;}
-.fg-team{padding:8px;font-size:13px;color:rgba(255,255,255,.7);text-align:center;border-bottom:1px solid rgba(255,255,255,.04);}
-.fg-team:last-child{border-bottom:none;}
-@media(max-width:520px){.format-grid{grid-template-columns:repeat(2,1fr);}}
-
-.ko-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
-.ko-stage{background:var(--card);border-radius:10px;border:1px solid var(--line);padding:14px 10px;}
-.ko-stage-ttl{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1px;color:var(--green);text-align:center;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.07);margin-bottom:8px;}
-.ko-match{background:rgba(255,255,255,.04);border-radius:7px;padding:8px;font-size:11px;color:rgba(255,255,255,.7);text-align:center;line-height:1.4;margin-bottom:6px;}
-.ko-match:last-child{margin-bottom:0;}
-.ko-match.final{background:rgba(0,255,98,.12);color:var(--green);font-weight:700;}
-@media(max-width:520px){.ko-grid{grid-template-columns:repeat(2,1fr);}}
-
-.rule-group{margin-bottom:24px;}
-.rule-group:last-child{margin-bottom:0;}
-.rule-group h3{font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:var(--green);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
-.rule-group h3::before{content:'';width:3px;height:16px;background:var(--green);border-radius:2px;display:block;}
-.rule-list{list-style:none;display:flex;flex-direction:column;gap:6px;}
-.rule-list li{display:flex;gap:10px;font-size:13px;color:rgba(255,255,255,.8);line-height:1.6;padding:10px 12px;background:rgba(255,255,255,.03);border-radius:8px;border-left:2px solid rgba(0,255,98,.25);}
-.rule-list li::before{content:attr(data-n)'.';color:var(--green);font-weight:700;font-size:12px;min-width:18px;flex-shrink:0;margin-top:2px;}
-
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-@media(max-width:520px){.grid2{grid-template-columns:1fr;}}
-
-.score-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:20px;}
-.score-card{background:var(--card);border-radius:12px;padding:18px 12px;text-align:center;border:1px solid var(--line);}
-.score-card .res{font-size:14px;font-weight:800;text-transform:uppercase;margin-bottom:4px;}
-.score-card .res.win{color:var(--green);}
-.score-card .res.draw{color:#f9e060;}
-.score-card .res.lose{color:rgba(255,255,255,.35);}
-.score-card .pts{font-size:clamp(32px,7vw,44px);font-weight:900;line-height:1;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.score-card .pts-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:3px;}
-
-.tb-list{list-style:none;counter-reset:tb;display:flex;flex-direction:column;gap:7px;}
-.tb-list li{counter-increment:tb;display:flex;align-items:flex-start;gap:10px;padding:10px 14px;background:rgba(255,255,255,.03);border-radius:8px;font-size:13px;color:rgba(255,255,255,.8);}
-.tb-list li::before{content:counter(tb);background:var(--green);color:var(--card);width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:900;flex-shrink:0;}
-
-.tbl-wrap{border-radius:12px;overflow:hidden;border:1px solid var(--line);}
-table{width:100%;border-collapse:collapse;font-size:13px;}
-thead tr{background:var(--card2);}
-thead th{padding:10px 12px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);white-space:nowrap;}
-thead th.c{text-align:center;}
-tbody tr:nth-child(even){background:rgba(255,255,255,.02);}
-tbody tr:hover{background:rgba(255,255,255,.05);}
-tbody td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04);color:rgba(255,255,255,.82);vertical-align:middle;}
-tbody tr:last-child td{border-bottom:none;}
-td.c{text-align:center;}
-td.num{font-weight:700;color:#fff;text-align:center;width:32px;}
-td.time{font-weight:600;color:#fff;white-space:nowrap;font-variant-numeric:tabular-nums;}
-td.bold{font-weight:700;color:#fff;}
-tr.sub-hdr td{background:rgba(0,255,98,.07);color:var(--green);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:7px 12px;border-top:1px solid rgba(0,255,98,.15);}
-tr.ko-hdr td{background:rgba(255,200,0,.05);color:#ffd700;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:7px 12px;border-top:1px solid rgba(255,200,0,.15);}
-tr.final-row td{background:rgba(0,255,98,.1);color:var(--green);font-weight:700;font-size:14px;}
-
-.gtag{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;padding:2px 7px;border-radius:4px;}
-.gtag.ab{background:rgba(0,255,98,.15);color:#00ff62;}
-.gtag.cd{background:rgba(0,184,255,.15);color:#00b8ff;}
-.gtag.qf{background:rgba(255,200,0,.12);color:#ffd700;}
-.gtag.sf{background:rgba(255,120,0,.12);color:#ff9030;}
-.gtag.f3{background:rgba(200,200,200,.1);color:#ccc;}
-.gtag.gf{background:rgba(0,255,98,.2);color:#00ff62;}
-
-.break-bar{display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.03);border-radius:10px;border:1px dashed rgba(255,255,255,.12);padding:11px 14px;margin:8px 0;}
-.break-bar .bb-icon{font-size:16px;}
-.break-bar .bb-lbl{font-size:13px;color:var(--muted);}
-.break-bar .bb-time{margin-left:auto;font-size:13px;font-weight:700;color:#fff;white-space:nowrap;}
-
-.podium{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
-.prize-card{background:var(--card);border-radius:14px;padding:20px 14px;text-align:center;border:1px solid var(--line);display:flex;flex-direction:column;gap:4px;}
-.prize-card.gold-border{border-color:rgba(249,224,96,.35);}
-.prize-card .medal{font-size:26px;}
-.prize-card .rank{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);}
-.prize-card .amount{font-size:clamp(28px,6.5vw,42px);font-weight:900;line-height:1.1;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.prize-card .extra{font-size:12px;color:var(--muted);}
-
-.total-box{background:rgba(0,255,98,.05);border:1px solid rgba(0,255,98,.2);border-radius:12px;padding:20px;text-align:center;margin-bottom:20px;}
-.total-box .lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;margin-bottom:6px;}
-.total-box .amount{font-size:clamp(44px,10vw,68px);font-weight:900;line-height:1;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.total-box .sub{font-size:14px;color:var(--muted);margin-top:4px;}
-
-footer{background:var(--card2);border-top:1px solid var(--line);padding:32px 24px;text-align:center;}
-.foot-inner{max-width:960px;margin:0 auto;}
-.foot-brand{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:8px;}
-.foot-brand img{height:30px;}
-.foot-name{font-size:18px;font-weight:900;background:var(--gold);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
-.foot-sub{font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;}
-.foot-copy{font-size:11px;color:rgba(255,255,255,.2);}
-
-.divider{border:none;border-top:1px solid var(--line);margin:0;}
-
-/* ── Mobile responsive tables ── */
-@media(max-width:620px){
-  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
-
-  .jadwal-tbl thead{display:none;}
-
-  /* Section & stage header rows */
-  .jadwal-tbl tbody tr.sub-hdr,
-  .jadwal-tbl tbody tr.ko-hdr{display:block;}
-  .jadwal-tbl tbody tr.sub-hdr td,
-  .jadwal-tbl tbody tr.ko-hdr td{display:block;padding:6px 0;}
-
-  /* Each match = card */
-  .jadwal-tbl tbody tr:not(.sub-hdr):not(.ko-hdr){
-    display:grid;
-    grid-template-columns:1fr 28px 1fr;
-    grid-template-rows:auto auto;
-    row-gap:0;
-    margin-bottom:6px;
-    background:var(--card);
-    border-radius:10px;
-    border:1px solid rgba(255,255,255,.08);
-    overflow:hidden;
-  }
-
-  .jadwal-tbl tbody td{border:none;padding:0;}
-  .jadwal-tbl td.num{display:none;}
-  .jadwal-tbl td:nth-child(3){display:none;}
-
-  /* Waktu → header strip */
-  .jadwal-tbl td.time{
-    grid-column:1/-1;grid-row:1;
-    padding:7px 14px;
-    font-size:10px;font-weight:700;
-    color:var(--green);letter-spacing:.5px;
-    text-align:center;
-    background:rgba(0,255,98,.05);
-    border-bottom:1px solid rgba(255,255,255,.07);
-  }
-
-  /* Tim 1 */
-  .jadwal-tbl td:nth-child(4){
-    grid-column:1;grid-row:2;
-    padding:11px 8px 11px 14px;
-    font-size:12px;font-weight:700;color:#fff;
-    text-align:right;align-self:center;
-    word-break:break-word;line-height:1.3;
-  }
-  /* vs */
-  .jadwal-tbl td:nth-child(5){
-    grid-column:2;grid-row:2;
-    font-size:9px;font-weight:700;
-    color:rgba(255,255,255,.2);
-    text-align:center;align-self:center;
-    text-transform:uppercase;letter-spacing:1px;
-  }
-  /* Tim 2 */
-  .jadwal-tbl td:nth-child(6){
-    grid-column:3;grid-row:2;
-    padding:11px 14px 11px 8px;
-    font-size:12px;font-weight:700;color:#fff;
-    text-align:left;align-self:center;
-    word-break:break-word;line-height:1.3;
-  }
-
-  /* Grand Final card */
-  .jadwal-tbl tbody tr.final-row{
-    background:rgba(0,255,98,.07);
-    border-color:rgba(0,255,98,.2);
-  }
-  .jadwal-tbl tbody tr.final-row td{color:var(--green);}
-  .jadwal-tbl tbody tr.final-row td.time{
-    background:rgba(0,255,98,.08);
-    border-bottom-color:rgba(0,255,98,.15);
-    font-size:11px;
-  }
-}
+body{font-family:'Inter',sans-serif;background:var(--navy);color:var(--text);font-size:13px;line-height:1.7;}
+.hdr{background:var(--card);padding:14px 20px;display:flex;align-items:center;gap:14px;border-bottom:2px solid #00ff6233;position:sticky;top:0;z-index:100;}
+.hdr img{height:40px;}
+.hdr-txt h1{font-size:17px;font-weight:900;color:#f9e060;}
+.hdr-txt p{font-size:11px;color:#aaa;margin-top:1px;}
+.hdr-btns{margin-left:auto;display:flex;gap:8px;}
+.hdr-btns a{padding:8px 16px;border-radius:7px;font-weight:700;font-size:12px;text-decoration:none;background:#00ff6222;color:var(--green);border:1px solid #00ff6244;white-space:nowrap;}
+.hdr-btns a:hover{background:#00ff6233;}
+@media(max-width:520px){.hdr{padding:12px 14px;gap:10px;}.hdr img{height:32px;}.hdr-txt h1{font-size:14px;}.hdr-txt p{font-size:10px;}.hdr-btns a{padding:7px 10px;font-size:11px;}}
+.content{max-width:800px;margin:0 auto;padding:16px;}
+.sec{margin-bottom:24px;}
+.sec-title{font-size:13px;font-weight:800;color:var(--green);text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px;padding-left:10px;border-left:3px solid var(--green);}
+.card{background:var(--card);border-radius:10px;padding:14px 16px;font-size:13px;}
+.rule{display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #ffffff08;}
+.rule:last-child{border-bottom:none;}
+.rnum{color:var(--green);font-weight:800;font-size:12px;min-width:22px;margin-top:1px;}
+.rtxt{flex:1;line-height:1.7;}
+.rtxt strong{color:#f9e060;}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:10.5px;font-weight:700;}
+.badge-r{background:#ff3b3b22;color:#ff6b6b;border:1px solid #ff3b3b44;}
+.badge-y{background:#f9e06022;color:#f9e060;border:1px solid #f9e06044;}
+.badge-g{background:#00ff6222;color:var(--green);border:1px solid #00ff6244;}
+.highlight-box{background:linear-gradient(135deg,#f9e06011,#f9e06022);border:1px solid #f9e06044;border-radius:8px;padding:12px 14px;font-size:12.5px;line-height:1.7;margin-top:8px;}
 `
 
 const BODY_HTML = `
-<nav class="navbar">
-  <div class="nav-inner">
-    <div class="nav-brand">
-      <img src="/turnament/logo.png" alt="Zains" style="height:36px;"/>
-    </div>
-    <div class="nav-links">
-      <a href="#format">Format</a>
-      <a href="#peraturan">Peraturan</a>
-      <a href="#penilaian">Penilaian</a>
-      <a href="#jadwal">Jadwal</a>
-      <a href="#hadiah">Hadiah</a>
-      <a href="/turnamen/skor" style="color:#00ff62;border:1px solid rgba(0,255,98,.3);">Papan Skor</a>
-    </div>
+<header class="hdr">
+  <img src="/turnament/logo.png" alt="Zains"/>
+  <div class="hdr-txt">
+    <h1>Ketentuan &ndash; Champions Cup #5</h1>
+    <p>Minggu, 26 Juli 2026 &nbsp;&middot;&nbsp; 08:00 WIB &nbsp;&middot;&nbsp; @Zains Minisoccer Cibadak</p>
   </div>
-</nav>
-
-<section class="hero">
-  <div class="hero-field"></div>
-  <div class="hero-inner">
-    <img src="/turnament/logo.png" alt="ZAINS" style="width:min(70%,300px);height:auto;display:block;margin:0 auto 8px;"/>
-    <div class="hero-cup">Champions Cup</div>
-    <div class="hero-sub">@Zains Minisoccer Cibadak #3</div>
-    <div class="hero-badge">Kategori Umum &nbsp;|&nbsp; Edisi Mei 2026</div>
-    <div class="hero-date">&#x1F4C5; &nbsp;Minggu, 31 Mei 2026 &nbsp;&middot;&nbsp; Pukul 09.00 WIB</div>
+  <div class="hdr-btns">
+    <a href="/turnamen/skor">Papan Skor</a>
   </div>
-</section>
+</header>
 
-<div class="wrap">
+<div class="content">
 
-<section class="sec" id="format">
-  <div class="sec-title">
-    <div class="sec-num">1</div>
-    <h2>Format Turnamen</h2>
-  </div>
-
-  <div class="info-grid" style="margin-bottom:24px;">
-    <div class="info-item"><div class="lbl">Total Tim</div><div class="val">16 Tim</div></div>
-    <div class="info-item"><div class="lbl">Jumlah Kloter</div><div class="val">2 Kloter</div></div>
-    <div class="info-item"><div class="lbl">Grup per Kloter</div><div class="val">2 Grup (8 Tim)</div></div>
-    <div class="info-item"><div class="lbl">Tim per Grup</div><div class="val">4 Tim</div></div>
-    <div class="info-item"><div class="lbl">Pemain per Tim</div><div class="val">6 + cadangan</div></div>
-    <div class="info-item"><div class="lbl">Main per Tim</div><div class="val">3&times; (Fase Grup)</div></div>
-    <div class="info-item"><div class="lbl">Durasi Match</div><div class="val">15 Menit (1 babak)</div></div>
-    <div class="info-item"><div class="lbl">Total Match</div><div class="val">32 Pertandingan</div></div>
-  </div>
-
-  <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:10px;">Bagan Fase Grup</p>
-  <div class="format-grid" style="margin-bottom:20px;">
-    <div class="fg-col">
-      <div class="fg-kloter">Kloter 1</div>
-      <div class="fg-grup">Grup A</div>
-      <div class="fg-teams">
-        <div class="fg-team">BARUDAK WELL</div><div class="fg-team">PELANGI FC</div>
-        <div class="fg-team">X-BER FC</div><div class="fg-team">MT FC</div>
-      </div>
-    </div>
-    <div class="fg-col">
-      <div class="fg-kloter">Kloter 1</div>
-      <div class="fg-grup">Grup B</div>
-      <div class="fg-teams">
-        <div class="fg-team">WARKAS FC</div><div class="fg-team">STAR LEN YHS</div>
-        <div class="fg-team">SENTANA FC</div><div class="fg-team">CIKIWUL</div>
-      </div>
-    </div>
-    <div class="fg-col">
-      <div class="fg-kloter">Kloter 2</div>
-      <div class="fg-grup">Grup C</div>
-      <div class="fg-teams">
-        <div class="fg-team">BAS FC</div><div class="fg-team">TIM AAA</div>
-        <div class="fg-team">RSUD PALABUHANRATU FC</div><div class="fg-team">CTY ORI</div>
-      </div>
-    </div>
-    <div class="fg-col">
-      <div class="fg-kloter">Kloter 2</div>
-      <div class="fg-grup">Grup D</div>
-      <div class="fg-teams">
-        <div class="fg-team">SOBAT IYAN FC</div><div class="fg-team">PAKIDULAN FC</div>
-        <div class="fg-team">JMJ</div><div class="fg-team">NYALSE FC</div>
-      </div>
+  <div class="sec">
+    <div class="sec-title">A. Ketentuan Umum</div>
+    <div class="card">
+      <div class="rule"><div class="rnum">1</div><div class="rtxt">Turnamen ini terbuka untuk <strong>24 tim</strong> yang telah terdaftar dan melunasi biaya pendaftaran.</div></div>
+      <div class="rule"><div class="rnum">2</div><div class="rtxt">Setiap tim wajib hadir <strong>15 menit sebelum</strong> jadwal pertandingan pertamanya. Keterlambatan lebih dari 5 menit dinyatakan <strong>WO (Walk Over)</strong>.</div></div>
+      <div class="rule"><div class="rnum">3</div><div class="rtxt">Setiap tim minimal membawa <strong>5 pemain</strong> inti dan maksimal <strong>10 pemain</strong> (termasuk cadangan).</div></div>
+      <div class="rule"><div class="rnum">4</div><div class="rtxt">Pemain wajib menggunakan <strong>kostum seragam</strong> (kaos seragam satu warna/motif). Tim tamu wajib membawa rompi/vest jika warna kostum sama dengan tim tuan rumah.</div></div>
+      <div class="rule"><div class="rnum">5</div><div class="rtxt">Setiap pemain hanya boleh terdaftar di <strong>satu tim</strong>. Pemain ganda (main di dua tim) akan mengakibatkan diskualifikasi tim.</div></div>
+      <div class="rule"><div class="rnum">6</div><div class="rtxt">Keputusan wasit dan panitia bersifat <strong>final dan tidak dapat diganggu gugat</strong>.</div></div>
     </div>
   </div>
 
-  <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:10px;">Bagan Fase Gugur</p>
-  <div class="ko-grid">
-    <div class="ko-stage">
-      <div class="ko-stage-ttl">Perempat Final</div>
-      <div class="ko-match">QF-1<br><small>Juara A vs RU B</small></div>
-      <div class="ko-match">QF-2<br><small>Juara B vs RU A</small></div>
-      <div class="ko-match">QF-3<br><small>Juara C vs RU D</small></div>
-      <div class="ko-match">QF-4<br><small>Juara D vs RU C</small></div>
-    </div>
-    <div class="ko-stage">
-      <div class="ko-stage-ttl">Semi Final</div>
-      <div class="ko-match">SF-1<br><small>W QF-1 vs W QF-4</small></div>
-      <div class="ko-match">SF-2<br><small>W QF-2 vs W QF-3</small></div>
-    </div>
-    <div class="ko-stage">
-      <div class="ko-stage-ttl">Juara 3</div>
-      <div class="ko-match">Perebutan Juara 3<br><small>L SF-1 vs L SF-2</small></div>
-    </div>
-    <div class="ko-stage">
-      <div class="ko-stage-ttl">Grand Final</div>
-      <div class="ko-match final">&#x1F3C6; FINAL<br><small>W SF-1 vs W SF-2</small></div>
-    </div>
-  </div>
-</section>
-
-<hr class="divider" style="margin:48px 0;"/>
-
-<section class="sec" id="peraturan">
-  <div class="sec-title">
-    <div class="sec-num">2</div>
-    <h2>Peraturan Pertandingan</h2>
-  </div>
-
-  <div class="grid2">
-    <div style="display:flex;flex-direction:column;gap:20px;">
-      <div class="rule-group">
-        <h3>Ketentuan Umum</h3>
-        <ul class="rule-list">
-          <li data-n="1">Setiap tim wajib hadir paling lambat <strong>15 menit</strong> sebelum jadwal.</li>
-          <li data-n="2">Terlambat lebih dari <strong>5 menit</strong> &rarr; WO, dinyatakan kalah <strong>0&ndash;3</strong>.</li>
-          <li data-n="3">Wajib memakai <strong>seragam tim</strong> dan sepatu olahraga.</li>
-          <li data-n="4">Keputusan wasit <strong>mutlak</strong> dan tidak dapat diganggu gugat.</li>
-        </ul>
-      </div>
-      <div class="rule-group">
-        <h3>Format Pertandingan</h3>
-        <ul class="rule-list">
-          <li data-n="1">Durasi <strong>15 menit penuh</strong>.</li>
-          <li data-n="2">Setiap tim menurunkan <strong>6 pemain</strong> (termasuk kiper).</li>
-          <li data-n="3">Pergantian pemain bebas (<strong>rolling substitution</strong>) saat bola keluar.</li>
-          <li data-n="4">Fase grup: skor imbang &rarr; <strong>poin dibagi</strong>. Tidak ada extra time.</li>
-          <li data-n="5">Fase gugur: skor imbang &rarr; langsung <strong>adu penalti</strong> (3 penendang, lalu sudden death).</li>
-        </ul>
-      </div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:20px;">
-      <div class="rule-group">
-        <h3>Bola &amp; Lapangan</h3>
-        <ul class="rule-list">
-          <li data-n="1">Bola ukuran <strong>5</strong> (standar mini soccer).</li>
-          <li data-n="2">Goal kick, corner, tendangan bebas sesuai <strong>aturan mini soccer umum</strong>.</li>
-          <li data-n="3"><strong>Tidak ada offside.</strong></li>
-        </ul>
-      </div>
-      <div class="rule-group">
-        <h3>Disiplin Pemain</h3>
-        <ul class="rule-list">
-          <li data-n="1"><span style="background:rgba(255,220,0,.15);color:#ffd700;padding:1px 7px;border-radius:4px;font-size:11px;font-weight:700;">&#x1F7E8; Kuning</span> &nbsp;2 kartu = larangan <strong>1 pertandingan</strong>.</li>
-          <li data-n="2"><span style="background:rgba(255,60,60,.15);color:#ff5555;padding:1px 7px;border-radius:4px;font-size:11px;font-weight:700;">&#x1F7E5; Merah</span> &nbsp;Langsung keluar + sanksi <strong>1 match berikutnya</strong>.</li>
-          <li data-n="3">Kekerasan fisik/verbal &rarr; <strong>diskualifikasi tim</strong>.</li>
-          <li data-n="4">Protes hanya oleh <strong>kapten tim</strong> secara sopan.</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-<hr class="divider" style="margin:48px 0;"/>
-
-<section class="sec" id="penilaian">
-  <div class="sec-title">
-    <div class="sec-num">3</div>
-    <h2>Format Penilaian &amp; Klasemen</h2>
-  </div>
-
-  <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:12px;">Sistem Poin</p>
-  <div class="score-trio">
-    <div class="score-card">
-      <div class="res win">Menang</div>
-      <div class="pts">3</div>
-      <div class="pts-lbl">Poin</div>
-    </div>
-    <div class="score-card">
-      <div class="res draw">Seri</div>
-      <div class="pts">1</div>
-      <div class="pts-lbl">Poin</div>
-    </div>
-    <div class="score-card">
-      <div class="res lose">Kalah</div>
-      <div class="pts">0</div>
-      <div class="pts-lbl">Poin</div>
+  <div class="sec">
+    <div class="sec-title">B. Peraturan Pertandingan</div>
+    <div class="card">
+      <div class="rule"><div class="rnum">1</div><div class="rtxt">Durasi setiap pertandingan adalah <strong>15 menit</strong> tanpa perpanjangan waktu di fase grup.</div></div>
+      <div class="rule"><div class="rnum">2</div><div class="rtxt">Jumlah pemain di lapangan: <strong>5 vs 5</strong> (termasuk kiper). Minimal 3 pemain untuk bisa bertanding.</div></div>
+      <div class="rule"><div class="rnum">3</div><div class="rtxt">Pergantian pemain <strong>bebas (rolling substitution)</strong> dan dapat dilakukan kapan saja saat bola mati.</div></div>
+      <div class="rule"><div class="rnum">4</div><div class="rtxt">Tendangan gawang, tendangan sudut, dan lemparan ke dalam mengikuti aturan <strong>futsal standar</strong>.</div></div>
+      <div class="rule"><div class="rnum">5</div><div class="rtxt">Pada fase gugur: jika skor seri setelah 15 menit, langsung dilanjutkan dengan <strong>adu penalti</strong> (3 penendang per tim, golden goal jika masih seri).</div></div>
+      <div class="rule"><div class="rnum">6</div><div class="rtxt"><strong>Kick-in</strong> menggantikan throw-in. Bola harus statis dan diinjak sebelum ditendang.</div></div>
     </div>
   </div>
 
-  <div class="grid2" style="gap:20px;">
-    <div>
-      <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:12px;">Kriteria Tiebreaker</p>
-      <ol class="tb-list">
-        <li>Total poin terbanyak</li>
-        <li>Selisih gol (goal difference)</li>
-        <li>Jumlah gol dicetak</li>
-        <li>Head-to-head</li>
-        <li>Adu penalti (jika perlu)</li>
-      </ol>
-    </div>
-    <div>
-      <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:12px;">Lolos Fase Gugur</p>
-      <div style="display:flex;flex-direction:column;gap:8px;">
-        <div class="card card-sm" style="display:flex;gap:10px;align-items:center;">
-          <span style="font-size:22px;">&#x1F947;</span>
-          <div>
-            <div style="font-size:13px;font-weight:700;color:#fff;">Juara Grup</div>
-            <div style="font-size:12px;color:var(--muted);">1 tim dari tiap grup</div>
-          </div>
-        </div>
-        <div class="card card-sm" style="display:flex;gap:10px;align-items:center;">
-          <span style="font-size:22px;">&#x1F948;</span>
-          <div>
-            <div style="font-size:13px;font-weight:700;color:#fff;">Runner-up Grup</div>
-            <div style="font-size:12px;color:var(--muted);">1 tim dari tiap grup</div>
-          </div>
-        </div>
-        <div class="card card-sm" style="background:rgba(0,255,98,.07);border-color:rgba(0,255,98,.2);">
-          <div style="font-size:13px;font-weight:700;color:var(--green);">Total 8 Tim</div>
-          <div style="font-size:12px;color:var(--muted);">Lolos ke Perempat Final</div>
-        </div>
-      </div>
+  <div class="sec">
+    <div class="sec-title">C. Kartu &amp; Sanksi</div>
+    <div class="card">
+      <div class="rule"><div class="rnum">1</div><div class="rtxt"><span class="badge badge-y">&#x1F7E8; Kartu Kuning</span> &mdash; Peringatan. Akumulasi <strong>2 kartu kuning</strong> dalam satu pertandingan = kartu merah.</div></div>
+      <div class="rule"><div class="rnum">2</div><div class="rtxt"><span class="badge badge-r">&#x1F7E5; Kartu Merah</span> &mdash; Pemain langsung keluar dan tidak dapat digantikan. Tim bermain dengan kekurangan satu pemain.</div></div>
+      <div class="rule"><div class="rnum">3</div><div class="rtxt">Pemain yang mendapat kartu merah <strong>tidak dapat bermain</strong> pada pertandingan berikutnya (minimal 1 match skors).</div></div>
+      <div class="rule"><div class="rnum">4</div><div class="rtxt">Tindakan kekerasan fisik yang disengaja dapat dikenai <strong>skors lebih dari 1 match</strong> atas keputusan panitia.</div></div>
+      <div class="rule"><div class="rnum">5</div><div class="rtxt">Protes terhadap keputusan wasit hanya boleh dilakukan oleh <strong>kapten tim</strong> dan wajib dilakukan dengan sopan.</div></div>
     </div>
   </div>
 
-  <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin:24px 0 12px;">Penyusunan Bracket Fase Gugur</p>
-  <div class="tbl-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th>Match</th><th>Tim 1</th><th class="c">vs</th><th>Tim 2</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr class="sub-hdr"><td colspan="4">Perempat Final</td></tr>
-        <tr><td class="bold">QF-1</td><td>Juara Grup A</td><td class="c">vs</td><td>Runner-up Grup B</td></tr>
-        <tr><td class="bold">QF-2</td><td>Juara Grup B</td><td class="c">vs</td><td>Runner-up Grup A</td></tr>
-        <tr><td class="bold">QF-3</td><td>Juara Grup C</td><td class="c">vs</td><td>Runner-up Grup D</td></tr>
-        <tr><td class="bold">QF-4</td><td>Juara Grup D</td><td class="c">vs</td><td>Runner-up Grup C</td></tr>
-        <tr class="sub-hdr"><td colspan="4">Semi Final</td></tr>
-        <tr><td class="bold">SF-1</td><td>Pemenang QF-1</td><td class="c">vs</td><td>Pemenang QF-4</td></tr>
-        <tr><td class="bold">SF-2</td><td>Pemenang QF-2</td><td class="c">vs</td><td>Pemenang QF-3</td></tr>
-        <tr class="sub-hdr"><td colspan="4">Perebutan Juara</td></tr>
-        <tr><td class="bold">Juara 3</td><td>Kalah SF-1</td><td class="c">vs</td><td>Kalah SF-2</td></tr>
-        <tr class="final-row"><td class="bold">&#x1F3C6; FINAL</td><td>Pemenang SF-1</td><td class="c">vs</td><td>Pemenang SF-2</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<hr class="divider" style="margin:48px 0;"/>
-
-<section class="sec" id="jadwal">
-  <div class="sec-title">
-    <div class="sec-num">4</div>
-    <h2>Jadwal Pertandingan &mdash; 31 Mei 2026 &middot; 09:00 WIB</h2>
-  </div>
-
-  <div class="info-grid" style="margin-bottom:24px;">
-    <div class="info-item"><div class="lbl">08.30</div><div class="val">Registrasi &amp; Briefing</div></div>
-    <div class="info-item"><div class="lbl">09.00 &ndash; 12.00</div><div class="val">Kloter 1 (Grup A &amp; B)</div></div>
-    <div class="info-item"><div class="lbl">12.00 &ndash; 12.30</div><div class="val">Istirahat Siang</div></div>
-    <div class="info-item"><div class="lbl">12.30 &ndash; 15.30</div><div class="val">Kloter 2 (Grup C &amp; D)</div></div>
-    <div class="info-item"><div class="lbl">15.30 &ndash; 15.45</div><div class="val">Jeda &amp; Rekap Klasemen</div></div>
-    <div class="info-item"><div class="lbl">15.45 &ndash; 17.45</div><div class="val">Fase Gugur s/d Final</div></div>
-    <div class="info-item"><div class="lbl">~17.45</div><div class="val">Penyerahan Piala</div></div>
-  </div>
-
-  <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin-bottom:10px;">Kloter 1 &mdash; Grup A &amp; B</p>
-  <div class="tbl-wrap" style="margin-bottom:12px;">
-    <table class="jadwal-tbl">
-      <thead>
-        <tr><th class="c">#</th><th>Waktu</th><th>Grup</th><th>Tim 1</th><th class="c">vs</th><th>Tim 2</th></tr>
-      </thead>
-      <tbody>
-        <tr><td class="num">1</td><td class="time">09:00 &ndash; 09:15</td><td><span class="gtag ab">Grup A</span></td><td>BARUDAK WELL</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>PELANGI FC</td></tr>
-        <tr><td class="num">2</td><td class="time">09:15 &ndash; 09:30</td><td><span class="gtag ab">Grup A</span></td><td>X-BER FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>MT FC</td></tr>
-        <tr><td class="num">3</td><td class="time">09:30 &ndash; 09:45</td><td><span class="gtag ab">Grup B</span></td><td>WARKAS FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>STAR LEN YHS</td></tr>
-        <tr><td class="num">4</td><td class="time">09:45 &ndash; 10:00</td><td><span class="gtag ab">Grup B</span></td><td>SENTANA FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>CIKIWUL</td></tr>
-        <tr><td class="num">5</td><td class="time">10:00 &ndash; 10:15</td><td><span class="gtag ab">Grup A</span></td><td>BARUDAK WELL</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>X-BER FC</td></tr>
-        <tr><td class="num">6</td><td class="time">10:15 &ndash; 10:30</td><td><span class="gtag ab">Grup A</span></td><td>PELANGI FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>MT FC</td></tr>
-        <tr><td class="num">7</td><td class="time">10:30 &ndash; 10:45</td><td><span class="gtag ab">Grup B</span></td><td>WARKAS FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>SENTANA FC</td></tr>
-        <tr><td class="num">8</td><td class="time">10:45 &ndash; 11:00</td><td><span class="gtag ab">Grup B</span></td><td>STAR LEN YHS</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>CIKIWUL</td></tr>
-        <tr><td class="num">9</td><td class="time">11:00 &ndash; 11:15</td><td><span class="gtag ab">Grup A</span></td><td>PELANGI FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>X-BER FC</td></tr>
-        <tr><td class="num">10</td><td class="time">11:15 &ndash; 11:30</td><td><span class="gtag ab">Grup A</span></td><td>BARUDAK WELL</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>MT FC</td></tr>
-        <tr><td class="num">11</td><td class="time">11:30 &ndash; 11:45</td><td><span class="gtag ab">Grup B</span></td><td>STAR LEN YHS</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>SENTANA FC</td></tr>
-        <tr><td class="num">12</td><td class="time">11:45 &ndash; 12:00</td><td><span class="gtag ab">Grup B</span></td><td>WARKAS FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>CIKIWUL</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="break-bar">
-    <div class="bb-icon">&#x1F37D;&#xFE0F;</div>
-    <div class="bb-lbl">Istirahat Siang</div>
-    <div class="bb-time">12:00 &ndash; 12:30</div>
-  </div>
-
-  <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin:12px 0 10px;">Kloter 2 &mdash; Grup C &amp; D</p>
-  <div class="tbl-wrap" style="margin-bottom:12px;">
-    <table class="jadwal-tbl">
-      <thead>
-        <tr><th class="c">#</th><th>Waktu</th><th>Grup</th><th>Tim 1</th><th class="c">vs</th><th>Tim 2</th></tr>
-      </thead>
-      <tbody>
-        <tr><td class="num">13</td><td class="time">12:30 &ndash; 12:45</td><td><span class="gtag cd">Grup C</span></td><td>BAS FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>TIM AAA</td></tr>
-        <tr><td class="num">14</td><td class="time">12:45 &ndash; 13:00</td><td><span class="gtag cd">Grup C</span></td><td>RSUD PALABUHANRATU FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>CTY ORI</td></tr>
-        <tr><td class="num">15</td><td class="time">13:00 &ndash; 13:15</td><td><span class="gtag cd">Grup D</span></td><td>SOBAT IYAN FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>PAKIDULAN FC</td></tr>
-        <tr><td class="num">16</td><td class="time">13:15 &ndash; 13:30</td><td><span class="gtag cd">Grup D</span></td><td>JMJ</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>NYALSE FC</td></tr>
-        <tr><td class="num">17</td><td class="time">13:30 &ndash; 13:45</td><td><span class="gtag cd">Grup C</span></td><td>BAS FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>RSUD PALABUHANRATU FC</td></tr>
-        <tr><td class="num">18</td><td class="time">13:45 &ndash; 14:00</td><td><span class="gtag cd">Grup C</span></td><td>TIM AAA</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>CTY ORI</td></tr>
-        <tr><td class="num">19</td><td class="time">14:00 &ndash; 14:15</td><td><span class="gtag cd">Grup D</span></td><td>SOBAT IYAN FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>JMJ</td></tr>
-        <tr><td class="num">20</td><td class="time">14:15 &ndash; 14:30</td><td><span class="gtag cd">Grup D</span></td><td>PAKIDULAN FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>NYALSE FC</td></tr>
-        <tr><td class="num">21</td><td class="time">14:30 &ndash; 14:45</td><td><span class="gtag cd">Grup C</span></td><td>TIM AAA</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>RSUD PALABUHANRATU FC</td></tr>
-        <tr><td class="num">22</td><td class="time">14:45 &ndash; 15:00</td><td><span class="gtag cd">Grup C</span></td><td>BAS FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>CTY ORI</td></tr>
-        <tr><td class="num">23</td><td class="time">15:00 &ndash; 15:15</td><td><span class="gtag cd">Grup D</span></td><td>PAKIDULAN FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>JMJ</td></tr>
-        <tr><td class="num">24</td><td class="time">15:15 &ndash; 15:30</td><td><span class="gtag cd">Grup D</span></td><td>SOBAT IYAN FC</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>NYALSE FC</td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="break-bar">
-    <div class="bb-icon">&#x1F4CA;</div>
-    <div class="bb-lbl">Jeda &amp; Rekap Klasemen &mdash; Penentuan 8 tim lolos</div>
-    <div class="bb-time">15:30 &ndash; 15:45</div>
-  </div>
-
-  <p style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--green);margin:12px 0 10px;">Fase Gugur</p>
-  <div class="tbl-wrap">
-    <table class="jadwal-tbl">
-      <thead>
-        <tr><th class="c">#</th><th>Waktu</th><th>Babak</th><th>Tim 1</th><th class="c">vs</th><th>Tim 2</th></tr>
-      </thead>
-      <tbody>
-        <tr class="ko-hdr"><td colspan="6">&#x26A1; Perempat Final</td></tr>
-        <tr><td class="num">25</td><td class="time">15:45 &ndash; 16:00</td><td><span class="gtag qf">QF-1</span></td><td>Juara Grup A</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>Runner-up Grup B</td></tr>
-        <tr><td class="num">26</td><td class="time">16:00 &ndash; 16:15</td><td><span class="gtag qf">QF-2</span></td><td>Juara Grup B</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>Runner-up Grup A</td></tr>
-        <tr><td class="num">27</td><td class="time">16:15 &ndash; 16:30</td><td><span class="gtag qf">QF-3</span></td><td>Juara Grup C</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>Runner-up Grup D</td></tr>
-        <tr><td class="num">28</td><td class="time">16:30 &ndash; 16:45</td><td><span class="gtag qf">QF-4</span></td><td>Juara Grup D</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>Runner-up Grup C</td></tr>
-        <tr class="ko-hdr"><td colspan="6">&#x1F525; Semi Final</td></tr>
-        <tr><td class="num">29</td><td class="time">16:45 &ndash; 17:00</td><td><span class="gtag sf">SF-1</span></td><td>Pemenang QF-1</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>Pemenang QF-4</td></tr>
-        <tr><td class="num">30</td><td class="time">17:00 &ndash; 17:15</td><td><span class="gtag sf">SF-2</span></td><td>Pemenang QF-2</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>Pemenang QF-3</td></tr>
-        <tr class="ko-hdr"><td colspan="6">&#x1F949; Perebutan Juara 3</td></tr>
-        <tr><td class="num">31</td><td class="time">17:15 &ndash; 17:30</td><td><span class="gtag f3">Juara 3</span></td><td>Kalah SF-1</td><td class="c" style="color:var(--muted);font-size:11px;">vs</td><td>Kalah SF-2</td></tr>
-        <tr class="ko-hdr"><td colspan="6">&#x1F3C6; Grand Final</td></tr>
-        <tr class="final-row"><td class="num">32</td><td class="time">17:30 &ndash; 17:45</td><td><span class="gtag gf">FINAL</span></td><td>Pemenang SF-1</td><td class="c" style="color:var(--green);font-size:11px;">vs</td><td>Pemenang SF-2</td></tr>
-      </tbody>
-    </table>
-  </div>
-</section>
-
-<hr class="divider" style="margin:48px 0;"/>
-
-<section class="sec" id="hadiah">
-  <div class="sec-title">
-    <div class="sec-num">5</div>
-    <h2>Hadiah &amp; Penghargaan</h2>
-  </div>
-
-  <div class="total-box">
-    <div class="lbl">Total Hadiah</div>
-    <div class="amount">2.000.000</div>
-    <div class="sub">Dua Juta Rupiah</div>
-  </div>
-
-  <div class="podium">
-    <div class="prize-card gold-border">
-      <div class="medal">&#x1F947;</div>
-      <div class="rank">Juara 1</div>
-      <div class="amount">1 JT</div>
-      <div class="extra">Trophy + Medali Emas</div>
-    </div>
-    <div class="prize-card">
-      <div class="medal">&#x1F948;</div>
-      <div class="rank">Juara 2</div>
-      <div class="amount">600K</div>
-      <div class="extra">Trophy + Medali Perak</div>
-    </div>
-    <div class="prize-card">
-      <div class="medal">&#x1F949;</div>
-      <div class="rank">Juara 3</div>
-      <div class="amount">400K</div>
-      <div class="extra">Trophy + Medali Perunggu</div>
+  <div class="sec">
+    <div class="sec-title">D. Fase Grup &amp; Klasemen</div>
+    <div class="card">
+      <div class="rule"><div class="rnum">1</div><div class="rtxt">Sistem poin: <strong>Menang = 3 poin</strong>, Seri = 1 poin, Kalah = 0 poin.</div></div>
+      <div class="rule"><div class="rnum">2</div><div class="rtxt"><strong>Tiebreaker</strong> (jika poin sama): (1) Selisih Gol &rarr; (2) Gol Masuk terbanyak &rarr; (3) Head-to-Head.</div></div>
+      <div class="rule"><div class="rnum">3</div><div class="rtxt"><strong>Hanya 1 tim teratas</strong> (Juara Grup) dari setiap grup yang lolos ke Perempat Final.</div></div>
+      <div class="rule"><div class="rnum">4</div><div class="rtxt">Hasil WO dihitung sebagai kekalahan 0&ndash;3 bagi tim yang WO.</div></div>
     </div>
   </div>
-</section>
+
+  <div class="sec">
+    <div class="sec-title">E. Fair Play &amp; Etika</div>
+    <div class="card">
+      <div class="rule"><div class="rnum">1</div><div class="rtxt">Pemain dan official tim wajib menjaga <strong>sportivitas</strong> &mdash; tidak memancing keributan, tidak mengintimidasi wasit.</div></div>
+      <div class="rule"><div class="rnum">2</div><div class="rtxt">Penonton/suporter dilarang memasuki area lapangan selama pertandingan berlangsung.</div></div>
+      <div class="rule"><div class="rnum">3</div><div class="rtxt">Panitia berhak mendiskualifikasi tim yang terbukti melakukan <strong>kecurangan</strong> atau menyebabkan kerusuhan.</div></div>
+      <div class="rule"><div class="rnum">4</div><div class="rtxt">Semua pemain wajib berjabat tangan sebelum dan sesudah pertandingan.</div></div>
+    </div>
+  </div>
+
+  <div class="highlight-box">
+    &#x26BD; Dengan mendaftar, setiap tim menyatakan <strong>setuju dan tunduk</strong> pada seluruh ketentuan yang berlaku. Selamat bertanding dan junjung tinggi sportivitas!
+  </div>
 
 </div>
-
-<footer>
-  <div class="foot-inner">
-    <div class="foot-brand">
-      <img src="/turnament/logo.png" alt="Zains"/>
-      <div>
-        <div class="foot-name">zains</div>
-        <div class="foot-sub">minisoccer cibadak</div>
-      </div>
-    </div>
-    <div class="foot-copy">&copy; 2026 Zains Minisoccer Cibadak &middot; Champions Cup #3 &middot; Mei 2026</div>
-  </div>
-</footer>
 `
+
+export const metadata = {
+  title: 'Ketentuan – Zains Champions Cup #5',
+}
 
 export default function TurnamenPage() {
   return (
